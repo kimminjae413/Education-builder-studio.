@@ -10,13 +10,11 @@ import { Step2Goals } from './Step2Goals'
 import { Step3Methods } from './Step3Methods'
 import { Step4Preview } from './Step4Preview'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useToast } from '@/components/ui/use-toast'
 
 const TOTAL_STEPS = 4
 
 export function DesignWizard() {
   const router = useRouter()
-  const { toast } = useToast()
   const [currentStep, setCurrentStep] = useState(1)
   const [isSaving, setIsSaving] = useState(false)
   
@@ -53,11 +51,7 @@ export function DesignWizard() {
 
   const handleNext = () => {
     if (!canProceedToNext()) {
-      toast({
-        title: '필수 항목을 입력해주세요',
-        description: '모든 필수 항목을 작성해야 다음 단계로 진행할 수 있습니다',
-        variant: 'destructive',
-      })
+      alert('필수 항목을 입력해주세요')
       return
     }
     
@@ -89,20 +83,12 @@ export function DesignWizard() {
       savedCourses.push(newCourse)
       localStorage.setItem('courses', JSON.stringify(savedCourses))
 
-      await new Promise(resolve => setTimeout(resolve, 1000)) // 저장 시뮬레이션
+      await new Promise(resolve => setTimeout(resolve, 1000))
 
-      toast({
-        title: '과정 설계가 저장되었습니다! 🎉',
-        description: '대시보드에서 확인할 수 있습니다',
-      })
-
+      alert('과정 설계가 저장되었습니다! 🎉')
       router.push('/dashboard')
     } catch (error) {
-      toast({
-        title: '저장 실패',
-        description: '과정 저장 중 오류가 발생했습니다',
-        variant: 'destructive',
-      })
+      alert('저장 중 오류가 발생했습니다')
     } finally {
       setIsSaving(false)
     }
@@ -111,10 +97,8 @@ export function DesignWizard() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        {/* 진행 상태 바 */}
         <WizardProgress currentStep={currentStep} totalSteps={TOTAL_STEPS} />
 
-        {/* 메인 콘텐츠 */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 mt-6">
           {currentStep === 1 && (
             <Step1BasicInfo data={data} onChange={updateData} />
@@ -137,7 +121,6 @@ export function DesignWizard() {
           )}
         </div>
 
-        {/* 네비게이션 버튼 (Step 4 제외) */}
         {currentStep < 4 && (
           <div className="flex gap-3 mt-6">
             {currentStep > 1 && (
@@ -163,7 +146,6 @@ export function DesignWizard() {
           </div>
         )}
 
-        {/* 취소 버튼 */}
         <div className="text-center mt-4">
           <button
             type="button"
