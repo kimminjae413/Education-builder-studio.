@@ -4,12 +4,18 @@ import { InstructorRank, RANK_INFO } from '@/lib/rank/types'
 import { getRankThresholds, getNextRank, getPointsToNextRank } from '@/lib/rank/calculator'
 
 interface RankProgressProps {
-  currentRank: InstructorRank
-  currentPoints: number
+  currentRank?: InstructorRank | string | null
+  currentPoints?: number | null
 }
 
 export function RankProgress({ currentRank, currentPoints }: RankProgressProps) {
-  const nextRank = getNextRank(currentRank)
+  // 안전장치 1: 기본값 설정
+  const safeRank = (currentRank && currentRank in RANK_INFO) 
+    ? currentRank as InstructorRank 
+    : InstructorRank.NEWCOMER
+  const safePoints = currentPoints || 0
+
+  const nextRank = getNextRank(safeRank)
   const thresholds = getRankThresholds()
   
   if (!nextRank) {
@@ -22,18 +28,30 @@ export function RankProgress({ currentRank, currentPoints }: RankProgressProps) 
     )
   }
 
-  const currentThreshold = thresholds[currentRank]
+  // 안전장치 2: thresholds 확인
+  const currentThreshold = thresholds[safeRank]
   const nextThreshold = thresholds[nextRank]
-  const pointsInCurrentRank = currentPoints - currentThreshold.min
+
+  if (!currentThreshold || !nextThreshold) {
+    return (
+      <div className="text-center">
+        <p className="text-sm text-gray-500">
+          랭크 정보를 불러오는 중...
+        </p>
+      </div>
+    )
+  }
+
+  const pointsInCurrentRank = safePoints - currentThreshold.min
   const pointsNeeded = nextThreshold.min - currentThreshold.min
-  const percentage = Math.min((pointsInCurrentRank / pointsNeeded) * 100, 100)
-  const pointsRemaining = getPointsToNextRank(currentPoints, currentRank)
+  const percentage = Math.min(Math.max((pointsInCurrentRank / pointsNeeded) * 100, 0), 100)
+  const pointsRemaining = getPointsToNextRank(safePoints, safeRank)
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium text-gray-700">
-          {RANK_INFO[currentRank].label}
+          {RANK_INFO[safeRank].label}
         </span>
         <span className="text-gray-500">
           {pointsRemaining.toLocaleString()}점 남음
@@ -49,7 +67,7 @@ export function RankProgress({ currentRank, currentPoints }: RankProgressProps) 
       </div>
       
       <div className="flex items-center justify-between text-xs text-gray-500">
-        <span>{currentPoints.toLocaleString()}점</span>
+        <span>{safePoints.toLocaleString()}점</span>
         <span className="text-cobalt-600 font-medium">
           {RANK_INFO[nextRank].label} →
         </span>
