@@ -78,12 +78,4 @@ export const ASSESSMENT_METHOD_LABELS: Record<AssessmentMethod, string> = {
   peer_review: '동료 평가',
   self_assessment: '자기 평가',
 }
-```
 
-### Commit 메시지:
-```
-feat: Add design wizard types
-
-- Add CourseDesignData interface
-- Add education target, difficulty, method types
-- Add label mappings for UI
