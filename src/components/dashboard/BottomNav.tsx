@@ -13,22 +13,22 @@ import {
 
 const navigation = [
   { name: '홈', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'AI 설계', href: '/dashboard/design', icon: Wand2 },
-  { name: '라이브러리', href: '/dashboard/library', icon: Library },
-  { name: '공유', href: '/dashboard/contribute', icon: Upload },
-  { name: '내 정보', href: '/dashboard/profile', icon: User },
+  { name: 'AI 설계', href: '/design', icon: Wand2 },
+  { name: '라이브러리', href: '/library', icon: Library },
+  { name: '공유', href: '/contribute', icon: Upload },
+  { name: '내 정보', href: '/profile', icon: User },
 ]
 
 export function BottomNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
       <div className="flex items-center justify-around px-2 py-2">
         {navigation.map((item) => {
           const isActive = pathname === item.href
           const Icon = item.icon
-
+          
           return (
             <Link
               key={item.name}
