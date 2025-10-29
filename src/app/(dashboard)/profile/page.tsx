@@ -25,11 +25,11 @@ export default async function ProfilePage() {
       <div className="bg-white rounded-2xl p-6 border border-gray-200">
         <div className="flex items-center gap-4 mb-6">
           <div className="h-20 w-20 rounded-full bg-cobalt-100 flex items-center justify-center">
-            <span className="text-3xl">{profile?.name?.[0] || user.email[0].toUpperCase()}</span>
+            <span className="text-3xl">{profile?.name?.[0] || user.email?.[0]?.toUpperCase() || 'U'}</span>
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900">{profile?.name || '이름 없음'}</h2>
-            <p className="text-gray-600">{user.email}</p>
+            <p className="text-gray-600">{user.email || '이메일 없음'}</p>
             <div className="mt-2">
               <RankBadge rank={profile?.rank as InstructorRank} />
             </div>
