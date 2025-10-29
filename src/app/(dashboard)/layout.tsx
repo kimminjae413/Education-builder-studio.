@@ -23,7 +23,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 헤더 - ✅ user와 profile 모두 전달 */}
+      {/* 헤더 - ✅ user와 profile 둘 다 전달해야 함! */}
       <DashboardHeader user={user} profile={profile} />
 
       <div className="container mx-auto px-4 py-4 lg:py-8">
