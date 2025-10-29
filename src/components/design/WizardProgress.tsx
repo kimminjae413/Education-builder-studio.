@@ -97,12 +97,4 @@ export function WizardProgress({ currentStep, totalSteps }: WizardProgressProps)
     </div>
   )
 }
-```
 
-### Commit 메시지:
-```
-feat: Add wizard progress component
-
-- Add step progress indicator
-- Responsive design (mobile/desktop)
-- Visual feedback for current/completed steps
