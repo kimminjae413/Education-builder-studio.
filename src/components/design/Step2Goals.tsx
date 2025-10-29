@@ -135,13 +135,3 @@ export function Step2Goals({ data, onChange }: Step2GoalsProps) {
     </div>
   )
 }
-```
-
-### Commit 메시지:
-```
-feat: Add Step 2 - Learning Goals component
-
-- Add learning objectives textarea
-- Add difficulty level selection
-- Add prerequisites input (optional)
-- Add visual feedback with icons
