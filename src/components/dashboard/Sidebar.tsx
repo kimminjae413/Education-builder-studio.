@@ -1,20 +1,34 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { RankBadge } from '@/components/rank/RankBadge'
-import { User } from '@supabase/supabase-js'
 import { Menu, X, LogOut, User as UserIcon } from 'lucide-react'
 
-interface DashboardHeaderProps {
-  user: User
-  profile: any
-}
-
-export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
+export function DashboardHeader() {
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(null)
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+        setProfile(profile)
+      }
+    }
+    loadUser()
+  }, [])
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -22,6 +36,8 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
     router.push('/login')
     router.refresh()
   }
+
+  if (!user) return null
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
@@ -86,7 +102,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
               <div className="flex items-center gap-1">
                 {/* 프로필 버튼 */}
                 <button
-                  onClick={() => router.push('/dashboard/profile')}
+                  onClick={() => router.push('/profile')}
                   className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
                   title="프로필"
                 >
