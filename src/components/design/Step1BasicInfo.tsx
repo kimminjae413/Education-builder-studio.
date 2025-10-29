@@ -103,13 +103,3 @@ export function Step1BasicInfo({ data, onChange }: Step1BasicInfoProps) {
     </div>
   )
 }
-```
-
-### Commit 메시지:
-```
-feat: Add Step 1 - Basic Info component
-
-- Add education target selection
-- Add subject/topic input
-- Add total hours input
-- Add input summary display
