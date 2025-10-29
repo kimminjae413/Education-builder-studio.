@@ -11,15 +11,19 @@ import {
   User
 } from 'lucide-react'
 
+interface BottomNavProps {
+  profile: any
+}
+
 const navigation = [
   { name: '홈', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'AI 설계', href: '/design', icon: Wand2 },
-  { name: '라이브러리', href: '/library', icon: Library },
-  { name: '공유', href: '/contribute', icon: Upload },
-  { name: '내 정보', href: '/profile', icon: User },
+  { name: 'AI 설계', href: '/dashboard/design', icon: Wand2 },
+  { name: '라이브러리', href: '/dashboard/library', icon: Library },
+  { name: '공유', href: '/dashboard/contribute', icon: Upload },
+  { name: '내 정보', href: '/dashboard/profile', icon: User },
 ]
 
-export function BottomNav() {
+export function BottomNav({ profile }: BottomNavProps) {
   const pathname = usePathname()
 
   return (
