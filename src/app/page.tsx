@@ -15,23 +15,11 @@ export default function HomePage() {
               <p className="text-xs text-gray-600">지혜를 설계하고, 경험을 공유하며</p>
             </div>
           </div>
-          
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="/about" className="text-sm text-gray-600 hover:text-cobalt-600">
-              플랫폼 소개
-            </Link>
-            <Link href="/features" className="text-sm text-gray-600 hover:text-cobalt-600">
-              주요 기능
-            </Link>
-            <Link href="/pricing" className="text-sm text-gray-600 hover:text-cobalt-600">
-              요금제
-            </Link>
-          </nav>
 
           <div className="flex items-center gap-2">
             <Link
               href="/login"
-              className="px-4 py-2 text-sm text-gray-700 hover:text-cobalt-600"
+              className="px-4 py-2 text-sm text-gray-700 hover:text-cobalt-600 transition-colors"
             >
               로그인
             </Link>
@@ -73,12 +61,6 @@ export default function HomePage() {
             >
               무료로 시작하기 →
             </Link>
-            <Link
-              href="/demo"
-              className="px-8 py-4 bg-white border-2 border-cobalt-200 text-cobalt-600 text-lg font-medium rounded-lg hover:border-cobalt-500 transition-colors"
-            >
-              데모 보기
-            </Link>
           </div>
 
           <p className="text-sm text-gray-500">
@@ -89,6 +71,15 @@ export default function HomePage() {
 
       {/* Features Grid */}
       <section className="container mx-auto px-4 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            주요 기능
+          </h2>
+          <p className="text-gray-600">
+            강사님들의 교육 설계를 위한 완벽한 도구
+          </p>
+        </div>
+
         <div className="grid md:grid-cols-3 gap-8">
           {/* Feature 1 */}
           <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-cobalt-300 hover:shadow-cobalt-md transition-all">
@@ -151,21 +142,39 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* CTA Section */}
+      <section className="container mx-auto px-4 py-16">
+        <div className="bg-gradient-to-r from-cobalt-500 to-cobalt-600 rounded-3xl p-12 text-center text-white">
+          <h2 className="text-3xl font-bold mb-4">
+            지금 바로 시작하세요
+          </h2>
+          <p className="text-cobalt-100 mb-8 max-w-2xl mx-auto">
+            Education Builder Studio와 함께<br />
+            더 나은 교육 콘텐츠를 만들어보세요
+          </p>
+          <Link
+            href="/signup"
+            className="inline-block px-8 py-4 bg-white text-cobalt-600 text-lg font-medium rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            무료 회원가입 →
+          </Link>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-gray-50 border-t py-12">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-cobalt-500 flex items-center justify-center">
                 <span className="text-white font-bold text-sm">EBS</span>
               </div>
-              <span className="text-gray-600">© 2025 에듀이노랩. All rights reserved.</span>
+              <span className="font-semibold text-gray-900">Education Builder Studio</span>
             </div>
             
-            <div className="flex gap-6 text-sm text-gray-600">
-              <Link href="/terms" className="hover:text-cobalt-600">이용약관</Link>
-              <Link href="/privacy" className="hover:text-cobalt-600">개인정보처리방침</Link>
-              <Link href="/contact" className="hover:text-cobalt-600">문의하기</Link>
+            <div className="text-sm text-gray-600 space-y-1">
+              <p>© 2025 에듀이노랩 (송인상 대표). All rights reserved.</p>
+              <p>K-Startup 2025 혁신창업리그 일반리그 지원 프로젝트</p>
             </div>
           </div>
         </div>
