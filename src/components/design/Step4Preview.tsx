@@ -223,13 +223,3 @@ export function Step4Preview({ data, onSave, isSaving = false }: Step4PreviewPro
     </div>
   )
 }
-```
-
-### Commit 메시지:
-```
-feat: Add Step 4 - Preview component
-
-- Add comprehensive course preview
-- Add section-by-section information display
-- Add save button with loading state
-- Add AI generation notice
