@@ -48,7 +48,15 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
 
       alert('프로필이 업데이트되었습니다! ✅')
       setIsEditing(false)
+      
+      // 강제 새로고침
       router.refresh()
+      
+      // 추가: 페이지 완전 리로드 (캐시 무시)
+      setTimeout(() => {
+        window.location.reload()
+      }, 500)
+      
     } catch (error) {
       console.error('Error updating profile:', error)
       alert('프로필 업데이트에 실패했습니다.')
