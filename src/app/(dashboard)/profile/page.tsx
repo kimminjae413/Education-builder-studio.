@@ -26,6 +26,7 @@ export default async function ProfilePage() {
       id: user.id,
       email: user.email,
       name: null,
+      phone: null,
       bio: null,
       rank: 'newcomer',
       rank_points: 0,
@@ -98,7 +99,7 @@ export default async function ProfilePage() {
               </div>
 
               {/* 자기소개 */}
-              <div className="space-y-2">
+              <div className="space-y-2 pb-4 border-b">
                 <label className="block text-sm font-medium text-gray-700">
                   자기소개
                 </label>
@@ -107,8 +108,26 @@ export default async function ProfilePage() {
                 </p>
               </div>
 
+              {/* 연락처 정보 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pb-4 border-b">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    이메일
+                  </label>
+                  <p className="text-gray-900 text-sm truncate">{user.email}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    핸드폰 번호
+                  </label>
+                  <p className="text-gray-900 text-sm">
+                    {safeProfile.phone || '등록된 번호가 없습니다'}
+                  </p>
+                </div>
+              </div>
+
               {/* 가입 정보 */}
-              <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t">
+              <div className="grid grid-cols-2 gap-4 mt-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     가입일
@@ -142,6 +161,7 @@ export default async function ProfilePage() {
               profile={{
                 id: safeProfile.id,
                 name: safeProfile.name,
+                phone: safeProfile.phone,
                 bio: safeProfile.bio,
               }} 
             />
