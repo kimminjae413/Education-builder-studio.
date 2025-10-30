@@ -77,14 +77,37 @@ export async function POST(request: NextRequest) {
       targetCategory = '초등 고학년'
     }
 
+    // ===== 🔥 핵심 수정: 한글 파일명 처리 =====
+    const timestamp = Date.now()
+    
+    // 파일명에서 확장자 분리
+    const nameWithoutExt = filename.replace(/\.[^/.]+$/, '')
+    const extension = fileExtension || 'pdf'
+    
+    // 한글 및 특수문자를 안전하게 처리
+    const safeBaseName = nameWithoutExt
+      .replace(/[^\w\s-]/g, '')  // 영문/숫자/_/-/공백만 남김
+      .replace(/\s+/g, '_')      // 공백을 언더스코어로
+      .trim()
+    
+    // 한글이 남아있거나 빈 문자열이면 타임스탬프 사용
+    const finalBaseName = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(safeBaseName) || safeBaseName.length === 0
+      ? `material_${timestamp}`
+      : `${timestamp}_${safeBaseName}`
+    
+    const storageFileName = `seed/${finalBaseName}.${extension}`
+    // ===== 수정 끝 =====
+    
+    console.log('Original filename:', filename)
+    console.log('Storage filename:', storageFileName)
+    
     // 파일을 Supabase Storage에 업로드
     const fileBuffer = await file.arrayBuffer()
-    const fileName = `seed/${Date.now()}_${filename}`
     
     const { data: uploadData, error: uploadError } = await supabase
       .storage
       .from('teaching-materials')
-      .upload(fileName, fileBuffer, {
+      .upload(storageFileName, fileBuffer, {
         contentType: file.type,
         upsert: false
       })
@@ -92,7 +115,7 @@ export async function POST(request: NextRequest) {
     if (uploadError) {
       console.error('Upload error:', uploadError)
       return NextResponse.json(
-        { error: 'File upload failed' },
+        { error: `File upload failed: ${uploadError.message}` },
         { status: 500 }
       )
     }
@@ -101,7 +124,7 @@ export async function POST(request: NextRequest) {
     const { data: { publicUrl } } = supabase
       .storage
       .from('teaching-materials')
-      .getPublicUrl(fileName)
+      .getPublicUrl(storageFileName)
 
     // 파일 내용 텍스트 추출 (간단한 버전 - PDF는 추후 개선)
     let contentText = ''
@@ -167,7 +190,7 @@ export async function POST(request: NextRequest) {
       .from('teaching_materials')
       .insert({
         user_id: user.id,
-        filename: filename,
+        filename: filename, // 원본 한글 파일명 유지 ⭐
         file_url: publicUrl,
         file_size: file.size,
         file_type: file.type,
@@ -194,9 +217,9 @@ export async function POST(request: NextRequest) {
     if (insertError) {
       console.error('Insert error:', insertError)
       // 업로드된 파일 삭제
-      await supabase.storage.from('teaching-materials').remove([fileName])
+      await supabase.storage.from('teaching-materials').remove([storageFileName])
       return NextResponse.json(
-        { error: 'Failed to save material data' },
+        { error: `Failed to save material data: ${insertError.message}` },
         { status: 500 }
       )
     }
@@ -205,6 +228,7 @@ export async function POST(request: NextRequest) {
       success: true,
       materialId: material.id,
       filename: filename,
+      storageFileName: storageFileName,
       categories: aiCategories
     })
 
