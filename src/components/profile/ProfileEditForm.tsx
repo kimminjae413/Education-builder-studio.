@@ -10,6 +10,7 @@ interface ProfileEditFormProps {
   profile: {
     id: string
     name: string | null
+    phone: string | null
     bio: string | null
   }
 }
@@ -20,6 +21,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: profile.name || '',
+    phone: profile.phone || '',
     bio: profile.bio || '',
   })
 
@@ -31,6 +33,15 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
       return
     }
 
+    // 핸드폰 번호 유효성 검사 (선택 사항)
+    if (formData.phone.trim()) {
+      const phoneRegex = /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/
+      if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
+        alert('올바른 핸드폰 번호 형식을 입력해주세요 (예: 010-1234-5678)')
+        return
+      }
+    }
+
     setLoading(true)
     const supabase = createClient()
 
@@ -39,6 +50,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
         .from('profiles')
         .update({
           name: formData.name.trim(),
+          phone: formData.phone.trim() || null,
           bio: formData.bio.trim() || null,
           updated_at: new Date().toISOString(),
         })
@@ -68,6 +80,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
   const handleCancel = () => {
     setFormData({
       name: profile.name || '',
+      phone: profile.phone || '',
       bio: profile.bio || '',
     })
     setIsEditing(false)
@@ -122,6 +135,24 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
             maxLength={50}
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cobalt-500 focus:border-transparent transition-all"
           />
+        </div>
+
+        {/* 핸드폰 번호 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            핸드폰 번호
+          </label>
+          <input
+            type="tel"
+            value={formData.phone}
+            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            placeholder="010-1234-5678"
+            maxLength={13}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cobalt-500 focus:border-transparent transition-all"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            하이픈(-) 포함 또는 제외하고 입력 가능합니다
+          </p>
         </div>
 
         {/* 자기소개 */}
