@@ -51,12 +51,22 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
     )
   }
 
-  // activities 파싱 (JSON 문자열인 경우)
-  if (course.activities && typeof course.activities === 'string') {
-    try {
-      course.activities = JSON.parse(course.activities)
-    } catch (e) {
-      console.error('Failed to parse activities:', e)
+  // activities 파싱 및 정규화
+  if (course.activities) {
+    // JSON 문자열이면 파싱
+    if (typeof course.activities === 'string') {
+      try {
+        course.activities = JSON.parse(course.activities)
+      } catch (e) {
+        console.error('Failed to parse activities:', e)
+      }
+    }
+    
+    // activities가 객체이고 activities 속성이 있으면 그것을 사용
+    if (course.activities && typeof course.activities === 'object' && !Array.isArray(course.activities)) {
+      if (course.activities.activities && Array.isArray(course.activities.activities)) {
+        course.activities = course.activities.activities
+      }
     }
   }
 
