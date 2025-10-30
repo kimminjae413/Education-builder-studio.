@@ -12,7 +12,7 @@ interface CourseDetailPageProps {
 
 export default async function CourseDetailPage({ params }: CourseDetailPageProps) {
   const { id } = await params
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // 현재 사용자 확인
   const { data: { user } } = await supabase.auth.getUser()
