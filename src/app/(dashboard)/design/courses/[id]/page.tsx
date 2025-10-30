@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ArrowLeft, Clock, Users, Calendar, Download, Share2, Bookmark, Eye } from 'lucide-react'
 import Link from 'next/link'
+import { RecommendedMaterials } from '@/components/design/RecommendedMaterials'
 
 interface CourseDetailPageProps {
   params: Promise<{
@@ -413,6 +414,11 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
               생성 시간: {course.generation_time_ms ? `${(course.generation_time_ms / 1000).toFixed(2)}초` : '알 수 없음'}
             </div>
           </div>
+        </div>
+
+        {/* 추천 자료 섹션 */}
+        <div className="mt-8">
+          <RecommendedMaterials courseId={course.id} />
         </div>
 
         {/* 하단 액션 버튼 */}
