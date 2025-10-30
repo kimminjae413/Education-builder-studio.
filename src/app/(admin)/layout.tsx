@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { AdminSidebar } from '@/components/admin/AdminSidebar'  // ← 추가!
 import Link from 'next/link'
 
 export default async function AdminLayout({
@@ -49,35 +50,8 @@ export default async function AdminLayout({
 
       <div className="container mx-auto p-4 lg:p-8">
         <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
-          {/* 관리자 사이드바 */}
-          <aside className="hidden lg:block">
-            <nav className="space-y-1 bg-white rounded-lg border p-2">
-              <Link
-                href="/admin"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-100"
-              >
-                📊 대시보드
-              </Link>
-              <Link
-                href="/admin/users"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-100"
-              >
-                👥 사용자 관리
-              </Link>
-              <Link
-                href="/admin/contents"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-100"
-              >
-                📝 콘텐츠 승인
-              </Link>
-              <Link
-                href="/admin/rewards"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-100"
-              >
-                🏆 리워드 관리
-              </Link>
-            </nav>
-          </aside>
+          {/* 관리자 사이드바 - AdminSidebar 컴포넌트 사용 */}
+          <AdminSidebar />
 
           {/* 메인 콘텐츠 */}
           <main>{children}</main>
