@@ -1,15 +1,16 @@
-// src/app/api/admin/seed-data/upload/route.ts
+// src/app/api/admin/seed-data/upload/route.ts (개선 버전)
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenerativeAI, GoogleAIFileManager } from '@google/generative-ai'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY || '')
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    // 관리자 권한 확인
+    // 관리자 권한 확인 (동일)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -49,11 +50,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 파일명에서 메타데이터 추출 시도
     const filename = file.name
     const fileExtension = filename.split('.').pop()?.toLowerCase()
     
-    // 학년 추출 (파일명 또는 경로에서)
+    // 학년 추출 (기존 로직 유지)
     let targetCategory = '초등'
     if (filename.includes('EL001') || filename.includes('유치')) {
       targetCategory = '유치부'
@@ -77,31 +77,26 @@ export async function POST(request: NextRequest) {
       targetCategory = '초등 고학년'
     }
 
-    // ===== 🔥 핵심 수정: 한글 파일명 처리 =====
+    // ===== 🔥 핵심 개선: 한글 파일명 처리 =====
     const timestamp = Date.now()
-    
-    // 파일명에서 확장자 분리
     const nameWithoutExt = filename.replace(/\.[^/.]+$/, '')
     const extension = fileExtension || 'pdf'
     
-    // 한글 및 특수문자를 안전하게 처리
     const safeBaseName = nameWithoutExt
-      .replace(/[^\w\s-]/g, '')  // 영문/숫자/_/-/공백만 남김
-      .replace(/\s+/g, '_')      // 공백을 언더스코어로
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '_')
       .trim()
     
-    // 한글이 남아있거나 빈 문자열이면 타임스탬프 사용
     const finalBaseName = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(safeBaseName) || safeBaseName.length === 0
       ? `material_${timestamp}`
       : `${timestamp}_${safeBaseName}`
     
     const storageFileName = `seed/${finalBaseName}.${extension}`
-    // ===== 수정 끝 =====
     
     console.log('Original filename:', filename)
     console.log('Storage filename:', storageFileName)
     
-    // 파일을 Supabase Storage에 업로드
+    // Supabase Storage에 업로드
     const fileBuffer = await file.arrayBuffer()
     
     const { data: uploadData, error: uploadError } = await supabase
@@ -120,91 +115,115 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 파일 URL 생성
+    // Public URL 생성
     const { data: { publicUrl } } = supabase
       .storage
       .from('teaching-materials')
       .getPublicUrl(storageFileName)
 
-    // 파일 내용 텍스트 추출 (간단한 버전 - PDF는 추후 개선)
-    let contentText = ''
-    try {
-      if (fileExtension === 'txt' || fileExtension === 'md') {
-        contentText = await file.text()
-      } else {
-        // PDF, Office 파일은 파일명과 메타데이터만 사용
-        contentText = `파일명: ${filename}\n대상: ${targetCategory}`
-      }
-    } catch (e) {
-      console.log('Content extraction failed, using filename only')
-      contentText = filename
-    }
-
-    // AI로 자동 분류
+    // ===== 🔥 핵심 개선: Gemini File API로 PDF/이미지 분석 =====
     let aiCategories = {
       subject_category: '',
       tool_categories: [] as string[],
       method_categories: [] as string[],
       description: '',
       learning_objectives: '',
-      difficulty: 'medium' as 'low' | 'medium' | 'high'
+      difficulty: 'medium' as 'low' | 'medium' | 'high',
+      contentSummary: '' // 내용 요약 추가
     }
 
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+      // 1. 파일을 Gemini에 임시 업로드 (분석용)
+      const tempFilePath = `/tmp/${timestamp}_${filename}`
+      const fs = await import('fs/promises')
+      await fs.writeFile(tempFilePath, Buffer.from(fileBuffer))
       
-      const prompt = `다음 교육 자료를 분석하여 JSON 형식으로 분류해주세요:
+      const uploadResult = await fileManager.uploadFile(tempFilePath, {
+        mimeType: file.type,
+        displayName: filename,
+      })
+      
+      console.log(`Uploaded to Gemini: ${uploadResult.file.uri}`)
+
+      // 2. Gemini로 파일 내용 분석 (텍스트, 도표, 그림 모두 포함!)
+      const model = genAI.getGenerativeModel({ 
+        model: 'gemini-2.0-flash-exp'  // 또는 'gemini-1.5-pro'
+      })
+      
+      const prompt = `다음 교육 자료를 **깊이 있게 분석**하여 JSON 형식으로 분류해주세요.
+파일에 포함된 **텍스트, 도표, 그림, 차트, 코드 예제** 등 모든 내용을 꼼꼼히 살펴보세요.
 
 파일명: ${filename}
-대상: ${targetCategory}
-내용 미리보기: ${contentText.substring(0, 500)}
+대상 학년: ${targetCategory}
 
 다음 형식으로 응답해주세요:
 {
   "subject_category": "주제 (예: 코딩, 로봇, 과학, 수학, 언어, 예술 등)",
-  "tool_categories": ["사용된 도구/교구 배열 (예: 아두이노, 레고, 마이크로비트 등)"],
+  "tool_categories": ["사용된 도구/교구 배열 (예: 아두이노, 레고, 마이크로비트, Scratch 등)"],
   "method_categories": ["교수방법 배열 (예: 프로젝트학습, 협동학습, 문제해결학습 등)"],
   "description": "자료에 대한 간단한 설명 (100자 이내)",
   "learning_objectives": "주요 학습 목표 (100자 이내)",
-  "difficulty": "난이도 (low/medium/high 중 하나)"
+  "difficulty": "난이도 (low/medium/high 중 하나)",
+  "contentSummary": "파일 내용의 핵심 요약 (200자 이내, 도표/그림 포함)"
 }
 
-**중요: 반드시 위 JSON 형식으로만 응답하고, 다른 설명은 추가하지 마세요.**`
+**중요:**
+- 파일 내의 도표, 그림, 차트를 분석하여 구체적인 교구나 활동을 파악하세요.
+- 슬라이드 제목, 본문, 이미지 설명 등을 종합하여 정확한 주제를 도출하세요.
+- 반드시 위 JSON 형식으로만 응답하고, 다른 설명은 추가하지 마세요.`
 
-      const result = await model.generateContent(prompt)
+      const result = await model.generateContent([
+        {
+          fileData: {
+            mimeType: uploadResult.file.mimeType,
+            fileUri: uploadResult.file.uri
+          }
+        },
+        { text: prompt }
+      ])
+      
       const responseText = result.response.text()
+      console.log('Gemini analysis:', responseText)
       
       // JSON 추출
       const jsonMatch = responseText.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
-        aiCategories = JSON.parse(jsonMatch[0])
+        aiCategories = { ...aiCategories, ...JSON.parse(jsonMatch[0]) }
       }
+
+      // 3. 임시 파일 삭제
+      await fs.unlink(tempFilePath)
+      
+      // 4. Gemini 임시 파일도 삭제 (선택)
+      // await fileManager.deleteFile(uploadResult.file.name)
+
     } catch (aiError) {
       console.error('AI categorization failed:', aiError)
       // AI 실패 시 기본값 사용
       aiCategories.description = `${filename} 자료`
+      aiCategories.contentSummary = '자동 분석 실패 - 수동 확인 필요'
     }
 
-    // teaching_materials 테이블에 저장
+    // DB 저장
     const { data: material, error: insertError } = await supabase
       .from('teaching_materials')
       .insert({
         user_id: user.id,
-        filename: filename, // 원본 한글 파일명 유지 ⭐
+        filename: filename,
         file_url: publicUrl,
         file_size: file.size,
         file_type: file.type,
-        title: filename.replace(/\.[^/.]+$/, ''), // 확장자 제거
+        title: filename.replace(/\.[^/.]+$/, ''),
         description: aiCategories.description,
-        content_text: contentText.substring(0, 10000), // 최대 10KB
+        content_text: aiCategories.contentSummary, // 요약 저장
         target_category: targetCategory,
         subject_category: aiCategories.subject_category || '기타',
         tool_categories: aiCategories.tool_categories || [],
         method_categories: aiCategories.method_categories || [],
         difficulty: aiCategories.difficulty || 'medium',
         learning_objectives: aiCategories.learning_objectives,
-        status: 'approved', // 시드 데이터는 자동 승인
-        is_seed_data: true, // 시드 데이터 표시
+        status: 'approved',
+        is_seed_data: true,
         usage_count: 0,
         download_count: 0,
         bookmark_count: 0,
@@ -216,7 +235,6 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       console.error('Insert error:', insertError)
-      // 업로드된 파일 삭제
       await supabase.storage.from('teaching-materials').remove([storageFileName])
       return NextResponse.json(
         { error: `Failed to save material data: ${insertError.message}` },
