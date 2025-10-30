@@ -1,105 +1,170 @@
 // src/components/design/Step1BasicInfo.tsx
 'use client'
 
-import { CourseDesignData, EDUCATION_TARGET_LABELS, EducationTarget } from '@/lib/design/types'
+import { ArrowRight } from 'lucide-react'
 
-interface Step1BasicInfoProps {
-  data: CourseDesignData
-  onChange: (updates: Partial<CourseDesignData>) => void
+interface Step1Props {
+  data: any
+  updateData: (data: any) => void
+  onNext: () => void
 }
 
-export function Step1BasicInfo({ data, onChange }: Step1BasicInfoProps) {
+export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
+  const handleNext = () => {
+    if (!data.targetAudience) {
+      alert('대상을 선택해주세요')
+      return
+    }
+    if (!data.subject) {
+      alert('주제를 입력해주세요')
+      return
+    }
+    if (data.tools.length === 0) {
+      alert('최소 1개 이상의 도구를 선택해주세요')
+      return
+    }
+    onNext()
+  }
+
+  const toolOptions = [
+    '아두이노', '스크래치', 'mBlock', '엔트리',
+    '마이크로비트', '라즈베리파이', '3D프린터',
+    '레고 마인드스톰', 'Python', 'JavaScript',
+    'Unity', 'Blender', 'Tinkercad', '기타'
+  ]
+
+  const toggleTool = (tool: string) => {
+    if (data.tools.includes(tool)) {
+      updateData({ tools: data.tools.filter((t: string) => t !== tool) })
+    } else {
+      updateData({ tools: [...data.tools, tool] })
+    }
+  }
+
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="max-w-3xl mx-auto space-y-6">
+      <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          기본 정보를 입력해주세요
+          📋 기본 정보
         </h2>
         <p className="text-gray-600">
-          교육 과정의 기본적인 정보를 설정합니다
+          어떤 수업을 만들고 싶으신가요?
         </p>
       </div>
 
-      {/* 교육 대상 */}
+      {/* 대상 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          교육 대상 <span className="text-red-500">*</span>
+          대상 <span className="text-red-500">*</span>
         </label>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {(Object.keys(EDUCATION_TARGET_LABELS) as EducationTarget[]).map((target) => (
-            <button
-              key={target}
-              type="button"
-              onClick={() => onChange({ target })}
-              className={`
-                p-4 rounded-lg border-2 text-left transition-all
-                ${
-                  data.target === target
-                    ? 'border-cobalt-500 bg-cobalt-50 text-cobalt-700'
-                    : 'border-gray-200 hover:border-cobalt-200 bg-white'
-                }
-              `}
-            >
-              <div className="font-medium">
-                {EDUCATION_TARGET_LABELS[target]}
-              </div>
-            </button>
-          ))}
-        </div>
+        <select
+          value={data.targetAudience}
+          onChange={(e) => updateData({ targetAudience: e.target.value })}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cobalt-500"
+        >
+          <option value="">선택해주세요</option>
+          <option value="유아">유아 (5~7세)</option>
+          <option value="초등 저학년">초등 저학년 (1~3학년)</option>
+          <option value="초등 고학년">초등 고학년 (4~6학년)</option>
+          <option value="중학생">중학생</option>
+          <option value="고등학생">고등학생</option>
+          <option value="대학생">대학생</option>
+          <option value="성인">성인</option>
+        </select>
       </div>
 
-      {/* 주제/과목 */}
+      {/* 주제 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          주제 또는 과목명 <span className="text-red-500">*</span>
+          주제 <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           value={data.subject}
-          onChange={(e) => onChange({ subject: e.target.value })}
-          placeholder="예: 파이썬 프로그래밍 기초, 3D 프린팅 입문"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cobalt-500 focus:border-transparent"
+          onChange={(e) => updateData({ subject: e.target.value })}
+          placeholder="예: 아두이노를 활용한 센서 프로젝트"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cobalt-500"
         />
-        <p className="mt-1 text-sm text-gray-500">
-          구체적인 주제명을 입력하면 더 정확한 커리큘럼을 생성할 수 있습니다
-        </p>
       </div>
 
-      {/* 총 교육 기간 */}
+      {/* 사용 도구 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          총 교육 시간 <span className="text-red-500">*</span>
+          사용 도구/교구 <span className="text-red-500">*</span>
         </label>
-        <div className="flex items-center gap-3">
-          <input
-            type="number"
-            min="1"
-            max="1000"
-            value={data.totalHours || ''}
-            onChange={(e) => onChange({ totalHours: parseInt(e.target.value) || 0 })}
-            placeholder="24"
-            className="w-32 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cobalt-500 focus:border-transparent"
-          />
-          <span className="text-gray-700 font-medium">시간</span>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          {toolOptions.map((tool) => (
+            <button
+              key={tool}
+              type="button"
+              onClick={() => toggleTool(tool)}
+              className={`
+                px-4 py-2 rounded-lg text-sm font-medium transition-all
+                ${data.tools.includes(tool)
+                  ? 'bg-cobalt-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }
+              `}
+            >
+              {tool}
+            </button>
+          ))}
         </div>
-        <p className="mt-1 text-sm text-gray-500">
-          전체 교육 과정에 필요한 총 시간을 입력하세요 (1~1000시간)
-        </p>
+        {data.tools.length > 0 && (
+          <p className="mt-2 text-sm text-gray-600">
+            {data.tools.length}개 선택됨
+          </p>
+        )}
       </div>
 
-      {/* 입력 현황 요약 */}
-      {data.target && data.subject && data.totalHours > 0 && (
-        <div className="mt-6 p-4 bg-cobalt-50 border border-cobalt-200 rounded-lg">
-          <h3 className="text-sm font-medium text-cobalt-900 mb-2">
-            입력 정보 확인
-          </h3>
-          <ul className="text-sm text-cobalt-700 space-y-1">
-            <li>• 대상: {EDUCATION_TARGET_LABELS[data.target]}</li>
-            <li>• 주제: {data.subject}</li>
-            <li>• 시간: {data.totalHours}시간</li>
-          </ul>
+      {/* 수업 시간 */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            수업 시간 (분)
+          </label>
+          <select
+            value={data.duration}
+            onChange={(e) => updateData({ duration: parseInt(e.target.value) })}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cobalt-500"
+          >
+            <option value={40}>40분 (1교시)</option>
+            <option value={45}>45분</option>
+            <option value={60}>60분</option>
+            <option value={80}>80분 (2교시)</option>
+            <option value={90}>90분</option>
+            <option value={120}>120분 (3교시)</option>
+          </select>
         </div>
-      )}
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            차시 수
+          </label>
+          <select
+            value={data.sessionCount}
+            onChange={(e) => updateData({ sessionCount: parseInt(e.target.value) })}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cobalt-500"
+          >
+            {[1, 2, 3, 4, 5, 6, 8, 10, 12, 16].map((num) => (
+              <option key={num} value={num}>
+                {num}차시
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* 다음 버튼 */}
+      <div className="flex justify-end pt-4">
+        <button
+          onClick={handleNext}
+          className="flex items-center gap-2 px-6 py-3 bg-cobalt-600 text-white font-medium rounded-lg hover:bg-cobalt-700 transition-colors"
+        >
+          다음 단계
+          <ArrowRight className="h-5 w-5" />
+        </button>
+      </div>
     </div>
   )
 }
