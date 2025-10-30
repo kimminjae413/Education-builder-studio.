@@ -5,12 +5,13 @@ import { ArrowLeft, Clock, Users, Calendar, Download, Share2, Bookmark, Eye } fr
 import Link from 'next/link'
 
 interface CourseDetailPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function CourseDetailPage({ params }: CourseDetailPageProps) {
+  const { id } = await params
   const supabase = createClient()
 
   // 현재 사용자 확인
@@ -28,7 +29,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
         rank
       )
     `)
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (error || !course) {
@@ -54,7 +55,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
     await supabase
       .from('courses')
       .update({ views_count: (course.views_count || 0) + 1 })
-      .eq('id', params.id)
+      .eq('id', id)
   }
 
   return (
