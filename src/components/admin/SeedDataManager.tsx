@@ -2,19 +2,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
-import { 
-  CheckCircle2, 
-  XCircle, 
-  Upload, 
-  Trash2, 
-  AlertTriangle,
-  FileText 
-} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface UploadResult {
@@ -191,14 +178,16 @@ export function SeedDataManager() {
   return (
     <div className="space-y-8">
       {/* 업로드 섹션 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
             새 시드 데이터 업로드
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+          </h2>
+        </div>
+        <div className="p-6 space-y-6">
           {/* 파일 선택 */}
           <div>
             <input
@@ -213,7 +202,7 @@ export function SeedDataManager() {
                 file:text-sm file:font-semibold
                 file:bg-blue-50 file:text-blue-700
                 hover:file:bg-blue-100
-                disabled:opacity-50"
+                disabled:opacity-50 disabled:cursor-not-allowed"
             />
             {files.length > 0 && (
               <p className="mt-2 text-sm text-gray-600">
@@ -223,19 +212,29 @@ export function SeedDataManager() {
           </div>
 
           {/* 업로드 버튼 */}
-          <Button
+          <button
             onClick={handleUpload}
             disabled={files.length === 0 || uploading}
-            className="w-full"
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 
+                     text-white font-medium py-3 px-4 rounded-lg
+                     transition-colors disabled:cursor-not-allowed
+                     flex items-center justify-center gap-2"
           >
-            <Upload className="mr-2 h-4 w-4" />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
             {uploading ? '업로드 중...' : `${files.length}개 파일 업로드`}
-          </Button>
+          </button>
 
           {/* 진행률 */}
           {uploading && (
             <div className="space-y-2">
-              <Progress value={progress} />
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div 
+                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
               <p className="text-sm text-gray-600 text-center">
                 {Math.round(progress)}% 완료 ({uploadResults.length} / {files.length})
               </p>
@@ -244,48 +243,54 @@ export function SeedDataManager() {
 
           {/* 결과 요약 */}
           {uploadResults.length > 0 && !uploading && (
-            <Alert>
-              <AlertDescription>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
-                    <span className="font-semibold">{successCount}개 성공</span>
-                  </div>
-                  {failedCount > 0 && (
-                    <div className="flex items-center gap-2">
-                      <XCircle className="h-5 w-5 text-red-600" />
-                      <span className="font-semibold">{failedCount}개 실패</span>
-                    </div>
-                  )}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="font-semibold">{successCount}개 성공</span>
                 </div>
-              </AlertDescription>
-            </Alert>
+                {failedCount > 0 && (
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="font-semibold">{failedCount}개 실패</span>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* 기존 시드 데이터 관리 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              기존 시드 데이터 ({seedData.length}개)
-            </div>
-            {selectedIds.size > 0 && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                선택 삭제 ({selectedIds.size}개)
-              </Button>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            기존 시드 데이터 ({seedData.length}개)
+          </h2>
+          {selectedIds.size > 0 && (
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 disabled:bg-gray-300 
+                       text-white text-sm font-medium py-2 px-4 rounded-lg
+                       transition-colors disabled:cursor-not-allowed
+                       flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              선택 삭제 ({selectedIds.size}개)
+            </button>
+          )}
+        </div>
+        <div className="p-6">
           {loading ? (
             <p className="text-center text-gray-500 py-8">로딩 중...</p>
           ) : seedData.length === 0 ? (
@@ -296,9 +301,11 @@ export function SeedDataManager() {
             <div className="space-y-4">
               {/* 전체 선택 */}
               <div className="flex items-center gap-2 pb-2 border-b">
-                <Checkbox
+                <input
+                  type="checkbox"
                   checked={selectedIds.size === seedData.length && seedData.length > 0}
-                  onCheckedChange={toggleSelectAll}
+                  onChange={toggleSelectAll}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                 />
                 <span className="text-sm font-medium">전체 선택</span>
               </div>
@@ -308,11 +315,13 @@ export function SeedDataManager() {
                 {seedData.map((material) => (
                   <div
                     key={material.id}
-                    className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50"
+                    className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    <Checkbox
+                    <input
+                      type="checkbox"
                       checked={selectedIds.has(material.id)}
-                      onCheckedChange={() => toggleSelection(material.id)}
+                      onChange={() => toggleSelection(material.id)}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                     />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">
@@ -330,18 +339,22 @@ export function SeedDataManager() {
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* 경고 메시지 */}
       {selectedIds.size > 0 && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>{selectedIds.size}개</strong>의 시드 데이터가 선택되었습니다. 
-            삭제하면 Storage 파일과 DB 데이터가 모두 영구 삭제됩니다.
-          </AlertDescription>
-        </Alert>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p className="text-sm text-red-800">
+              <strong>{selectedIds.size}개</strong>의 시드 데이터가 선택되었습니다. 
+              삭제하면 Storage 파일과 DB 데이터가 모두 영구 삭제됩니다.
+            </p>
+          </div>
+        </div>
       )}
     </div>
   )
