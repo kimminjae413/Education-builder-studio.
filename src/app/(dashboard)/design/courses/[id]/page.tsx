@@ -251,16 +251,48 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
               🎯 차시별 활동
             </h2>
             <div className="space-y-6">
-              {course.activities.map((activity: any, index: number) => (
-                <div key={index} className="border-l-4 border-cobalt-500 pl-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">
-                    {index + 1}차시: {activity.title || activity.session || `차시 ${index + 1}`}
-                  </h3>
-                  <p className="text-gray-700 leading-relaxed">
-                    {activity.description || activity.content || activity}
-                  </p>
-                </div>
-              ))}
+              {course.activities.map((activity: any, index: number) => {
+                // activity가 문자열인 경우
+                if (typeof activity === 'string') {
+                  return (
+                    <div key={index} className="border-l-4 border-cobalt-500 pl-4">
+                      <h3 className="font-semibold text-gray-900 mb-2">
+                        {index + 1}차시
+                      </h3>
+                      <p className="text-gray-700 leading-relaxed">
+                        {activity}
+                      </p>
+                    </div>
+                  )
+                }
+                
+                // activity가 객체인 경우
+                const title = activity.title || activity.session || activity.name || `차시 ${index + 1}`
+                const content = activity.description || activity.content || activity.activities || activity.activity || JSON.stringify(activity)
+                
+                return (
+                  <div key={index} className="border-l-4 border-cobalt-500 pl-4">
+                    <h3 className="font-semibold text-gray-900 mb-2">
+                      {index + 1}차시: {title}
+                    </h3>
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
+                    </p>
+                    
+                    {/* 추가 필드들 표시 */}
+                    {activity.duration && (
+                      <div className="mt-2 text-sm text-gray-600">
+                        ⏱️ {activity.duration}
+                      </div>
+                    )}
+                    {activity.objectives && (
+                      <div className="mt-2 text-sm text-gray-600">
+                        🎯 목표: {Array.isArray(activity.objectives) ? activity.objectives.join(', ') : activity.objectives}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}
