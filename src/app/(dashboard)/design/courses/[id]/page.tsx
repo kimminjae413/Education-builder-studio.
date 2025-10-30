@@ -255,7 +255,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                 // activity가 문자열인 경우
                 if (typeof activity === 'string') {
                   return (
-                    <div key={index} className="border-l-4 border-cobalt-500 pl-4">
+                    <div key={index} className="border-l-4 border-cobalt-500 pl-4 py-2">
                       <h3 className="font-semibold text-gray-900 mb-2">
                         {index + 1}차시
                       </h3>
@@ -266,28 +266,98 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                   )
                 }
                 
-                // activity가 객체인 경우
+                // activity가 배열인 경우 (각 차시가 여러 활동을 포함)
+                if (Array.isArray(activity)) {
+                  return (
+                    <div key={index} className="space-y-4">
+                      <h3 className="text-lg font-bold text-gray-900 mb-3">
+                        📅 {index + 1}차시
+                      </h3>
+                      
+                      {activity.map((subActivity: any, subIndex: number) => {
+                        const type = subActivity.type || '활동'
+                        const title = subActivity.title || `활동 ${subIndex + 1}`
+                        const description = subActivity.description || ''
+                        const duration = subActivity.duration
+                        const materials = subActivity.materials || []
+                        
+                        // 타입별 색상
+                        const typeColors: Record<string, string> = {
+                          '강의': 'bg-blue-50 border-blue-200 text-blue-700',
+                          '실습': 'bg-green-50 border-green-200 text-green-700',
+                          '프로젝트': 'bg-purple-50 border-purple-200 text-purple-700',
+                          '평가': 'bg-orange-50 border-orange-200 text-orange-700',
+                        }
+                        const colorClass = typeColors[type] || 'bg-gray-50 border-gray-200 text-gray-700'
+                        
+                        return (
+                          <div key={subIndex} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                            <div className="flex items-start gap-3 mb-3">
+                              <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${colorClass} border`}>
+                                {type}
+                              </span>
+                              {duration && (
+                                <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                  ⏱️ {duration}분
+                                </span>
+                              )}
+                            </div>
+                            
+                            <h4 className="font-semibold text-gray-900 mb-2">
+                              {title}
+                            </h4>
+                            
+                            {description && (
+                              <p className="text-gray-700 text-sm leading-relaxed mb-3">
+                                {description}
+                              </p>
+                            )}
+                            
+                            {materials && materials.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-gray-200">
+                                <p className="text-xs font-medium text-gray-600 mb-2">
+                                  📦 필요 자료
+                                </p>
+                                <ul className="space-y-1">
+                                  {materials.map((material: string, mIndex: number) => (
+                                    <li key={mIndex} className="text-xs text-gray-600 flex items-start gap-1.5">
+                                      <span className="text-cobalt-500 mt-0.5">•</span>
+                                      <span>{material}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                }
+                
+                // activity가 단일 객체인 경우
                 const title = activity.title || activity.session || activity.name || `차시 ${index + 1}`
-                const content = activity.description || activity.content || activity.activities || activity.activity || JSON.stringify(activity)
+                const content = activity.description || activity.content || activity.activities || activity.activity || ''
+                const duration = activity.duration
+                const objectives = activity.objectives
                 
                 return (
-                  <div key={index} className="border-l-4 border-cobalt-500 pl-4">
+                  <div key={index} className="border-l-4 border-cobalt-500 pl-4 py-2">
                     <h3 className="font-semibold text-gray-900 mb-2">
                       {index + 1}차시: {title}
                     </h3>
-                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                      {typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap mb-2">
+                      {content}
                     </p>
                     
-                    {/* 추가 필드들 표시 */}
-                    {activity.duration && (
+                    {duration && (
                       <div className="mt-2 text-sm text-gray-600">
-                        ⏱️ {activity.duration}
+                        ⏱️ {duration}분
                       </div>
                     )}
-                    {activity.objectives && (
+                    {objectives && (
                       <div className="mt-2 text-sm text-gray-600">
-                        🎯 목표: {Array.isArray(activity.objectives) ? activity.objectives.join(', ') : activity.objectives}
+                        🎯 목표: {Array.isArray(objectives) ? objectives.join(', ') : objectives}
                       </div>
                     )}
                   </div>
