@@ -315,7 +315,7 @@ export default function LandingPage() {
               © 2025 Education Builder Studio. All rights reserved.
             </p>
             <p className="text-sm">
-              에듀이노랩 · K-Startup 2025 혁신창업리그
+              에듀이노랩 
             </p>
           </div>
         </div>
