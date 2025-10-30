@@ -1,279 +1,361 @@
-// src/components/admin/SeedDataTable.tsx
+// src/components/admin/SeedDataUpload.tsx
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Sparkles, Star, User, Calendar, Search } from 'lucide-react'
+import { Upload, FileText, CheckCircle, XCircle, Loader2, FolderOpen } from 'lucide-react'
 
-interface Material {
-  id: string
-  title: string
+interface UploadStatus {
   filename: string
-  is_seed_data: boolean
-  usage_count: number
-  download_count: number
-  rating: number
-  rating_count: number
-  created_at: string
-  seed_approved_at: string | null
-  profiles: {
-    name: string
-    email: string
-    rank: string
+  status: 'pending' | 'processing' | 'success' | 'error'
+  message?: string
+  materialId?: string
+}
+
+export function SeedDataUpload() {
+  const [files, setFiles] = useState<File[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [uploadStatuses, setUploadStatuses] = useState<UploadStatus[]>([])
+  const [dragActive, setDragActive] = useState(false)
+
+  // 드래그 이벤트 핸들러
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true)
+    } else if (e.type === 'dragleave') {
+      setDragActive(false)
+    }
   }
-  seed_approver: {
-    name: string
-    email: string
-  } | null
-}
 
-interface SeedDataTableProps {
-  materials: Material[]
-}
+  // 파일 드롭 핸들러
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
 
-export function SeedDataTable({ materials }: SeedDataTableProps) {
-  const router = useRouter()
-  const [filter, setFilter] = useState<'all' | 'seed' | 'regular'>('all')
-  const [search, setSearch] = useState('')
-  const [loading, setLoading] = useState<string | null>(null)
+    const droppedFiles = Array.from(e.dataTransfer.files)
+    const validFiles = droppedFiles.filter(file => {
+      const ext = file.name.split('.').pop()?.toLowerCase()
+      return ['pdf', 'ppt', 'pptx', 'doc', 'docx'].includes(ext || '')
+    })
 
-  // 필터링
-  const filteredMaterials = materials.filter((material) => {
-    // 시드 필터
-    if (filter === 'seed' && !material.is_seed_data) return false
-    if (filter === 'regular' && material.is_seed_data) return false
+    setFiles(prev => [...prev, ...validFiles])
+  }
 
-    // 검색
-    if (search) {
-      const searchLower = search.toLowerCase()
-      return (
-        material.title.toLowerCase().includes(searchLower) ||
-        material.profiles.name.toLowerCase().includes(searchLower) ||
-        material.profiles.email.toLowerCase().includes(searchLower)
-      )
+  // 파일 선택 핸들러
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const selectedFiles = Array.from(e.target.files)
+      setFiles(prev => [...prev, ...selectedFiles])
     }
+  }
 
-    return true
-  })
+  // 파일 제거
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index))
+  }
 
-  // 시드 지정/해제
-  const handleToggleSeed = async (materialId: string, currentStatus: boolean) => {
-    if (!confirm(
-      currentStatus
-        ? '시드 데이터에서 제외하시겠습니까?'
-        : '이 자료를 시드 데이터로 지정하시겠습니까?'
-    )) {
-      return
-    }
+  // 전체 업로드 실행
+  const handleUpload = async () => {
+    if (files.length === 0) return
 
-    setLoading(materialId)
+    setUploading(true)
+    setUploadStatuses(files.map(f => ({ filename: f.name, status: 'pending' })))
 
-    try {
-      const response = await fetch(`/api/admin/seed-data/${materialId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          is_seed_data: !currentStatus,
-        }),
-      })
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      
+      // 상태 업데이트: 처리 중
+      setUploadStatuses(prev => prev.map((item, idx) => 
+        idx === i ? { ...item, status: 'processing' } : item
+      ))
 
-      if (!response.ok) {
-        throw new Error('Failed to update seed status')
+      try {
+        // FormData 생성
+        const formData = new FormData()
+        formData.append('file', file)
+
+        // API 호출
+        const response = await fetch('/api/admin/seed-data/upload', {
+          method: 'POST',
+          body: formData,
+        })
+
+        const result = await response.json()
+
+        if (response.ok) {
+          // 성공
+          setUploadStatuses(prev => prev.map((item, idx) =>
+            idx === i ? {
+              ...item,
+              status: 'success',
+              message: '업로드 및 AI 분석 완료',
+              materialId: result.materialId
+            } : item
+          ))
+        } else {
+          // 실패
+          setUploadStatuses(prev => prev.map((item, idx) =>
+            idx === i ? {
+              ...item,
+              status: 'error',
+              message: result.error || '업로드 실패'
+            } : item
+          ))
+        }
+      } catch (error) {
+        // 에러
+        setUploadStatuses(prev => prev.map((item, idx) =>
+          idx === i ? {
+            ...item,
+            status: 'error',
+            message: '네트워크 오류'
+          } : item
+        ))
       }
 
-      alert(currentStatus ? '✅ 시드에서 제외되었습니다' : '✅ 시드로 지정되었습니다')
-      router.refresh()
-
-    } catch (error) {
-      console.error('Toggle seed error:', error)
-      alert('❌ 변경에 실패했습니다')
-    } finally {
-      setLoading(null)
+      // 다음 파일로 넘어가기 전 잠시 대기 (API 부하 방지)
+      await new Promise(resolve => setTimeout(resolve, 1000))
     }
+
+    setUploading(false)
+  }
+
+  // 완료 후 초기화
+  const handleReset = () => {
+    setFiles([])
+    setUploadStatuses([])
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200">
-      {/* 필터 & 검색 */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* 필터 */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                filter === 'all'
-                  ? 'bg-cobalt-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              전체 ({materials.length})
-            </button>
-            <button
-              onClick={() => setFilter('seed')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                filter === 'seed'
-                  ? 'bg-gold-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              🌱 시드 ({materials.filter(m => m.is_seed_data).length})
-            </button>
-            <button
-              onClick={() => setFilter('regular')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                filter === 'regular'
-                  ? 'bg-cobalt-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              일반 ({materials.filter(m => !m.is_seed_data).length})
-            </button>
+    <div className="space-y-6">
+      {/* 업로드 존 */}
+      {uploadStatuses.length === 0 && (
+        <div className="bg-white rounded-lg border p-8">
+          {/* 드래그앤드롭 영역 */}
+          <div
+            className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
+              dragActive
+                ? 'border-cobalt-500 bg-cobalt-50'
+                : 'border-gray-300 bg-gray-50'
+            }`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-lg font-medium text-gray-700 mb-2">
+              파일을 드래그하거나 클릭하여 선택하세요
+            </p>
+            <p className="text-sm text-gray-500 mb-4">
+              PDF, PPT, PPTX, DOC, DOCX 파일 지원
+            </p>
+            <label className="inline-block">
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.ppt,.pptx,.doc,.docx"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <span className="px-6 py-3 bg-cobalt-600 text-white rounded-lg hover:bg-cobalt-700 cursor-pointer inline-block">
+                파일 선택
+              </span>
+            </label>
           </div>
 
-          {/* 검색 */}
-          <div className="flex-1 max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="제목, 강사명으로 검색..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cobalt-500"
-              />
+          {/* 선택된 파일 목록 */}
+          {files.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-700">
+                  선택된 파일 ({files.length}개)
+                </h3>
+                <button
+                  onClick={() => setFiles([])}
+                  className="text-sm text-red-600 hover:text-red-700"
+                >
+                  모두 제거
+                </button>
+              </div>
+
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {files.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FileText className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeFile(index)}
+                      className="text-red-600 hover:text-red-700 ml-4"
+                    >
+                      <XCircle className="h-5 w-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* 업로드 버튼 */}
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={handleUpload}
+                  disabled={uploading}
+                  className="flex-1 px-6 py-3 bg-cobalt-600 text-white rounded-lg hover:bg-cobalt-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+                >
+                  {uploading ? '업로드 중...' : `${files.length}개 파일 업로드 시작`}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 업로드 진행 상황 */}
+      {uploadStatuses.length > 0 && (
+        <div className="bg-white rounded-lg border p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              업로드 진행 상황
+            </h3>
+            {!uploading && (
+              <button
+                onClick={handleReset}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+              >
+                새로 업로드
+              </button>
+            )}
+          </div>
+
+          {/* 진행 상태 요약 */}
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            <div className="text-center p-3 bg-gray-50 rounded-lg">
+              <div className="text-2xl font-bold text-gray-900">
+                {uploadStatuses.length}
+              </div>
+              <div className="text-xs text-gray-600">전체</div>
+            </div>
+            <div className="text-center p-3 bg-blue-50 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">
+                {uploadStatuses.filter(s => s.status === 'processing').length}
+              </div>
+              <div className="text-xs text-blue-600">처리 중</div>
+            </div>
+            <div className="text-center p-3 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">
+                {uploadStatuses.filter(s => s.status === 'success').length}
+              </div>
+              <div className="text-xs text-green-600">완료</div>
+            </div>
+            <div className="text-center p-3 bg-red-50 rounded-lg">
+              <div className="text-2xl font-bold text-red-600">
+                {uploadStatuses.filter(s => s.status === 'error').length}
+              </div>
+              <div className="text-xs text-red-600">실패</div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* 테이블 */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                제목
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                강사
-              </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                사용량
-              </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                평점
-              </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                상태
-              </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                액션
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {filteredMaterials.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
-                  {search ? '검색 결과가 없습니다' : '콘텐츠가 없습니다'}
-                </td>
-              </tr>
-            ) : (
-              filteredMaterials.map((material) => (
-                <tr key={material.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <div className="max-w-xs">
-                      <div className="font-medium text-gray-900 truncate">
-                        {material.title}
-                      </div>
-                      <div className="text-sm text-gray-500 truncate">
-                        {material.filename}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-400" />
-                      <div className="text-sm">
-                        <div className="text-gray-900">
-                          {material.profiles.name || '이름 없음'}
-                        </div>
-                        <div className="text-gray-500 text-xs">
-                          {material.profiles.rank}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <div className="text-sm text-gray-900">
-                      {material.usage_count + material.download_count}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      사용+다운로드
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    {material.rating_count > 0 ? (
-                      <div className="flex items-center justify-center gap-1">
-                        <Star className="h-4 w-4 fill-gold-400 text-gold-400" />
-                        <span className="text-sm font-medium text-gray-900">
-                          {material.rating.toFixed(1)}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          ({material.rating_count})
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-sm text-gray-400">-</span>
+          {/* 파일별 상태 */}
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {uploadStatuses.map((status, index) => (
+              <div
+                key={index}
+                className={`flex items-center justify-between p-4 rounded-lg border ${
+                  status.status === 'success' ? 'bg-green-50 border-green-200' :
+                  status.status === 'error' ? 'bg-red-50 border-red-200' :
+                  status.status === 'processing' ? 'bg-blue-50 border-blue-200' :
+                  'bg-gray-50 border-gray-200'
+                }`}
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {status.status === 'pending' && (
+                    <div className="h-5 w-5 rounded-full border-2 border-gray-300" />
+                  )}
+                  {status.status === 'processing' && (
+                    <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
+                  )}
+                  {status.status === 'success' && (
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  )}
+                  {status.status === 'error' && (
+                    <XCircle className="h-5 w-5 text-red-600" />
+                  )}
+
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {status.filename}
+                    </p>
+                    {status.message && (
+                      <p className={`text-xs mt-1 ${
+                        status.status === 'error' ? 'text-red-600' : 'text-gray-600'
+                      }`}>
+                        {status.message}
+                      </p>
                     )}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    {material.is_seed_data ? (
-                      <div>
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-gold-100 text-gold-700 text-xs font-medium rounded">
-                          🌱 시드
-                        </span>
-                        {material.seed_approved_at && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            {new Date(material.seed_approved_at).toLocaleDateString('ko-KR')}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-xs text-gray-500">일반</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={() => handleToggleSeed(material.id, material.is_seed_data)}
-                      disabled={loading === material.id}
-                      className={`
-                        px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
-                        ${material.is_seed_data
-                          ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          : 'bg-gold-500 text-white hover:bg-gold-600'
-                        }
-                        disabled:opacity-50 disabled:cursor-not-allowed
-                      `}
-                    >
-                      {loading === material.id ? (
-                        '처리중...'
-                      ) : material.is_seed_data ? (
-                        '시드 해제'
-                      ) : (
-                        <span className="flex items-center gap-1">
-                          <Sparkles className="h-4 w-4" />
-                          시드 지정
-                        </span>
-                      )}
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                  </div>
+                </div>
+
+                {status.status === 'success' && status.materialId && (
+                  <a
+                    href={`/library/${status.materialId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-cobalt-600 hover:text-cobalt-700 font-medium ml-4"
+                  >
+                    보기 →
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 안내 사항 */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h3 className="text-sm font-semibold text-blue-900 mb-3 flex items-center gap-2">
+          <FolderOpen className="h-4 w-4" />
+          시드 데이터 업로드 가이드
+        </h3>
+        <ul className="space-y-2 text-sm text-blue-800">
+          <li className="flex items-start gap-2">
+            <span className="text-blue-600 mt-0.5">•</span>
+            <span>
+              <strong>지원 파일:</strong> PDF, PPT, PPTX, DOC, DOCX
+            </span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-blue-600 mt-0.5">•</span>
+            <span>
+              <strong>자동 처리:</strong> AI가 파일 내용을 분석하여 자동으로 카테고리를 분류합니다
+            </span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-blue-600 mt-0.5">•</span>
+            <span>
+              <strong>자동 승인:</strong> 시드 데이터는 자동으로 "승인됨" 상태로 저장됩니다
+            </span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-blue-600 mt-0.5">•</span>
+            <span>
+              <strong>구글 드라이브 구조:</strong> EBS_DATA/EL001~EL010 폴더별로 업로드하면 자동으로 학년별로 분류됩니다
+            </span>
+          </li>
+        </ul>
       </div>
     </div>
   )
