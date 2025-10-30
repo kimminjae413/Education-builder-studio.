@@ -134,7 +134,7 @@ ${seedContext}
     // Gemini API 호출
     const startTime = Date.now()
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-pro',
+      model: 'gemini-2.5-flash',
       generationConfig: {
         maxOutputTokens: 8192,
       }
@@ -182,7 +182,7 @@ ${seedContext}
         lesson_plan: courseData.overview,
         activities: courseData.sessions,
         materials_needed: courseData.overall_materials,
-        ai_model_used: 'gemini-pro',
+        ai_model_used: 'gemini-2.5-flash',
         ai_prompt_used: prompt,
         generation_time_ms: generationTime,
         status: 'completed',
