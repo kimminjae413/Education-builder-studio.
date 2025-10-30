@@ -1,0 +1,328 @@
+// src/app/(dashboard)/design/courses/[id]/page.tsx
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { ArrowLeft, Clock, Users, Calendar, Download, Share2, Bookmark, Eye } from 'lucide-react'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+
+interface CourseDetailPageProps {
+  params: {
+    id: string
+  }
+}
+
+export default async function CourseDetailPage({ params }: CourseDetailPageProps) {
+  const supabase = createClient()
+
+  // 현재 사용자 확인
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  // 과정 데이터 가져오기
+  const { data: course, error } = await supabase
+    .from('courses')
+    .select(`
+      *,
+      profiles:user_id (
+        name,
+        email,
+        rank
+      )
+    `)
+    .eq('id', params.id)
+    .single()
+
+  if (error || !course) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold text-gray-900">과정을 찾을 수 없습니다</h1>
+          <p className="text-gray-600">요청하신 과정이 존재하지 않거나 삭제되었습니다.</p>
+          <Link href="/design">
+            <Button>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              AI 설계로 돌아가기
+            </Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  // 조회수 증가
+  if (course.user_id !== user.id) {
+    await supabase
+      .from('courses')
+      .update({ views_count: (course.views_count || 0) + 1 })
+      .eq('id', params.id)
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* 헤더 */}
+      <div className="bg-white border-b sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/design">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                뒤로 가기
+              </Button>
+            </Link>
+            
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm">
+                <Bookmark className="h-4 w-4 mr-2" />
+                북마크
+              </Button>
+              <Button variant="outline" size="sm">
+                <Share2 className="h-4 w-4 mr-2" />
+                공유
+              </Button>
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                다운로드
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8 max-w-5xl">
+        {/* 제목 & 메타 정보 */}
+        <div className="bg-white rounded-lg border p-8 mb-6">
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                {course.title}
+              </h1>
+              
+              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-1.5">
+                  <Users className="h-4 w-4" />
+                  <span>{course.target_audience}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-4 w-4" />
+                  <span>{course.duration}분 × {course.session_count}차시</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4" />
+                  <span>{new Date(course.created_at).toLocaleDateString('ko-KR')}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Eye className="h-4 w-4" />
+                  <span>조회 {course.views_count || 0}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 주제 & 도구 */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                주제
+              </label>
+              <div className="px-3 py-2 bg-gray-50 rounded-lg text-gray-900">
+                {course.subject}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                사용 도구/교구
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {course.tools?.map((tool: string, index: number) => (
+                  <span
+                    key={index}
+                    className="px-2 py-1 bg-cobalt-50 text-cobalt-700 rounded text-sm"
+                  >
+                    {tool}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 교수 방법 비율 */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              교수 방법 비율
+            </label>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-cobalt-600 mb-1">
+                  {course.lecture_ratio}%
+                </div>
+                <div className="text-sm text-gray-600">강의</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600 mb-1">
+                  {course.practice_ratio}%
+                </div>
+                <div className="text-sm text-gray-600">실습</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-600 mb-1">
+                  {course.project_ratio}%
+                </div>
+                <div className="text-sm text-gray-600">프로젝트</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 학습 목표 */}
+        <div className="bg-white rounded-lg border p-8 mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            📚 학습 목표
+          </h2>
+          
+          {course.knowledge_goals && course.knowledge_goals.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                🧠 지식 목표
+              </h3>
+              <ul className="space-y-2">
+                {course.knowledge_goals.map((goal: string, index: number) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="text-cobalt-500 mt-1">•</span>
+                    <span className="text-gray-700">{goal}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {course.skill_goals && course.skill_goals.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                ⚡ 기능 목표
+              </h3>
+              <ul className="space-y-2">
+                {course.skill_goals.map((goal: string, index: number) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="text-green-500 mt-1">•</span>
+                    <span className="text-gray-700">{goal}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {course.attitude_goals && course.attitude_goals.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                💚 태도 목표
+              </h3>
+              <ul className="space-y-2">
+                {course.attitude_goals.map((goal: string, index: number) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="text-purple-500 mt-1">•</span>
+                    <span className="text-gray-700">{goal}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {/* 수업 계획안 */}
+        {course.lesson_plan && (
+          <div className="bg-white rounded-lg border p-8 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              📝 수업 계획안
+            </h2>
+            <div className="prose max-w-none">
+              <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                {course.lesson_plan}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 차시별 활동 */}
+        {course.activities && Array.isArray(course.activities) && course.activities.length > 0 && (
+          <div className="bg-white rounded-lg border p-8 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              🎯 차시별 활동
+            </h2>
+            <div className="space-y-6">
+              {course.activities.map((activity: any, index: number) => (
+                <div key={index} className="border-l-4 border-cobalt-500 pl-4">
+                  <h3 className="font-semibold text-gray-900 mb-2">
+                    {index + 1}차시: {activity.title || activity.session || `차시 ${index + 1}`}
+                  </h3>
+                  <p className="text-gray-700 leading-relaxed">
+                    {activity.description || activity.content || activity}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 평가 방법 */}
+        {course.assessment_methods && course.assessment_methods.length > 0 && (
+          <div className="bg-white rounded-lg border p-8 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              ✅ 평가 방법
+            </h2>
+            <div className="grid gap-3">
+              {course.assessment_methods.map((method: string, index: number) => (
+                <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="w-8 h-8 rounded-full bg-cobalt-100 text-cobalt-600 flex items-center justify-center font-semibold text-sm">
+                    {index + 1}
+                  </div>
+                  <span className="text-gray-700">{method}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 필요 자료 */}
+        {course.materials_needed && course.materials_needed.length > 0 && (
+          <div className="bg-white rounded-lg border p-8 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              📦 필요한 자료 및 준비물
+            </h2>
+            <div className="grid sm:grid-cols-2 gap-2">
+              {course.materials_needed.map((material: string, index: number) => (
+                <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                  <span className="text-cobalt-500">✓</span>
+                  <span className="text-gray-700">{material}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* AI 생성 정보 */}
+        <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 text-xs text-gray-500">
+          <div className="flex items-center justify-between">
+            <div>
+              AI 모델: <span className="font-mono">{course.ai_model_used}</span>
+            </div>
+            <div>
+              생성 시간: {course.generation_time_ms ? `${(course.generation_time_ms / 1000).toFixed(2)}초` : '알 수 없음'}
+            </div>
+          </div>
+        </div>
+
+        {/* 하단 액션 버튼 */}
+        <div className="mt-8 flex gap-4">
+          <Link href="/design" className="flex-1">
+            <Button variant="outline" className="w-full">
+              새로운 과정 만들기
+            </Button>
+          </Link>
+          <Button className="flex-1">
+            이 과정 수정하기
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
