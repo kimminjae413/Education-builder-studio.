@@ -62,11 +62,17 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
       }
     }
     
-    // activities가 객체이고 activities 속성이 있으면 그것을 사용
-    if (course.activities && typeof course.activities === 'object' && !Array.isArray(course.activities)) {
-      if (course.activities.activities && Array.isArray(course.activities.activities)) {
-        course.activities = course.activities.activities
-      }
+    // activities가 배열이고, 각 요소가 세션 객체라면
+    if (Array.isArray(course.activities)) {
+      // 각 세션에서 activities 배열만 추출
+      course.activities = course.activities.map((session: any) => {
+        // 세션 객체에 activities 속성이 있으면 그것을 사용
+        if (session && typeof session === 'object' && session.activities) {
+          return session.activities
+        }
+        // 없으면 세션 전체를 반환 (이미 activities 배열인 경우)
+        return session
+      })
     }
   }
 
