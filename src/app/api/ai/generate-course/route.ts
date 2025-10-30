@@ -180,7 +180,8 @@ ${seedContext}
         project_ratio: projectRatio,
         ai_generated_content: courseData,
         lesson_plan: courseData.overview,
-        activities: courseData.sessions,
+        // ✅ 수정: sessions 배열을 그대로 저장 (각 세션이 activities를 포함)
+        activities: courseData.sessions || [],
         materials_needed: courseData.overall_materials,
         ai_model_used: 'gemini-2.5-flash',
         ai_prompt_used: prompt,
@@ -197,6 +198,14 @@ ${seedContext}
         { status: 500 }
       )
     }
+
+    // AI 사용 횟수 증가
+    await supabase
+      .from('profiles')
+      .update({
+        ai_usage_count_this_month: (profile?.ai_usage_count_this_month || 0) + 1
+      })
+      .eq('id', user.id)
 
     return NextResponse.json({
       success: true,
