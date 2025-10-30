@@ -320,10 +320,10 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                                   📦 필요 자료
                                 </p>
                                 <ul className="space-y-1">
-                                  {materials.map((material: string, mIndex: number) => (
+                                  {materials.map((material: any, mIndex: number) => (
                                     <li key={mIndex} className="text-xs text-gray-600 flex items-start gap-1.5">
                                       <span className="text-cobalt-500 mt-0.5">•</span>
-                                      <span>{material}</span>
+                                      <span>{typeof material === 'string' ? material : JSON.stringify(material)}</span>
                                     </li>
                                   ))}
                                 </ul>
@@ -338,7 +338,13 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                 
                 // activity가 단일 객체인 경우
                 const title = activity.title || activity.session || activity.name || `차시 ${index + 1}`
-                const content = activity.description || activity.content || activity.activities || activity.activity || ''
+                let content = activity.description || activity.content || activity.activities || activity.activity || ''
+                
+                // content가 객체/배열이면 문자열로 변환
+                if (typeof content !== 'string') {
+                  content = JSON.stringify(content, null, 2)
+                }
+                
                 const duration = activity.duration
                 const objectives = activity.objectives
                 
