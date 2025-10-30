@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ArrowLeft, Clock, Users, Calendar, Download, Share2, Bookmark, Eye } from 'lucide-react'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 
 interface CourseDetailPageProps {
   params: {
@@ -38,11 +37,12 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold text-gray-900">과정을 찾을 수 없습니다</h1>
           <p className="text-gray-600">요청하신 과정이 존재하지 않거나 삭제되었습니다.</p>
-          <Link href="/design">
-            <Button>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              AI 설계로 돌아가기
-            </Button>
+          <Link 
+            href="/design"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-cobalt-500 text-white hover:bg-cobalt-600 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            AI 설계로 돌아가기
           </Link>
         </div>
       </div>
@@ -63,26 +63,27 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/design">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                뒤로 가기
-              </Button>
+            <Link 
+              href="/design"
+              className="inline-flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              뒤로 가기
             </Link>
             
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <Bookmark className="h-4 w-4 mr-2" />
+              <button className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                <Bookmark className="h-4 w-4" />
                 북마크
-              </Button>
-              <Button variant="outline" size="sm">
-                <Share2 className="h-4 w-4 mr-2" />
+              </button>
+              <button className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                <Share2 className="h-4 w-4" />
                 공유
-              </Button>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
+              </button>
+              <button className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                <Download className="h-4 w-4" />
                 다운로드
-              </Button>
+              </button>
             </div>
           </div>
         </div>
@@ -314,13 +315,13 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
         {/* 하단 액션 버튼 */}
         <div className="mt-8 flex gap-4">
           <Link href="/design" className="flex-1">
-            <Button variant="outline" className="w-full">
+            <button className="w-full px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
               새로운 과정 만들기
-            </Button>
+            </button>
           </Link>
-          <Button className="flex-1">
+          <button className="flex-1 px-4 py-2 bg-cobalt-500 text-white hover:bg-cobalt-600 rounded-lg transition-colors">
             이 과정 수정하기
-          </Button>
+          </button>
         </div>
       </div>
     </div>
