@@ -410,18 +410,6 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
           </div>
         )}
 
-        {/* AI 생성 정보 */}
-        <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 text-xs text-gray-500">
-          <div className="flex items-center justify-between">
-            <div>
-              AI 모델: <span className="font-mono">{course.ai_model_used}</span>
-            </div>
-            <div>
-              생성 시간: {course.generation_time_ms ? `${(course.generation_time_ms / 1000).toFixed(2)}초` : '알 수 없음'}
-            </div>
-          </div>
-        </div>
-
         {/* 추천 자료 섹션 */}
         <div className="mt-8">
           <RecommendedMaterials courseId={course.id} />
