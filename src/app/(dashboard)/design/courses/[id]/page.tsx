@@ -246,153 +246,152 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
         )}
 
         {/* 차시별 활동 */}
-        {course.activities && Array.isArray(course.activities) && course.activities.length > 0 && (
-          <div className="bg-white rounded-lg border p-8 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">
-              🎯 차시별 활동
-            </h2>
-            <div className="space-y-8">
-              {course.activities.map((session: any, sessionIndex: number) => {
-                // 1. 문자열인 경우
-                if (typeof session === 'string') {
-                  return (
-                    <div key={sessionIndex} className="border-l-4 border-cobalt-500 pl-6">
-                      <h3 className="text-lg font-bold text-gray-900 mb-3">
-                        📅 {sessionIndex + 1}차시
-                      </h3>
-                      <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                        {session}
-                      </p>
-                    </div>
-                  )
-                }
+        {(() => {
+          let activities = course.activities
+          
+          // activities가 문자열이면 JSON 파싱 시도
+          if (typeof activities === 'string') {
+            try {
+              activities = JSON.parse(activities)
+            } catch (e) {
+              // 파싱 실패하면 원본 문자열 그대로 표시
+              return (
+                <div className="bg-white rounded-lg border p-8 mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">
+                    🎯 차시별 활동
+                  </h2>
+                  <div className="prose max-w-none">
+                    <pre className="whitespace-pre-wrap text-sm text-gray-700 bg-gray-50 p-4 rounded">
+                      {activities}
+                    </pre>
+                  </div>
+                </div>
+              )
+            }
+          }
 
-                // 2. 배열인 경우 (가장 흔한 케이스)
-                if (Array.isArray(session)) {
-                  return (
-                    <div key={sessionIndex} className="space-y-4">
-                      <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-cobalt-500">
-                        📅 {sessionIndex + 1}차시
-                      </h3>
-                      
-                      <div className="space-y-4">
-                        {session.map((activity: any, activityIndex: number) => {
-                          // 활동이 문자열인 경우
-                          if (typeof activity === 'string') {
+          // 배열이 아니거나 비어있으면 표시 안 함
+          if (!Array.isArray(activities) || activities.length === 0) {
+            return null
+          }
+
+          return (
+            <div className="bg-white rounded-lg border p-8 mb-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">
+                🎯 차시별 활동
+              </h2>
+              <div className="space-y-10">
+                {activities.map((session: any, sessionIndex: number) => {
+                  // 배열인 경우 (각 차시가 여러 활동을 포함)
+                  if (Array.isArray(session)) {
+                    return (
+                      <div key={sessionIndex} className="space-y-5">
+                        <div className="flex items-center gap-3 pb-3 border-b-2 border-cobalt-500">
+                          <span className="text-2xl">📅</span>
+                          <h3 className="text-xl font-bold text-gray-900">
+                            {sessionIndex + 1}차시
+                          </h3>
+                        </div>
+                        
+                        <div className="space-y-6 pl-2">
+                          {session.map((activity: any, activityIndex: number) => {
+                            const type = activity.type || '활동'
+                            const title = activity.title || ''
+                            const description = activity.description || ''
+                            const duration = activity.duration
+                            const materials = activity.materials || []
+
+                            // 타입별 이모지
+                            const typeEmoji: Record<string, string> = {
+                              '강의': '📖',
+                              '실습': '🔧',
+                              '프로젝트': '🎨',
+                              '평가': '✅',
+                            }
+                            const emoji = typeEmoji[type] || '📌'
+
                             return (
-                              <div key={activityIndex} className="bg-gray-50 rounded-lg p-4">
-                                <p className="text-gray-700">{activity}</p>
-                              </div>
-                            )
-                          }
-
-                          // 활동이 객체인 경우
-                          const type = activity.type || '활동'
-                          const title = activity.title || `활동 ${activityIndex + 1}`
-                          const description = activity.description || ''
-                          const duration = activity.duration
-                          const materials = activity.materials || []
-
-                          // 타입별 색상
-                          const typeStyles: Record<string, { bg: string; border: string; text: string }> = {
-                            '강의': { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700' },
-                            '실습': { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700' },
-                            '프로젝트': { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700' },
-                            '평가': { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700' },
-                          }
-                          const style = typeStyles[type] || { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-700' }
-
-                          return (
-                            <div key={activityIndex} className={`rounded-lg border-2 ${style.border} ${style.bg} p-5 transition-all hover:shadow-md`}>
-                              {/* 헤더: 타입과 시간 */}
-                              <div className="flex items-center gap-3 mb-4">
-                                <span className={`px-3 py-1.5 rounded-full text-sm font-bold ${style.text} bg-white border-2 ${style.border}`}>
-                                  {type}
-                                </span>
-                                {duration && (
-                                  <span className="px-3 py-1.5 rounded-full text-sm font-medium bg-white text-gray-600 border border-gray-200">
-                                    ⏱️ {duration}분
-                                  </span>
+                              <div key={activityIndex} className="space-y-3">
+                                {/* 타입과 제목 */}
+                                <div className="flex items-start gap-3">
+                                  <span className="text-2xl flex-shrink-0">{emoji}</span>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-3 mb-2">
+                                      <span className="inline-block px-3 py-1 bg-cobalt-100 text-cobalt-700 rounded-full text-sm font-semibold">
+                                        {type}
+                                      </span>
+                                      {duration && (
+                                        <span className="text-sm text-gray-600">
+                                          ⏱️ <strong>{duration}분</strong>
+                                        </span>
+                                      )}
+                                    </div>
+                                    
+                                    {title && (
+                                      <h4 className="text-lg font-bold text-gray-900 mb-2">
+                                        {title}
+                                      </h4>
+                                    )}
+                                    
+                                    {description && (
+                                      <p className="text-gray-700 leading-relaxed mb-3">
+                                        {description}
+                                      </p>
+                                    )}
+                                    
+                                    {/* 필요 자료 */}
+                                    {materials && Array.isArray(materials) && materials.length > 0 && (
+                                      <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                                        <p className="text-sm font-semibold text-gray-700 mb-2">
+                                          📦 필요한 자료
+                                        </p>
+                                        <ul className="space-y-1.5">
+                                          {materials.map((material: any, mIndex: number) => {
+                                            const materialText = typeof material === 'string' ? material : String(material)
+                                            return (
+                                              <li key={mIndex} className="text-sm text-gray-600 flex items-start gap-2">
+                                                <span className="text-cobalt-500 mt-1">•</span>
+                                                <span className="flex-1">{materialText}</span>
+                                              </li>
+                                            )
+                                          })}
+                                        </ul>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                {/* 구분선 (마지막 활동 제외) */}
+                                {activityIndex < session.length - 1 && (
+                                  <div className="border-b border-gray-200 my-4"></div>
                                 )}
                               </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  }
 
-                              {/* 제목 */}
-                              <h4 className="text-base font-bold text-gray-900 mb-3">
-                                {title}
-                              </h4>
-
-                              {/* 설명 */}
-                              {description && (
-                                <p className="text-gray-700 leading-relaxed mb-4 whitespace-pre-wrap">
-                                  {description}
-                                </p>
-                              )}
-
-                              {/* 필요 자료 */}
-                              {materials && Array.isArray(materials) && materials.length > 0 && (
-                                <div className="mt-4 pt-4 border-t border-gray-200">
-                                  <p className="text-sm font-bold text-gray-700 mb-3">
-                                    📦 필요한 자료
-                                  </p>
-                                  <ul className="space-y-2">
-                                    {materials.map((material: any, mIndex: number) => {
-                                      const materialText = typeof material === 'string' ? material : JSON.stringify(material)
-                                      return (
-                                        <li key={mIndex} className="flex items-start gap-2 text-sm text-gray-600">
-                                          <span className="text-cobalt-500 font-bold mt-0.5">•</span>
-                                          <span className="flex-1">{materialText}</span>
-                                        </li>
-                                      )
-                                    })}
-                                  </ul>
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })}
+                  // 문자열이나 단일 객체인 경우
+                  return (
+                    <div key={sessionIndex} className="space-y-3">
+                      <div className="flex items-center gap-3 pb-3 border-b-2 border-cobalt-500">
+                        <span className="text-2xl">📅</span>
+                        <h3 className="text-xl font-bold text-gray-900">
+                          {sessionIndex + 1}차시
+                        </h3>
+                      </div>
+                      <div className="text-gray-700 leading-relaxed pl-2">
+                        {typeof session === 'string' ? session : JSON.stringify(session, null, 2)}
                       </div>
                     </div>
                   )
-                }
-
-                // 3. 단일 객체인 경우
-                const title = session.title || session.session || session.name || `차시 ${sessionIndex + 1}`
-                const description = session.description || session.content || ''
-                const duration = session.duration
-                const objectives = session.objectives
-
-                return (
-                  <div key={sessionIndex} className="border-l-4 border-cobalt-500 pl-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-3">
-                      📅 {sessionIndex + 1}차시: {title}
-                    </h3>
-                    
-                    {description && (
-                      <p className="text-gray-700 leading-relaxed mb-4 whitespace-pre-wrap">
-                        {typeof description === 'string' ? description : JSON.stringify(description, null, 2)}
-                      </p>
-                    )}
-
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                      {duration && (
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-semibold">⏱️</span>
-                          <span>{duration}분</span>
-                        </div>
-                      )}
-                      {objectives && (
-                        <div className="flex items-start gap-1.5">
-                          <span className="font-semibold">🎯</span>
-                          <span>{Array.isArray(objectives) ? objectives.join(', ') : objectives}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* 평가 방법 */}
         {course.assessment_methods && course.assessment_methods.length > 0 && (
