@@ -13,7 +13,7 @@ interface Material {
   target_category: string
   file_url: string
   file_type: string
-  similarity?: number // ⭐ 벡터 검색 유사도
+  similarity?: number
 }
 
 interface RecommendedMaterialsProps {
@@ -91,7 +91,6 @@ export function RecommendedMaterials({ courseId }: RecommendedMaterialsProps) {
 
   return (
     <div className="bg-gradient-to-r from-cobalt-50 to-blue-50 rounded-lg border border-cobalt-200 p-6">
-      {/* 헤더 */}
       <div className="flex items-center gap-2 mb-4">
         <Star className="h-5 w-5 text-cobalt-600 fill-cobalt-600" />
         <h2 className="text-xl font-bold text-gray-900">
@@ -106,14 +105,12 @@ export function RecommendedMaterials({ courseId }: RecommendedMaterialsProps) {
         AI가 설계안 내용을 분석하여 유사한 베테랑 강사의 검증된 자료를 자동으로 추천했습니다
       </p>
       
-      {/* 자료 카드 그리드 */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {materials.map((material) => (
           <MaterialCard key={material.id} material={material} />
         ))}
       </div>
 
-      {/* 하단 안내 */}
       <div className="mt-6 p-4 bg-white rounded-lg border border-cobalt-200">
         <p className="text-xs text-gray-600 text-center">
           💡 <strong>Tip:</strong> 이 자료들은 실제 수업에서 검증된 베테랑 강사의 콘텐츠입니다.
@@ -124,7 +121,6 @@ export function RecommendedMaterials({ courseId }: RecommendedMaterialsProps) {
   )
 }
 
-// ⭐ 개별 자료 카드 컴포넌트
 function MaterialCard({ material }: { material: Material }) {
   const [downloading, setDownloading] = useState(false)
 
@@ -149,14 +145,12 @@ function MaterialCard({ material }: { material: Material }) {
     }
   }
 
-  // 유사도를 퍼센트로 변환
   const similarityPercent = material.similarity 
     ? Math.round(material.similarity * 100) 
     : null
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 hover:border-cobalt-500 hover:shadow-md transition-all">
-      {/* 파일 아이콘 & 유사도 뱃지 */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-start gap-2 flex-1">
           <div className="p-2 bg-cobalt-100 rounded flex-shrink-0">
@@ -169,7 +163,6 @@ function MaterialCard({ material }: { material: Material }) {
           </div>
         </div>
         
-        {/* 유사도 뱃지 */}
         {similarityPercent && similarityPercent >= 70 && (
           <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full flex-shrink-0">
             {similarityPercent}%
@@ -177,14 +170,12 @@ function MaterialCard({ material }: { material: Material }) {
         )}
       </div>
       
-      {/* 설명 */}
       {material.description && (
         <p className="text-xs text-gray-600 line-clamp-2 mb-3">
           {material.description}
         </p>
       )}
       
-      {/* 태그 */}
       <div className="flex flex-wrap gap-1.5 mb-3">
         <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">
           {material.subject_category}
@@ -194,7 +185,6 @@ function MaterialCard({ material }: { material: Material }) {
         </span>
       </div>
       
-      {/* 액션 버튼 */}
       <div className="flex gap-2">
         <button
           onClick={handleDownload}
