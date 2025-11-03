@@ -5,10 +5,11 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // ⭐ 타입 변경
 ) {
   try {
     const supabase = await createClient()
+    const params = await context.params // ⭐ await 추가
     
     // 인증 확인
     const { data: { user } } = await supabase.auth.getUser()
@@ -70,7 +71,7 @@ export async function GET(
       `)
       .in('id', course.recommended_materials)
       .eq('status', 'approved')
-      .eq('is_seed_data', true) // ⭐ 시드 데이터만
+      .eq('is_seed_data', true)
 
     if (materialsError) {
       console.error('❌ 자료 조회 실패:', materialsError)
@@ -81,10 +82,10 @@ export async function GET(
       })
     }
 
-    // ⭐ 추천 순서대로 정렬 (recommended_materials 배열 순서 유지)
+    // 추천 순서대로 정렬
     const sortedMaterials = course.recommended_materials
       .map((id: string) => materials?.find(m => m.id === id))
-      .filter(Boolean) // null/undefined 제거
+      .filter(Boolean)
 
     console.log(`✅ ${sortedMaterials.length}개 자료 조회 완료`)
 
@@ -106,13 +107,13 @@ export async function GET(
   }
 }
 
-// ⭐ POST: 다운로드 횟수 증가 (선택사항)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // ⭐ 타입 변경
 ) {
   try {
     const supabase = await createClient()
+    const params = await context.params // ⭐ await 추가
     
     // 인증 확인
     const { data: { user } } = await supabase.auth.getUser()
