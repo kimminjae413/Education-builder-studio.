@@ -68,3 +68,26 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* ⭐ 로딩 & 피드백 애니메이션 추가 */
+@layer utilities {
+  /* 에러 메시지 흔들림 */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+  }
+  
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+
+  /* 스피너 회전 */
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+}
