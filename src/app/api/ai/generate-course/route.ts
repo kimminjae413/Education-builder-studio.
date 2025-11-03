@@ -6,9 +6,54 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
-// ⭐ 추가: Netlify Functions 타임아웃 설정
-export const maxDuration = 30 // Pro 플랜: 26초, 여기선 30초로 안전하게 설정
-export const dynamic = 'force-dynamic' // 캐싱 비활성화
+// Netlify Functions 타임아웃 설정
+export const maxDuration = 30
+export const dynamic = 'force-dynamic'
+
+// ⭐ 관련 자료 검색 함수 (NEW)
+async function findRelatedMaterials(
+  supabase: any,
+  courseData: any,
+  targetAudience: string,
+  subject: string
+) {
+  try {
+    // 1. 설계안 내용을 텍스트로 변환
+    const searchText = `
+${courseData.title}
+${courseData.overview}
+대상: ${targetAudience}
+주제: ${subject}
+${courseData.sessions?.map((s: any) => s.title).join(' ')}
+    `.trim()
+
+    console.log('🔍 관련 자료 검색 시작...')
+
+    // 2. 임베딩 생성
+    const model = genAI.getGenerativeModel({ model: 'text-embedding-004' })
+    const result = await model.embedContent(searchText)
+    const queryEmbedding = result.embedding.values
+
+    // 3. 벡터 검색 (유사도 0.7 이상, 최대 5개)
+    const { data: materials, error } = await supabase.rpc('match_materials', {
+      query_embedding: queryEmbedding,
+      match_threshold: 0.7,
+      match_count: 5
+    })
+
+    if (error) {
+      console.error('❌ 벡터 검색 에러:', error)
+      return []
+    }
+
+    console.log(`✅ 관련 자료 ${materials?.length || 0}개 발견`)
+    return materials || []
+
+  } catch (error) {
+    console.error('❌ 관련 자료 검색 실패:', error)
+    return []
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,15 +106,15 @@ export async function POST(request: NextRequest) {
       projectRatio,
     } = body
 
-    // 시드 데이터 조회 - ⭐ 3개로 줄여서 프롬프트 길이 단축
+    // 시드 데이터 조회 (3개로 축소)
     const { data: seedMaterials } = await supabase
       .from('teaching_materials')
       .select('title, description, target_category, subject_category')
       .eq('is_seed_data', true)
       .eq('status', 'approved')
-      .limit(3) // ⭐ 5개 → 3개로 축소
+      .limit(3)
 
-    // 시드 데이터 컨텍스트 생성 - ⭐ 간결하게 수정
+    // 시드 데이터 컨텍스트 생성
     let seedContext = ''
     if (seedMaterials && seedMaterials.length > 0) {
       seedContext = '\n\n참고 자료:\n'
@@ -78,7 +123,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // ⭐ Gemini 프롬프트 단축 (토큰 절약)
+    // Gemini 프롬프트
     const prompt = `당신은 교육과정 설계 전문가입니다.
 
 대상: ${targetAudience}
@@ -122,12 +167,12 @@ JSON 형식으로 출력:
 
 중요: 유효한 JSON만 출력, 코드블록 사용 금지`
 
-    // ⭐ Gemini API 호출 - 더 빠른 모델 + 토큰 축소
+    // Gemini API 호출
     const startTime = Date.now()
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.0-flash-exp', // ⭐ 2.5-flash → 2.0-flash-exp (더 빠름)
+      model: 'gemini-2.0-flash-exp',
       generationConfig: {
-        maxOutputTokens: 4096,       // ⭐ 8192 → 4096 (절반으로 축소)
+        maxOutputTokens: 4096,
         temperature: 0.7,
       }
     })
@@ -137,7 +182,7 @@ JSON 형식으로 출력:
     const text = response.text()
     
     const generationTime = Date.now() - startTime
-    console.log(`⏱️ AI 생성 시간: ${generationTime}ms`) // ⭐ 로그 추가
+    console.log(`⏱️ AI 생성 시간: ${generationTime}ms`)
 
     // JSON 파싱
     let courseData
@@ -146,12 +191,20 @@ JSON 형식으로 출력:
       courseData = JSON.parse(jsonText)
     } catch (parseError) {
       console.error('JSON parsing error:', parseError)
-      console.error('AI Response:', text.substring(0, 500)) // ⭐ 일부만 로그
+      console.error('AI Response:', text.substring(0, 500))
       return NextResponse.json(
         { error: 'AI 응답 파싱 실패. 다시 시도해주세요.' },
         { status: 500 }
       )
     }
+
+    // ⭐ 관련 자료 검색 (NEW)
+    const recommendedMaterials = await findRelatedMaterials(
+      supabase,
+      courseData,
+      targetAudience,
+      subject
+    )
 
     // DB에 저장
     const { data: course, error: dbError } = await supabase
@@ -178,6 +231,7 @@ JSON 형식으로 출력:
         ai_prompt_used: prompt,
         generation_time_ms: generationTime,
         status: 'completed',
+        recommended_materials: recommendedMaterials.map((m: any) => m.id), // ⭐ 추가
       })
       .select()
       .single()
@@ -202,6 +256,7 @@ JSON 형식으로 출력:
       success: true,
       course,
       generationTime,
+      recommendedMaterials, // ⭐ 프론트엔드로 전달
     })
 
   } catch (error: any) {
