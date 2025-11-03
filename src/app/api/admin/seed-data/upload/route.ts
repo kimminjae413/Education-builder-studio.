@@ -1,8 +1,9 @@
-// src/app/api/admin/seed-data/upload/route.ts
+// src/app/api/admin/seed-data/upload/route.ts (업데이트 버전)
+
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import { extractTextFromFile, cleanTextForAI } from '@/lib/utils/file-parser' // ⭐ 추가
+import { parseFile, getUserFriendlyError } from '@/lib/utils/file-parser'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
@@ -33,6 +34,8 @@ export async function POST(request: NextRequest) {
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
+
+    console.log(`📄 파일 업로드 시작: ${file.name} (${file.type})`)
 
     // 파일 검증
     const allowedTypes = [
@@ -78,75 +81,58 @@ export async function POST(request: NextRequest) {
       targetCategory = '초등 고학년'
     }
 
-    // 한글 파일명 처리
-    const timestamp = Date.now()
-    const nameWithoutExt = filename.replace(/\.[^/.]+$/, '')
-    const extension = fileExtension || 'pdf'
-    
-    const safeBaseName = nameWithoutExt
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '_')
-      .trim()
-    
-    const finalBaseName = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(safeBaseName) || safeBaseName.length === 0
-      ? `material_${timestamp}`
-      : `${timestamp}_${safeBaseName}`
-    
-    const storageFileName = `seed/${finalBaseName}.${extension}`
-    
-    console.log('Original filename:', filename)
-    console.log('Storage filename:', storageFileName)
-    
+    // 🔥 NEW: 파일 내용 완전 파싱
+    console.log('📖 파일 내용 추출 시작...')
+    let parsedContent
+    try {
+      const fileBuffer = await file.arrayBuffer()
+      parsedContent = await parseFile(fileBuffer, file.type)
+      
+      console.log('✅ 파일 파싱 완료:', {
+        textLength: parsedContent.text.length,
+        imageCount: parsedContent.imageCount,
+        hasTable: parsedContent.hasTable,
+        pageCount: parsedContent.pageCount
+      })
+    } catch (parseError: any) {
+      console.error('❌ 파일 파싱 실패:', parseError)
+      return NextResponse.json(
+        { error: getUserFriendlyError(parseError) },
+        { status: 400 }
+      )
+    }
+
     // Supabase Storage에 업로드
+    console.log('☁️ Storage 업로드 시작...')
     const fileBuffer = await file.arrayBuffer()
+    const fileName = `seed/${Date.now()}_${filename}`
     
     const { data: uploadData, error: uploadError } = await supabase
       .storage
       .from('teaching-materials')
-      .upload(storageFileName, fileBuffer, {
+      .upload(fileName, fileBuffer, {
         contentType: file.type,
         upsert: false
       })
 
     if (uploadError) {
-      console.error('Upload error:', uploadError)
+      console.error('❌ Upload error:', uploadError)
       return NextResponse.json(
-        { error: `File upload failed: ${uploadError.message}` },
+        { error: 'File upload failed' },
         { status: 500 }
       )
     }
 
-    // Public URL 생성
+    // 파일 URL 생성
     const { data: { publicUrl } } = supabase
       .storage
       .from('teaching-materials')
-      .getPublicUrl(storageFileName)
+      .getPublicUrl(fileName)
 
-    // ⭐ 파일 내용 텍스트 추출 (개선된 버전)
-    let contentText = ''
-    let extractionSuccess = false
-    
-    try {
-      console.log(`📂 파일 처리 시작: ${filename}`)
-      contentText = await extractTextFromFile(file)
-      
-      // 추출 성공 여부 판단 (파일명보다 충분히 길면 성공)
-      extractionSuccess = contentText.length > filename.length + 50
-      
-      if (extractionSuccess) {
-        contentText = cleanTextForAI(contentText)
-        console.log(`✅ 텍스트 추출 성공: ${contentText.length}자`)
-      } else {
-        console.warn(`⚠️ 텍스트 추출 실패, 파일명만 사용`)
-        contentText = `파일명: ${filename}\n대상: ${targetCategory}`
-      }
-    } catch (e) {
-      console.error('텍스트 추출 에러:', e)
-      contentText = `파일명: ${filename}\n대상: ${targetCategory}`
-      extractionSuccess = false
-    }
+    console.log('✅ Storage 업로드 완료')
 
-    // ⭐ AI로 자동 분류 (실제 내용 기반)
+    // 🔥 NEW: AI 분석 - 실제 내용 기반
+    console.log('🤖 AI 분석 시작...')
     let aiCategories = {
       subject_category: '',
       tool_categories: [] as string[],
@@ -157,66 +143,55 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const model = genAI.getGenerativeModel({ 
-        model: 'gemini-2.0-flash-exp',
-        generationConfig: {
-          temperature: 0.3, // 정확성 우선
-        }
-      })
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
       
-      // ⭐ 프롬프트 개선: 실제 내용 포함
+      // 풍부한 컨텍스트로 프롬프트 생성
       const prompt = `다음 교육 자료를 분석하여 JSON 형식으로 분류해주세요:
 
-**파일명**: ${filename}
-**대상**: ${targetCategory}
+파일명: ${filename}
+대상 학년: ${targetCategory}
+페이지/슬라이드 수: ${parsedContent.pageCount || '알 수 없음'}
+이미지 수: ${parsedContent.imageCount}개
+표 포함: ${parsedContent.hasTable ? '있음' : '없음'}
 
-${extractionSuccess ? 
-  `**실제 문서 내용** (처음 500자):\n${contentText.substring(0, 500)}` : 
-  `**문서 내용**: (추출 실패, 파일명 기반으로 분석)`
-}
+실제 내용:
+${parsedContent.summary}
 
-다음 JSON 형식으로 응답해주세요:
+다음 형식으로 응답해주세요:
 {
-  "subject_category": "주제 (예: 코딩, 로봇, 메이커, 과학, 수학, AI 등)",
-  "tool_categories": ["도구/교구 (예: 아두이노, 마이크로비트, 레고, 3D프린터 등)"],
-  "method_categories": ["교수방법 (예: 프로젝트학습, 문제해결학습, 협동학습, 강의, 실습 등)"],
-  "description": "${extractionSuccess ? '실제 내용 기반' : '파일명 기반'} 설명 (2-3문장, 100자 이내)",
-  "learning_objectives": "${extractionSuccess ? '문서에서 파악한' : '추정되는'} 학습 목표 (100자 이내)",
-  "difficulty": "난이도 (low/medium/high)"
+  "subject_category": "주제 (예: 코딩, 로봇, 과학, 수학, 언어, 예술, 메이커, AI 등)",
+  "tool_categories": ["사용된 도구/교구 배열 (예: 아두이노, 레고, 마이크로비트, 스크래치, 엔트리, 3D프린터 등)"],
+  "method_categories": ["교수방법 배열 (예: 프로젝트학습, 협동학습, 문제해결학습, 탐구학습, 토론학습 등)"],
+  "description": "자료에 대한 간단한 설명 (실제 내용 기반, 100자 이내)",
+  "learning_objectives": "주요 학습 목표 (실제 내용 기반, 100자 이내)",
+  "difficulty": "난이도 (low/medium/high 중 하나)"
 }
 
 **중요**: 
-${extractionSuccess ? 
-  '- 실제 문서 내용을 정확히 분석하세요\n- 문서에 명시된 학습 활동과 목표를 반영하세요' : 
-  '- 파일명만으로 추정하여 작성하세요'
-}
-- 반드시 유효한 JSON만 출력하세요 (코드 블록 사용 금지)`
+1. 실제 내용을 바탕으로 정확하게 분류하세요
+2. 반드시 위 JSON 형식으로만 응답하고, 다른 설명은 추가하지 마세요
+3. description과 learning_objectives는 실제 내용에서 추출하세요`
 
-      console.log('🤖 AI 분석 시작...')
       const result = await model.generateContent(prompt)
       const responseText = result.response.text()
+      
+      console.log('🤖 AI 응답:', responseText.substring(0, 200))
       
       // JSON 추출
       const jsonMatch = responseText.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
         aiCategories = JSON.parse(jsonMatch[0])
-        console.log('✅ AI 분석 성공:', aiCategories)
-      } else {
-        throw new Error('JSON 추출 실패')
+        console.log('✅ AI 분석 완료:', aiCategories)
       }
     } catch (aiError) {
-      console.error('AI 분류 실패:', aiError)
-      aiCategories = {
-        subject_category: '기타',
-        tool_categories: [],
-        method_categories: ['강의', '실습'],
-        description: extractionSuccess ? contentText.substring(0, 100) : filename,
-        learning_objectives: '교육 자료',
-        difficulty: 'medium'
-      }
+      console.error('❌ AI categorization failed:', aiError)
+      // AI 실패 시 기본값 사용
+      aiCategories.description = `${filename}의 교육 자료`
+      aiCategories.learning_objectives = `${targetCategory} 대상 학습`
     }
 
-    // DB 저장
+    // teaching_materials 테이블에 저장
+    console.log('💾 DB 저장 시작...')
     const { data: material, error: insertError } = await supabase
       .from('teaching_materials')
       .insert({
@@ -225,52 +200,60 @@ ${extractionSuccess ?
         file_url: publicUrl,
         file_size: file.size,
         file_type: file.type,
-        title: filename.replace(/\.[^/.]+$/, ''),
+        title: filename.replace(/\.[^/.]+$/, ''), // 확장자 제거
         description: aiCategories.description,
-        content_text: contentText.substring(0, 10000), // 최대 10000자 저장
+        content_text: parsedContent.summary, // 🔥 NEW: 실제 내용 저장
         target_category: targetCategory,
         subject_category: aiCategories.subject_category || '기타',
         tool_categories: aiCategories.tool_categories || [],
         method_categories: aiCategories.method_categories || [],
         difficulty: aiCategories.difficulty || 'medium',
         learning_objectives: aiCategories.learning_objectives,
-        status: 'approved',
+        status: 'approved', // 시드 데이터는 자동 승인
         is_seed_data: true,
         usage_count: 0,
         download_count: 0,
         bookmark_count: 0,
         rating: 0,
         rating_count: 0,
-        extracted_text_length: extractionSuccess ? contentText.length : 0, // ⭐ 추가
-        text_extraction_success: extractionSuccess, // ⭐ 추가
+        // 🔥 NEW: 파싱 메타데이터 저장 (선택적)
+        metadata: {
+          pageCount: parsedContent.pageCount,
+          imageCount: parsedContent.imageCount,
+          hasTable: parsedContent.hasTable,
+          estimatedReadingTime: parsedContent.metadata.estimatedReadingTime
+        }
       })
       .select()
       .single()
 
     if (insertError) {
-      console.error('Insert error:', insertError)
-      // 업로드한 파일 삭제
-      await supabase.storage.from('teaching-materials').remove([storageFileName])
+      console.error('❌ Insert error:', insertError)
+      // 업로드된 파일 삭제
+      await supabase.storage.from('teaching-materials').remove([fileName])
       return NextResponse.json(
-        { error: `Failed to save material data: ${insertError.message}` },
+        { error: 'Failed to save material data' },
         { status: 500 }
       )
     }
 
-    console.log(`✅ 시드 데이터 업로드 완료: ${filename}`)
+    console.log('✅ DB 저장 완료')
 
     return NextResponse.json({
       success: true,
       materialId: material.id,
       filename: filename,
-      storageFileName: storageFileName,
       categories: aiCategories,
-      textExtracted: extractionSuccess, // ⭐ 클라이언트에 알림
-      textLength: extractionSuccess ? contentText.length : 0, // ⭐ 추가
+      parsed: {
+        textLength: parsedContent.text.length,
+        imageCount: parsedContent.imageCount,
+        hasTable: parsedContent.hasTable,
+        pageCount: parsedContent.pageCount
+      }
     })
 
   } catch (error) {
-    console.error('Seed data upload error:', error)
+    console.error('❌ Seed data upload error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
