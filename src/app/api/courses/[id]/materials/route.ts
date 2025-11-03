@@ -129,10 +129,17 @@ export async function POST(
     }
 
     // 다운로드 횟수 증가
+    // ⭐ FIX: supabase.raw() 대신 클라이언트 사이드 증가 사용
+    const { data: current } = await supabase
+      .from('teaching_materials')
+      .select('download_count')
+      .eq('id', materialId)
+      .single()
+    
     const { error } = await supabase
       .from('teaching_materials')
       .update({ 
-        download_count: supabase.raw('download_count + 1'),
+        download_count: (current?.download_count || 0) + 1,
         updated_at: new Date().toISOString()
       })
       .eq('id', materialId)
