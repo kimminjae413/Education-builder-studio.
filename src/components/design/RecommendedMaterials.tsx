@@ -16,14 +16,11 @@ interface Material {
   similarity?: number
 }
 
-interface RecommendedMaterialsProps {
-  courseId: string
-}
-
-export function RecommendedMaterials({ courseId }: RecommendedMaterialsProps) {
+export function RecommendedMaterials({ courseId }: { courseId: string }) {
   const [materials, setMaterials] = useState<Material[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [downloading, setDownloading] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchRecommendations() {
@@ -45,6 +42,27 @@ export function RecommendedMaterials({ courseId }: RecommendedMaterialsProps) {
 
     fetchRecommendations()
   }, [courseId])
+
+  const handleDownload = async (material: Material) => {
+    setDownloading(material.id)
+    try {
+      const response = await fetch(material.file_url)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = material.filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('Download error:', error)
+      alert('다운로드에 실패했습니다. 다시 시도해주세요.')
+    } finally {
+      setDownloading(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -107,29 +125,6 @@ export function RecommendedMaterials({ courseId }: RecommendedMaterialsProps) {
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {materials.map((material) => {
-          const [downloading, setDownloading] = useState(false)
-
-          const handleDownload = async () => {
-            setDownloading(true)
-            try {
-              const response = await fetch(material.file_url)
-              const blob = await response.blob()
-              const url = window.URL.createObjectURL(blob)
-              const a = document.createElement('a')
-              a.href = url
-              a.download = material.filename
-              document.body.appendChild(a)
-              a.click()
-              window.URL.revokeObjectURL(url)
-              document.body.removeChild(a)
-            } catch (error) {
-              console.error('Download error:', error)
-              alert('다운로드에 실패했습니다. 다시 시도해주세요.')
-            } finally {
-              setDownloading(false)
-            }
-          }
-
           const similarityPercent = material.similarity 
             ? Math.round(material.similarity * 100) 
             : null
@@ -172,11 +167,11 @@ export function RecommendedMaterials({ courseId }: RecommendedMaterialsProps) {
               
               <div className="flex gap-2">
                 <button
-                  onClick={handleDownload}
-                  disabled={downloading}
+                  onClick={() => handleDownload(material)}
+                  disabled={downloading === material.id}
                   className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-cobalt-600 text-white rounded-lg hover:bg-cobalt-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
                 >
-                  {downloading ? (
+                  {downloading === material.id ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <span>다운로드 중...</span>
