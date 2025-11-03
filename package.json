@@ -20,7 +20,9 @@
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
     "pdf-parse": "^1.1.1",
-    "mammoth": "^1.8.0"
+    "mammoth": "^1.8.0",
+    "jszip": "^3.10.1",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "typescript": "^5",
