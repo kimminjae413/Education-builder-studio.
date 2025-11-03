@@ -1,24 +1,47 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 export function GlobalLoadingIndicator() {
   const [loading, setLoading] = useState(false)
   const pathname = usePathname()
-  const searchParams = useSearchParams()
 
   useEffect(() => {
-    // 페이지 전환 시작
-    setLoading(true)
-    
-    // 페이지 전환 완료 (약간의 딜레이 후)
-    const timer = setTimeout(() => {
-      setLoading(false)
-    }, 500)
+    // 모든 링크와 버튼에 클릭 이벤트 추가
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      const link = target.closest('a')
+      const button = target.closest('button')
 
-    return () => clearTimeout(timer)
-  }, [pathname, searchParams])
+      // 링크 클릭 (외부 링크 제외)
+      if (link && link.href && !link.href.startsWith('mailto:') && !link.href.startsWith('tel:')) {
+        const url = new URL(link.href)
+        // 같은 도메인 내 링크만
+        if (url.origin === window.location.origin && url.pathname !== pathname) {
+          setLoading(true)
+        }
+      }
+
+      // 버튼 클릭 (type="submit" 또는 onClick이 있는 경우)
+      if (button && (button.type === 'submit' || button.onclick)) {
+        setLoading(true)
+        // 5초 후 자동으로 로딩 해제 (안전장치)
+        setTimeout(() => setLoading(false), 5000)
+      }
+    }
+
+    document.addEventListener('click', handleClick)
+
+    return () => {
+      document.removeEventListener('click', handleClick)
+    }
+  }, [pathname])
+
+  // 페이지 전환 완료 시 로딩 해제
+  useEffect(() => {
+    setLoading(false)
+  }, [pathname])
 
   if (!loading) return null
 
@@ -29,7 +52,7 @@ export function GlobalLoadingIndicator() {
         <div className="h-full bg-cobalt-500 animate-loading-bar" />
       </div>
 
-      {/* 전체 화면 오버레이 (선택적) */}
+      {/* 전체 화면 오버레이 */}
       <div className="fixed inset-0 z-[9998] bg-white/50 backdrop-blur-sm flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-lg p-6 flex items-center gap-3">
           <svg 
