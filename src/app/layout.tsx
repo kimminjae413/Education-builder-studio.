@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { GlobalLoadingIndicator } from '@/components/GlobalLoadingIndicator'
+import { Suspense } from 'react'
 
 export const metadata: Metadata = {
-  title: 'Education Builder Studio - 지혜를 설계하고, 경험을 공유하며',
-  description: 'AI 기반 교육과정 개발 지원 및 공유 플랫폼',
-  keywords: ['교육', '강사', '교육과정', 'AI', '코딩교육', '메이커교육'],
+  title: 'Education Builder Studio',
+  description: '지혜를 설계하고, 경험을 공유하며, 교육의 미래를 함께 짓다',
 }
 
 export default function RootLayout({
@@ -13,8 +14,13 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ko" suppressHydrationWarning>
-      <body className="font-sans antialiased">
+    <html lang="ko">
+      <body>
+        {/* ⭐ 전역 로딩 인디케이터 */}
+        <Suspense fallback={null}>
+          <GlobalLoadingIndicator />
+        </Suspense>
+        
         {children}
       </body>
     </html>
