@@ -69,7 +69,7 @@
   }
 }
 
-/* ⭐ 로딩 & 피드백 애니메이션 추가 */
+/* ⭐ 로딩 & 피드백 애니메이션 */
 @layer utilities {
   /* 에러 메시지 흔들림 */
   @keyframes shake {
@@ -89,5 +89,40 @@
   
   .animate-spin {
     animation: spin 1s linear infinite;
+  }
+
+  /* ⭐ 로딩 바 애니메이션 */
+  @keyframes loading-bar {
+    0% { width: 0%; }
+    50% { width: 70%; }
+    100% { width: 100%; }
+  }
+  
+  .animate-loading-bar {
+    animation: loading-bar 1s ease-in-out infinite;
+  }
+
+  /* 페이드인 */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+}
+
+/* ⭐ 클릭 가능한 요소에 기본 피드백 */
+@layer components {
+  button:not(:disabled):active,
+  a:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 }
