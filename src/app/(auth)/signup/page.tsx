@@ -1,7 +1,47 @@
+'use client'
+
 import { SignupForm } from '@/components/auth/SignupForm'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 
 export default function SignupPage() {
+  const [checking, setChecking] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        // 이미 로그인됨 → 대시보드로
+        router.push('/dashboard')
+      } else {
+        // 로그인 안됨 → 폼 표시
+        setChecking(false)
+      }
+    }
+
+    checkAuth()
+  }, [router])
+
+  // 로딩 중
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cobalt-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <svg className="animate-spin h-12 w-12 text-cobalt-500 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p className="text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-cobalt-50 to-white flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
