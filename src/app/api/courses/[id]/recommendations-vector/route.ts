@@ -115,7 +115,7 @@ export async function GET(
 
     // 최종 점수 순으로 정렬하고 상위 8개
     const topRecommendations = scoredResults
-      .sort((a, b) => b.recommendation_score - a.recommendation_score)
+      .sort((a: any, b: any) => b.recommendation_score - a.recommendation_score)
       .slice(0, 8)
 
     console.log(`✅ 최종 추천: ${topRecommendations.length}개`)
