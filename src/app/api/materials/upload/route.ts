@@ -95,11 +95,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 7. 파일명 생성 (충돌 방지)
+    // 7. 파일명 생성 (충돌 방지 + 한글/특수문자 처리)
     const timestamp = Date.now()
-    const fileName = `${user.id}/${timestamp}_${file.name}`
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'file'
+    
+    // 안전한 파일명 생성: timestamp + 확장자
+    // 원본 파일명은 DB의 filename 컬럼에 저장
+    const fileName = `${user.id}/${timestamp}.${fileExt}`
 
     console.log('☁️ Storage 업로드 시작:', fileName)
+    console.log('📄 원본 파일명:', file.name)
 
     // 8. Supabase Storage에 업로드
     const { data: uploadData, error: uploadError } = await supabase.storage
