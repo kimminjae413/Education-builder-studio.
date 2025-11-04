@@ -1,11 +1,25 @@
+// src/components/dashboard/DashboardHeader.tsx
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { RankBadge } from '@/components/rank/RankBadge'
 import { User } from '@supabase/supabase-js'
-import { Menu, X, LogOut, User as UserIcon } from 'lucide-react'
+import { 
+  Menu, 
+  X, 
+  LogOut, 
+  User as UserIcon,
+  LayoutDashboard,
+  Wand2,
+  Library,
+  Upload,
+  Trophy,
+  Shield
+} from 'lucide-react'
+import { cn } from '@/lib/utils/cn'
 
 interface DashboardHeaderProps {
   user: User
@@ -14,6 +28,7 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
@@ -21,6 +36,43 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
     await supabase.auth.signOut()
     router.push('/login')
     router.refresh()
+  }
+
+  const navItems = [
+    {
+      href: '/dashboard',
+      label: '대시보드',
+      icon: LayoutDashboard,
+    },
+    {
+      href: '/design',
+      label: 'AI 설계',
+      icon: Wand2,
+    },
+    {
+      href: '/library',
+      label: '라이브러리',
+      icon: Library,
+    },
+    {
+      href: '/contribute',
+      label: '콘텐츠 기여',
+      icon: Upload,
+    },
+    {
+      href: '/rewards',
+      label: '리워드',
+      icon: Trophy,
+    },
+  ]
+
+  // ⭐ 관리자인 경우 관리자 메뉴 추가
+  if (profile?.role === 'admin') {
+    navItems.push({
+      href: '/admin',
+      label: '관리자',
+      icon: Shield,
+    })
   }
 
   return (
@@ -32,7 +84,8 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
             {/* 모바일 메뉴 버튼 */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label="메뉴 열기/닫기"
             >
               {mobileMenuOpen ? (
                 <X className="w-6 h-6 text-gray-600" />
@@ -42,7 +95,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
             </button>
 
             {/* 로고 */}
-            <div className="flex items-center gap-2">
+            <Link href="/dashboard" className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-lg bg-cobalt-500 flex items-center justify-center shadow-cobalt-md">
                 <svg
                   className="w-6 h-6 text-white"
@@ -62,7 +115,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
                 <h1 className="text-lg font-bold text-gray-900">EBS</h1>
                 <p className="text-xs text-gray-500">Education Builder Studio</p>
               </div>
-            </div>
+            </Link>
           </div>
 
           {/* 사용자 정보 */}
@@ -89,6 +142,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
                   onClick={() => router.push('/dashboard/profile')}
                   className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
                   title="프로필"
+                  aria-label="프로필"
                 >
                   <UserIcon className="w-5 h-5 text-gray-600" />
                 </button>
@@ -98,6 +152,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
                   onClick={handleLogout}
                   className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
                   title="로그아웃"
+                  aria-label="로그아웃"
                 >
                   <LogOut className="w-5 h-5" />
                 </button>
@@ -107,11 +162,12 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
         </div>
       </div>
 
-      {/* 모바일 메뉴 (드롭다운) */}
+      {/* ⭐ 모바일 메뉴 드롭다운 (네비게이션 포함) */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white">
-          <div className="p-4 space-y-2">
-            <div className="flex items-center justify-between mb-4">
+        <div className="lg:hidden border-t border-gray-200 bg-white">
+          {/* 사용자 정보 */}
+          <div className="p-4 border-b border-gray-100">
+            <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium text-gray-900">{profile?.name || '이름 없음'}</p>
                 <p className="text-sm text-gray-500">{user.email}</p>
@@ -119,6 +175,38 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
               {profile?.rank && <RankBadge rank={profile.rank} size="sm" />}
             </div>
           </div>
+
+          {/* ⭐ 네비게이션 메뉴 */}
+          <nav className="p-2">
+            {navItems.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+              const isAdminMenu = item.href === '/admin'
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors mb-1',
+                    isActive && !isAdminMenu && 'bg-cobalt-500 text-white',
+                    isActive && isAdminMenu && 'bg-red-500 text-white',
+                    !isActive && !isAdminMenu && 'text-gray-700 hover:bg-gray-100',
+                    !isActive && isAdminMenu && 'text-red-600 hover:bg-red-50'
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span>{item.label}</span>
+                  {isAdminMenu && !isActive && (
+                    <span className="ml-auto text-xs font-semibold px-2 py-0.5 bg-red-100 text-red-700 rounded">
+                      ADMIN
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
+          </nav>
         </div>
       )}
     </header>
