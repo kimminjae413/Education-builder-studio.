@@ -139,7 +139,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
               <div className="flex items-center gap-1">
                 {/* 프로필 버튼 */}
                 <button
-                  onClick={() => router.push('/dashboard/profile')}
+                  onClick={() => router.push('/profile')}
                   className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
                   title="프로필"
                   aria-label="프로필"
