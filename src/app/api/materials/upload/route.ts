@@ -22,48 +22,86 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('📤 파일 업로드 요청 시작')
+
     const supabase = await createClient()
     
-    // 인증 확인
+    // 1. 인증 확인
     const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    
+    if (authError) {
+      console.error('❌ 인증 오류:', authError)
+      return NextResponse.json({ error: '인증 오류가 발생했습니다' }, { status: 401 })
     }
 
-    // FormData 파싱
-    const formData = await request.formData()
+    if (!user) {
+      console.error('❌ 사용자 없음')
+      return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 })
+    }
+
+    console.log('✅ 사용자 인증 완료:', user.email)
+
+    // 2. FormData 파싱
+    let formData: FormData
+    try {
+      formData = await request.formData()
+    } catch (parseError) {
+      console.error('❌ FormData 파싱 실패:', parseError)
+      return NextResponse.json({ error: 'FormData 파싱에 실패했습니다' }, { status: 400 })
+    }
+
     const file = formData.get('file') as File
     const title = formData.get('title') as string
     const description = formData.get('description') as string
     const targetCategory = formData.get('target_category') as string
     const subjectCategory = formData.get('subject_category') as string
 
+    console.log('📋 업로드 정보:', {
+      filename: file?.name,
+      size: file?.size,
+      type: file?.type,
+      title: title,
+      targetCategory: targetCategory,
+      subjectCategory: subjectCategory
+    })
+
+    // 3. 파일 존재 확인
     if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+      console.error('❌ 파일 없음')
+      return NextResponse.json({ error: '파일을 선택해주세요' }, { status: 400 })
     }
 
-    // 파일 크기 검증
+    // 4. 제목 확인
+    if (!title || title.trim() === '') {
+      console.error('❌ 제목 없음')
+      return NextResponse.json({ error: '제목을 입력해주세요' }, { status: 400 })
+    }
+
+    // 5. 파일 크기 검증
     if (file.size > MAX_FILE_SIZE) {
+      console.error('❌ 파일 크기 초과:', file.size)
       return NextResponse.json(
         { error: '파일 크기는 50MB를 초과할 수 없습니다' },
         { status: 400 }
       )
     }
 
-    // 파일 타입 검증
+    // 6. 파일 타입 검증
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      console.error('❌ 지원하지 않는 파일 형식:', file.type)
       return NextResponse.json(
         { error: '지원하지 않는 파일 형식입니다' },
         { status: 400 }
       )
     }
 
-    // 파일명 생성 (충돌 방지)
+    // 7. 파일명 생성 (충돌 방지)
     const timestamp = Date.now()
-    const fileExt = file.name.split('.').pop()
     const fileName = `${user.id}/${timestamp}_${file.name}`
 
-    // Supabase Storage에 업로드
+    console.log('☁️ Storage 업로드 시작:', fileName)
+
+    // 8. Supabase Storage에 업로드
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('teaching-materials')
       .upload(fileName, file, {
@@ -72,19 +110,25 @@ export async function POST(request: NextRequest) {
       })
 
     if (uploadError) {
-      console.error('Storage upload error:', uploadError)
+      console.error('❌ Storage 업로드 실패:', uploadError)
       return NextResponse.json(
-        { error: '파일 업로드에 실패했습니다' },
+        { error: `파일 업로드 실패: ${uploadError.message}` },
         { status: 500 }
       )
     }
 
-    // 파일 URL 생성
+    console.log('✅ Storage 업로드 완료:', uploadData.path)
+
+    // 9. 파일 URL 생성
     const { data: { publicUrl } } = supabase.storage
       .from('teaching-materials')
       .getPublicUrl(fileName)
 
-    // teaching_materials 테이블에 메타데이터 저장
+    console.log('🔗 Public URL 생성:', publicUrl)
+
+    // 10. teaching_materials 테이블에 메타데이터 저장
+    console.log('💾 데이터베이스 저장 시작')
+
     const { data: material, error: dbError } = await supabase
       .from('teaching_materials')
       .insert({
@@ -93,8 +137,8 @@ export async function POST(request: NextRequest) {
         file_url: publicUrl,
         file_size: file.size,
         file_type: file.type,
-        title: title || file.name,
-        description: description || null,
+        title: title.trim(),
+        description: description?.trim() || null,
         target_category: targetCategory || null,
         subject_category: subjectCategory || null,
         status: 'pending', // 승인 대기
@@ -104,29 +148,33 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (dbError) {
-      console.error('Database insert error:', dbError)
+      console.error('❌ 데이터베이스 저장 실패:', dbError)
       
       // DB 저장 실패 시 업로드된 파일 삭제
+      console.log('🗑️ 업로드된 파일 삭제 시도...')
       await supabase.storage
         .from('teaching-materials')
         .remove([fileName])
       
       return NextResponse.json(
-        { error: '메타데이터 저장에 실패했습니다' },
+        { error: `데이터 저장 실패: ${dbError.message}` },
         { status: 500 }
       )
     }
 
+    console.log('✅ 데이터베이스 저장 완료:', material.id)
+
+    // 11. 성공 응답
     return NextResponse.json({
       success: true,
       material,
       message: '파일이 성공적으로 업로드되었습니다',
     })
 
-  } catch (error) {
-    console.error('Upload error:', error)
+  } catch (error: any) {
+    console.error('❌ 업로드 중 예상치 못한 오류:', error)
     return NextResponse.json(
-      { error: '파일 업로드 중 오류가 발생했습니다' },
+      { error: `업로드 중 오류 발생: ${error.message || '알 수 없는 오류'}` },
       { status: 500 }
     )
   }
