@@ -10,7 +10,8 @@ import {
   Library, 
   Upload, 
   Trophy,
-  Shield
+  Shield,
+  User
 } from 'lucide-react'
 
 interface BottomNavProps {
@@ -42,9 +43,9 @@ export function BottomNav({ profile }: BottomNavProps) {
       icon: Upload,
     },
     {
-      href: '/rewards',
-      label: '리워드',
-      icon: Trophy,
+      href: '/profile',
+      label: '프로필',
+      icon: User,
     },
   ]
 
