@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { RankBadge } from '@/components/rank/RankBadge'
 import { InstructorRank } from '@/lib/rank/types'
-import { Search, FileText, Download, Eye, CheckCircle, XCircle, X } from 'lucide-react'
+import { Search, FileText, Download, Eye, CheckCircle, XCircle, X, ExternalLink } from 'lucide-react'
 
 interface ContentsTableProps {
   materials: any[]
@@ -25,7 +25,7 @@ export function ContentsTable({ materials }: ContentsTableProps) {
   const [sortBy, setSortBy] = useState<'created_at' | 'title'>('created_at')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   
-  // 🔴 리뷰 모달 상태
+  // 리뷰 모달 상태
   const [modal, setModal] = useState<ReviewModal>({ isOpen: false, material: null, action: null })
   const [reviewNote, setReviewNote] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -58,20 +58,60 @@ export function ContentsTable({ materials }: ContentsTableProps) {
       return sortOrder === 'asc' ? aVal - (bVal as number) : (bVal as number) - aVal
     })
 
-  // 🔴 리뷰 모달 열기
+  // 🆕 파일 다운로드 핸들러
+  const handleDownload = async (material: any) => {
+    try {
+      // Supabase Storage URL에서 직접 다운로드
+      const response = await fetch(material.file_url)
+      
+      if (!response.ok) {
+        throw new Error('파일을 가져올 수 없습니다')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = material.filename || `${material.title}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      // 다운로드 카운트 증가
+      const supabase = createClient()
+      await supabase
+        .from('teaching_materials')
+        .update({ download_count: (material.download_count || 0) + 1 })
+        .eq('id', material.id)
+
+      router.refresh()
+    } catch (error) {
+      console.error('다운로드 실패:', error)
+      alert('❌ 파일 다운로드에 실패했습니다.')
+    }
+  }
+
+  // 🆕 파일 미리보기 핸들러
+  const handlePreview = (material: any) => {
+    // 새 창에서 파일 열기
+    window.open(material.file_url, '_blank', 'noopener,noreferrer')
+  }
+
+  // 리뷰 모달 열기
   const openReviewModal = (material: any, action: 'approve' | 'reject') => {
     setModal({ isOpen: true, material, action })
     setReviewNote(material.review_note || '')
   }
 
-  // 🔴 리뷰 모달 닫기
+  // 리뷰 모달 닫기
   const closeReviewModal = () => {
     setModal({ isOpen: false, material: null, action: null })
     setReviewNote('')
     setIsSubmitting(false)
   }
 
-  // 🔴 승인/거부 제출
+  // 승인/거부 제출
   const handleReviewSubmit = async () => {
     if (!modal.material || !modal.action) return
 
@@ -87,8 +127,6 @@ export function ContentsTable({ materials }: ContentsTableProps) {
           status: newStatus,
           review_note: reviewNote.trim() || null,
           reviewed_at: new Date().toISOString(),
-          // reviewed_by는 서버에서 자동으로 설정되어야 하지만, 
-          // 클라이언트에서도 설정 가능하도록 추가
         })
         .eq('id', modal.material.id)
 
@@ -104,6 +142,27 @@ export function ContentsTable({ materials }: ContentsTableProps) {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // 🆕 파일 확장자 추출
+  const getFileExtension = (filename: string) => {
+    const ext = filename?.split('.').pop()?.toLowerCase()
+    return ext || 'file'
+  }
+
+  // 🆕 파일 타입 아이콘 색상
+  const getFileTypeColor = (filename: string) => {
+    const ext = getFileExtension(filename)
+    const colors: Record<string, string> = {
+      'pdf': 'bg-red-100 text-red-600',
+      'ppt': 'bg-orange-100 text-orange-600',
+      'pptx': 'bg-orange-100 text-orange-600',
+      'doc': 'bg-blue-100 text-blue-600',
+      'docx': 'bg-blue-100 text-blue-600',
+      'hwp': 'bg-green-100 text-green-600',
+      'hwpx': 'bg-green-100 text-green-600',
+    }
+    return colors[ext] || 'bg-gray-100 text-gray-600'
   }
 
   // 상태 뱃지
@@ -198,6 +257,9 @@ export function ContentsTable({ materials }: ContentsTableProps) {
                 업로드일
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                파일
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 관리
               </th>
             </tr>
@@ -205,10 +267,11 @@ export function ContentsTable({ materials }: ContentsTableProps) {
           <tbody className="divide-y divide-gray-200">
             {filteredMaterials.map((material) => (
               <tr key={material.id} className="hover:bg-gray-50">
+                {/* 콘텐츠 정보 */}
                 <td className="px-4 py-3">
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-10 h-10 bg-cobalt-100 rounded-lg flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-cobalt-600" />
+                    <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${getFileTypeColor(material.filename)}`}>
+                      <FileText className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-900 truncate">
@@ -217,9 +280,14 @@ export function ContentsTable({ materials }: ContentsTableProps) {
                       <div className="text-sm text-gray-500 truncate">
                         {material.subject} · {material.target_audience}
                       </div>
+                      <div className="text-xs text-gray-400 mt-0.5">
+                        {material.filename}
+                      </div>
                     </div>
                   </div>
                 </td>
+
+                {/* 업로더 */}
                 <td className="px-4 py-3">
                   <div>
                     <div className="font-medium text-gray-900">
@@ -230,6 +298,8 @@ export function ContentsTable({ materials }: ContentsTableProps) {
                     </div>
                   </div>
                 </td>
+
+                {/* 상태 */}
                 <td className="px-4 py-3">
                   <StatusBadge status={material.status} />
                   {material.reviewed_at && (
@@ -238,6 +308,8 @@ export function ContentsTable({ materials }: ContentsTableProps) {
                     </div>
                   )}
                 </td>
+
+                {/* 통계 */}
                 <td className="px-4 py-3">
                   <div className="text-sm space-y-1">
                     <div className="flex items-center gap-1 text-gray-600">
@@ -250,11 +322,37 @@ export function ContentsTable({ materials }: ContentsTableProps) {
                     </div>
                   </div>
                 </td>
+
+                {/* 업로드일 */}
                 <td className="px-4 py-3">
                   <div className="text-sm text-gray-500">
                     {new Date(material.created_at).toLocaleDateString('ko-KR')}
                   </div>
                 </td>
+
+                {/* 🆕 파일 액션 */}
+                <td className="px-4 py-3">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handlePreview(material)}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm text-cobalt-600 hover:bg-cobalt-50 rounded-lg transition-colors"
+                      title="새 창에서 미리보기"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      미리보기
+                    </button>
+                    <button
+                      onClick={() => handleDownload(material)}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                      title="파일 다운로드"
+                    >
+                      <Download className="h-4 w-4" />
+                      다운로드
+                    </button>
+                  </div>
+                </td>
+
+                {/* 관리 버튼 */}
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
                     {material.status === 'pending' && (
@@ -309,7 +407,7 @@ export function ContentsTable({ materials }: ContentsTableProps) {
         </div>
       )}
 
-      {/* 🔴 리뷰 모달 */}
+      {/* 리뷰 모달 */}
       {modal.isOpen && modal.material && modal.action && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -357,6 +455,10 @@ export function ContentsTable({ materials }: ContentsTableProps) {
                       {new Date(modal.material.created_at).toLocaleDateString('ko-KR')}
                     </div>
                   </div>
+                  <div className="col-span-2">
+                    <div className="text-gray-600 mb-1">파일명</div>
+                    <div className="font-medium text-sm">{modal.material.filename}</div>
+                  </div>
                 </div>
                 {modal.material.description && (
                   <div>
@@ -364,6 +466,24 @@ export function ContentsTable({ materials }: ContentsTableProps) {
                     <div className="text-sm">{modal.material.description}</div>
                   </div>
                 )}
+
+                {/* 🆕 파일 확인 버튼 */}
+                <div className="flex gap-2 pt-3 border-t border-gray-200">
+                  <button
+                    onClick={() => handlePreview(modal.material)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-cobalt-600 bg-cobalt-50 hover:bg-cobalt-100 rounded-lg transition-colors"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    파일 미리보기
+                  </button>
+                  <button
+                    onClick={() => handleDownload(modal.material)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  >
+                    <Download className="h-4 w-4" />
+                    파일 다운로드
+                  </button>
+                </div>
               </div>
 
               {/* 검토 메모 */}
