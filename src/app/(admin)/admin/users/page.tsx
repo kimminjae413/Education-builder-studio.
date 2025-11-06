@@ -39,6 +39,10 @@ export default async function UsersPage() {
     console.error('❌ Users Query Error:', usersError)
   }
 
+  // 서버 로그에도 출력
+  console.log('✅ UsersPage - allUsers:', allUsers?.length, '명')
+  console.log('✅ UsersPage - emails:', allUsers?.map(u => u.email).join(', '))
+
   // ✅ 강사만 필터링 (통계용)
   const instructors = allUsers?.filter(u => u.role === 'instructor') || []
 
@@ -54,23 +58,54 @@ export default async function UsersPage() {
 
   return (
     <div className="space-y-8">
-      {/* 🔍 디버그 정보 */}
-      <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4">
-        <h3 className="font-bold text-yellow-900 mb-2">🔍 디버그 정보</h3>
-        <div className="text-sm space-y-1 text-yellow-800">
-          <div><strong>현재 사용자:</strong> {user.email}</div>
-          <div><strong>관리자 여부:</strong> {profile?.role === 'admin' ? '✅ Yes' : '❌ No'}</div>
-          <div><strong>조회 에러:</strong> {usersError ? usersError.message : '✅ 없음'}</div>
-          <div><strong>allUsers:</strong> {allUsers?.length || 0}명</div>
-          <div><strong>instructors:</strong> {instructors.length}명</div>
-          <div><strong>admin:</strong> {allUsers?.filter(u => u.role === 'admin').length || 0}명</div>
+      {/* 🔍 디버그 정보 - 인라인 스타일 사용! */}
+      <div style={{
+        backgroundColor: '#fef3c7',
+        borderLeft: '8px solid #f59e0b',
+        borderRadius: '12px',
+        padding: '24px',
+        marginBottom: '24px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+      }}>
+        <h3 style={{ 
+          fontSize: '24px', 
+          fontWeight: 'bold', 
+          color: '#78350f',
+          marginBottom: '16px'
+        }}>
+          🔍 디버그 정보 (인라인 스타일로 무조건 보임!)
+        </h3>
+        <div style={{ fontSize: '16px', color: '#92400e', lineHeight: '1.8' }}>
+          <div style={{ marginBottom: '8px' }}><strong>현재 사용자:</strong> {user.email}</div>
+          <div style={{ marginBottom: '8px' }}><strong>관리자 여부:</strong> {profile?.role === 'admin' ? '✅ Yes' : '❌ No'}</div>
+          <div style={{ marginBottom: '8px' }}><strong>조회 에러:</strong> {usersError ? usersError.message : '✅ 없음'}</div>
+          <div style={{ marginBottom: '8px' }}><strong>allUsers:</strong> {allUsers?.length || 0}명</div>
+          <div style={{ marginBottom: '8px' }}><strong>instructors:</strong> {instructors.length}명</div>
+          <div style={{ marginBottom: '8px' }}><strong>admin:</strong> {allUsers?.filter(u => u.role === 'admin').length || 0}명</div>
           {allUsers && allUsers.length > 0 && (
-            <div className="text-xs text-yellow-700 mt-2 font-mono">
-              이메일: {allUsers.map(u => u.email).join(', ')}
+            <div style={{ 
+              fontSize: '14px', 
+              color: '#a16207', 
+              marginTop: '16px', 
+              fontFamily: 'monospace',
+              backgroundColor: '#fef9c3',
+              padding: '12px',
+              borderRadius: '6px'
+            }}>
+              <strong>이메일 목록:</strong><br/>
+              {allUsers.map(u => u.email).join(', ')}
             </div>
           )}
           {(!allUsers || allUsers.length === 0) && (
-            <div className="text-red-600 font-semibold mt-2">
+            <div style={{ 
+              color: '#dc2626', 
+              fontWeight: 'bold', 
+              marginTop: '16px', 
+              fontSize: '18px',
+              backgroundColor: '#fee2e2',
+              padding: '12px',
+              borderRadius: '6px'
+            }}>
               ⚠️ 데이터를 가져오지 못했습니다!
             </div>
           )}
