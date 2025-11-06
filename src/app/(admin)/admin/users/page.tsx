@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { UsersTable } from '@/components/admin/UsersTable'
 import { RankDistribution } from '@/components/admin/RankDistribution'
-import { createClient as createServiceClient } from '@supabase/supabase-js'
 
 export default async function UsersPage() {
   const supabase = await createClient()
@@ -23,20 +22,8 @@ export default async function UsersPage() {
     redirect('/dashboard')
   }
 
-  // ✅ Service Role 클라이언트 생성 (RLS 우회)
-  const supabaseAdmin = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    }
-  )
-
-  // ✅ Service Role로 모든 사용자 조회 (RLS 무시)
-  const { data: allUsers, error } = await supabaseAdmin
+  // ✅ 모든 사용자 조회 (role 필터 제거)
+  const { data: allUsers, error: usersError } = await supabase
     .from('profiles')
     .select(`
       *,
@@ -47,12 +34,10 @@ export default async function UsersPage() {
     `)
     .order('created_at', { ascending: false })
 
-  // 디버그: 에러 확인
-  if (error) {
-    console.error('❌ Supabase Error:', error)
+  // 에러 로깅
+  if (usersError) {
+    console.error('❌ Users Query Error:', usersError)
   }
-
-  console.log('✅ allUsers:', allUsers?.length, '명')
 
   // ✅ 강사만 필터링 (통계용)
   const instructors = allUsers?.filter(u => u.role === 'instructor') || []
@@ -73,13 +58,22 @@ export default async function UsersPage() {
       <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4">
         <h3 className="font-bold text-yellow-900 mb-2">🔍 디버그 정보</h3>
         <div className="text-sm space-y-1 text-yellow-800">
-          <div><strong>조회 에러:</strong> {error ? error.message : '없음'}</div>
+          <div><strong>현재 사용자:</strong> {user.email}</div>
+          <div><strong>관리자 여부:</strong> {profile?.role === 'admin' ? '✅ Yes' : '❌ No'}</div>
+          <div><strong>조회 에러:</strong> {usersError ? usersError.message : '✅ 없음'}</div>
           <div><strong>allUsers:</strong> {allUsers?.length || 0}명</div>
           <div><strong>instructors:</strong> {instructors.length}명</div>
           <div><strong>admin:</strong> {allUsers?.filter(u => u.role === 'admin').length || 0}명</div>
-          <div className="text-xs text-yellow-700 mt-2 font-mono">
-            이메일: {allUsers?.map(u => u.email).join(', ') || '없음'}
-          </div>
+          {allUsers && allUsers.length > 0 && (
+            <div className="text-xs text-yellow-700 mt-2 font-mono">
+              이메일: {allUsers.map(u => u.email).join(', ')}
+            </div>
+          )}
+          {(!allUsers || allUsers.length === 0) && (
+            <div className="text-red-600 font-semibold mt-2">
+              ⚠️ 데이터를 가져오지 못했습니다!
+            </div>
+          )}
         </div>
       </div>
 
@@ -137,7 +131,6 @@ export default async function UsersPage() {
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           전체 사용자 목록
         </h2>
-        {/* ✅ 수정: 모든 사용자 표시 */}
         <UsersTable users={allUsers || []} />
       </div>
     </div>
