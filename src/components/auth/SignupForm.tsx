@@ -44,7 +44,7 @@ export function SignupForm() {
       
       console.log('🔍 회원가입 시도:', cleanEmail)
       
-      // ⭐ 0. 먼저 이메일 중복 체크 (profiles 테이블에서)
+      // ⭐ STEP 0: 먼저 이메일 중복 체크 (profiles 테이블에서)
       console.log('🔍 이메일 중복 체크 중...')
       const { data: existingProfile, error: checkError } = await supabase
         .from('profiles')
@@ -59,16 +59,16 @@ export function SignupForm() {
       if (existingProfile) {
         console.warn('⚠️ 이미 가입된 이메일:', cleanEmail)
         setError('⚠️ 이미 가입된 이메일입니다. 3초 후 로그인 페이지로 이동합니다.')
-        setLoading(false)
+        setLoading(false) // ⭐ 중요: 로딩 해제!
         setTimeout(() => {
           router.push('/login')
         }, 3000)
-        return
+        return // ⭐ 여기서 함수 종료
       }
       
-      console.log('✅ 이메일 사용 가능')
+      console.log('✅ 이메일 사용 가능, 회원가입 진행')
       
-      // 1. 회원가입
+      // ⭐ STEP 1: 회원가입
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: cleanEmail,
         password: formData.password,
@@ -113,25 +113,7 @@ export function SignupForm() {
       if (authData.user) {
         console.log('✅ User 객체 수신')
         
-        // ⭐ 중요: 중복 가입 감지
-        // Supabase는 이미 가입된 이메일도 user 객체를 반환하지만
-        // session이 없고 email_confirmed_at이 있으면 이미 가입된 계정임!
-        if (!authData.session && authData.user.email_confirmed_at) {
-          console.warn('⚠️ 중복 가입 감지:', cleanEmail)
-          console.warn('⚠️ 이메일은 이미 인증됨:', authData.user.email_confirmed_at)
-          setError('⚠️ 이미 가입되고 인증까지 완료된 이메일입니다. 로그인 페이지를 이용해주세요.')
-          
-          setTimeout(() => {
-            router.push('/login')
-          }, 3000)
-          
-          setLoading(false)
-          return
-        }
-
-        console.log('✅ 신규 회원가입 성공!')
-        
-        // 2. 프로필 업데이트
+        // ⭐ STEP 2: 프로필 업데이트
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ name: formData.name })
@@ -143,7 +125,7 @@ export function SignupForm() {
           console.log('✅ 프로필에 이름 저장 완료')
         }
 
-        // 3. 이메일 인증 필요 여부 확인
+        // ⭐ STEP 3: 이메일 인증 필요 여부 확인
         if (authData.session) {
           // 바로 로그인됨 (이메일 인증 비활성화 상태)
           console.log('✅ 즉시 로그인, 대시보드로 이동')
@@ -266,9 +248,9 @@ export function SignupForm() {
   // 회원가입 폼
   return (
     <form onSubmit={handleSignup} className="space-y-4">
-      {/* 에러 메시지 */}
+      {/* ⭐ 에러 메시지 - 항상 맨 위에 표시 (로딩 중에도 보임) */}
       {error && (
-        <div className="p-3 rounded-lg bg-red-50 border border-red-200 animate-shake">
+        <div className="p-3 rounded-lg bg-red-50 border border-red-200">
           <p className="text-sm text-red-600">{error}</p>
         </div>
       )}
@@ -284,7 +266,7 @@ export function SignupForm() {
           required
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cobalt-500 focus:border-transparent transition-all disabled:bg-gray-100"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cobalt-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder="홍길동"
           disabled={loading}
         />
@@ -301,7 +283,7 @@ export function SignupForm() {
           required
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cobalt-500 focus:border-transparent transition-all disabled:bg-gray-100"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cobalt-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder="example@email.com"
           disabled={loading}
           autoComplete="email"
@@ -319,7 +301,7 @@ export function SignupForm() {
           required
           value={formData.password}
           onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cobalt-500 focus:border-transparent transition-all disabled:bg-gray-100"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cobalt-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder="••••••••"
           disabled={loading}
           autoComplete="new-password"
@@ -338,7 +320,7 @@ export function SignupForm() {
           required
           value={formData.confirmPassword}
           onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cobalt-500 focus:border-transparent transition-all disabled:bg-gray-100"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cobalt-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder="••••••••"
           disabled={loading}
           autoComplete="new-password"
