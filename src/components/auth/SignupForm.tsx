@@ -58,8 +58,8 @@ export function SignupForm() {
       
       if (existingProfile) {
         console.warn('⚠️ 이미 가입된 이메일:', cleanEmail)
+        setLoading(false) // ⭐ 먼저 로딩 해제!
         setError('⚠️ 이미 가입된 이메일입니다. 3초 후 로그인 페이지로 이동합니다.')
-        setLoading(false) // ⭐ 중요: 로딩 해제!
         setTimeout(() => {
           router.push('/login')
         }, 3000)
@@ -248,10 +248,10 @@ export function SignupForm() {
   // 회원가입 폼
   return (
     <div className="space-y-4">
-      {/* ⭐ 에러 메시지 - 폼 바깥에 배치 (항상 선명하게 보임!) */}
+      {/* ⭐ 에러 메시지 - 최상단에 고정 (z-index로 모든 것 위에 표시) */}
       {error && (
-        <div className="p-3 rounded-lg bg-red-50 border border-red-200 animate-pulse">
-          <p className="text-sm text-red-600 font-medium">{error}</p>
+        <div className="relative z-50 p-3 rounded-lg bg-red-50 border-2 border-red-500 shadow-lg animate-pulse">
+          <p className="text-sm text-red-600 font-semibold">{error}</p>
         </div>
       )}
 
