@@ -247,13 +247,15 @@ export function SignupForm() {
 
   // 회원가입 폼
   return (
-    <form onSubmit={handleSignup} className="space-y-4">
-      {/* ⭐ 에러 메시지 - 항상 맨 위에 표시 (로딩 중에도 보임) */}
+    <div className="space-y-4">
+      {/* ⭐ 에러 메시지 - 폼 바깥에 배치 (항상 선명하게 보임!) */}
       {error && (
-        <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-          <p className="text-sm text-red-600">{error}</p>
+        <div className="p-3 rounded-lg bg-red-50 border border-red-200 animate-pulse">
+          <p className="text-sm text-red-600 font-medium">{error}</p>
         </div>
       )}
+
+      <form onSubmit={handleSignup} className="space-y-4">
 
       {/* 이름 */}
       <div>
@@ -350,10 +352,11 @@ export function SignupForm() {
         )}
       </button>
 
-      {/* 안내 */}
-      <p className="text-xs text-gray-500 text-center">
-        회원가입 시 <span className="font-medium">강사(Instructor)</span> 계정이 생성됩니다.
-      </p>
-    </form>
+        {/* 안내 */}
+        <p className="text-xs text-gray-500 text-center">
+          회원가입 시 <span className="font-medium">강사(Instructor)</span> 계정이 생성됩니다.
+        </p>
+      </form>
+    </div>
   )
 }
