@@ -23,8 +23,13 @@ export function GlobalLoadingIndicator() {
         }
       }
 
-      // 버튼 클릭 (type="submit" 또는 onClick이 있는 경우)
-      if (button && (button.type === 'submit' || button.onclick)) {
+      // ⭐ 중요: 폼 제출 버튼은 제외!
+      // 각 폼(SignupForm, LoginForm 등)에서 자체 로딩 상태를 처리하므로
+      // GlobalLoadingIndicator는 네비게이션 버튼만 처리
+      // 
+      // 네비게이션 버튼에 data-navigation="true" 속성 추가 필요:
+      // <button data-navigation="true">대시보드로 이동</button>
+      if (button && button.dataset.navigation === 'true') {
         setLoading(true)
         // 5초 후 자동으로 로딩 해제 (안전장치)
         setTimeout(() => setLoading(false), 5000)
@@ -32,7 +37,6 @@ export function GlobalLoadingIndicator() {
     }
 
     document.addEventListener('click', handleClick)
-
     return () => {
       document.removeEventListener('click', handleClick)
     }
