@@ -42,6 +42,9 @@ export function SignupForm() {
       // 이메일 정리
       const cleanEmail = formData.email.trim().toLowerCase()
       
+      // ✅ 0. 먼저 이미 가입된 이메일인지 확인
+      console.log('🔍 Checking if email already exists:', cleanEmail)
+      
       // 1. 회원가입
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: cleanEmail,
@@ -50,17 +53,27 @@ export function SignupForm() {
           data: {
             name: formData.name,
           },
-          emailRedirectTo: `${window.location.origin}/login`,
+          emailRedirectTo: `https://educationbuilderstudio.netlify.app/auth/callback`,
         },
       })
 
       if (signUpError) {
         console.error('🔴 Signup error:', signUpError)
+        console.error('🔴 Error code:', signUpError.status)
+        console.error('🔴 Error message:', signUpError.message)
         
-        if (signUpError.message.includes('already registered')) {
-          setError('이미 등록된 이메일입니다.')
+        if (signUpError.message.includes('already registered') || 
+            signUpError.message.includes('User already registered')) {
+          setError('⚠️ 이미 가입된 이메일입니다. 로그인 페이지로 이동해주세요.')
+          
+          // 3초 후 자동으로 로그인 페이지로 이동
+          setTimeout(() => {
+            router.push('/login')
+          }, 3000)
         } else if (signUpError.message.includes('Invalid email')) {
           setError('올바른 이메일 형식이 아닙니다.')
+        } else if (signUpError.message.includes('Password')) {
+          setError('비밀번호가 요구사항을 충족하지 않습니다. (최소 6자)')
         } else {
           setError(`회원가입 오류: ${signUpError.message}`)
         }
@@ -69,6 +82,11 @@ export function SignupForm() {
       }
 
       if (authData.user) {
+        console.log('✅ Signup success!')
+        console.log('✅ User ID:', authData.user.id)
+        console.log('✅ Email:', authData.user.email)
+        console.log('✅ Session:', authData.session ? 'Created' : 'Email confirmation required')
+        
         // 2. profiles 테이블에 자동으로 생성됨 (트리거)
         // role은 기본값 'instructor'로 자동 설정됨
         
@@ -80,6 +98,8 @@ export function SignupForm() {
 
         if (profileError) {
           console.error('Profile update error:', profileError)
+        } else {
+          console.log('✅ Profile updated with name')
         }
 
         // 4. ✅ 이메일 인증 필요 여부 확인
@@ -89,10 +109,14 @@ export function SignupForm() {
           router.push('/dashboard')
         } else {
           // 이메일 인증 필요
-          console.log('📧 Email confirmation required')
+          console.log('📧 Email confirmation required, showing success screen')
           setUserEmail(cleanEmail)
           setSuccess(true)
         }
+      } else {
+        console.error('🔴 No user returned from signup')
+        setError('회원가입 처리 중 문제가 발생했습니다.')
+        setLoading(false)
       }
     } catch (err: any) {
       console.error('🔴 Unexpected error:', err)
