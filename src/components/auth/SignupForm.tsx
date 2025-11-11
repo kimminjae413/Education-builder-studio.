@@ -42,8 +42,7 @@ export function SignupForm() {
       // 이메일 정리
       const cleanEmail = formData.email.trim().toLowerCase()
       
-      // ✅ 0. 먼저 이미 가입된 이메일인지 확인
-      console.log('🔍 Checking if email already exists:', cleanEmail)
+      console.log('🔍 회원가입 시도:', cleanEmail)
       
       // 1. 회원가입
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -57,16 +56,21 @@ export function SignupForm() {
         },
       })
 
+      console.log('📊 회원가입 응답:', {
+        user: authData?.user?.id,
+        email: authData?.user?.email,
+        emailConfirmedAt: authData?.user?.email_confirmed_at,
+        session: authData?.session ? 'exists' : 'null',
+        error: signUpError
+      })
+
+      // 에러 처리
       if (signUpError) {
-        console.error('🔴 Signup error:', signUpError)
-        console.error('🔴 Error code:', signUpError.status)
-        console.error('🔴 Error message:', signUpError.message)
+        console.error('🔴 회원가입 에러:', signUpError)
         
         if (signUpError.message.includes('already registered') || 
             signUpError.message.includes('User already registered')) {
-          setError('⚠️ 이미 가입된 이메일입니다. 로그인 페이지로 이동해주세요.')
-          
-          // 3초 후 자동으로 로그인 페이지로 이동
+          setError('⚠️ 이미 가입된 이메일입니다. 3초 후 로그인 페이지로 이동합니다.')
           setTimeout(() => {
             router.push('/login')
           }, 3000)
@@ -81,47 +85,59 @@ export function SignupForm() {
         return
       }
 
+      // User 객체 처리
       if (authData.user) {
-        console.log('✅ Signup success!')
-        console.log('✅ User ID:', authData.user.id)
-        console.log('✅ Email:', authData.user.email)
-        console.log('✅ Session:', authData.session ? 'Created' : 'Email confirmation required')
+        console.log('✅ User 객체 수신')
         
-        // 2. profiles 테이블에 자동으로 생성됨 (트리거)
-        // role은 기본값 'instructor'로 자동 설정됨
+        // ⭐ 중요: 중복 가입 감지
+        // Supabase는 이미 가입된 이메일도 user 객체를 반환하지만
+        // session이 없고 email_confirmed_at이 있으면 이미 가입된 계정임!
+        if (!authData.session && authData.user.email_confirmed_at) {
+          console.warn('⚠️ 중복 가입 감지:', cleanEmail)
+          console.warn('⚠️ 이메일은 이미 인증됨:', authData.user.email_confirmed_at)
+          setError('⚠️ 이미 가입되고 인증까지 완료된 이메일입니다. 로그인 페이지를 이용해주세요.')
+          
+          setTimeout(() => {
+            router.push('/login')
+          }, 3000)
+          
+          setLoading(false)
+          return
+        }
+
+        console.log('✅ 신규 회원가입 성공!')
         
-        // 3. 프로필에 이름 업데이트
+        // 2. 프로필 업데이트
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ name: formData.name })
           .eq('id', authData.user.id)
 
         if (profileError) {
-          console.error('Profile update error:', profileError)
+          console.error('❌ 프로필 업데이트 실패:', profileError)
         } else {
-          console.log('✅ Profile updated with name')
+          console.log('✅ 프로필에 이름 저장 완료')
         }
 
-        // 4. ✅ 이메일 인증 필요 여부 확인
+        // 3. 이메일 인증 필요 여부 확인
         if (authData.session) {
-          // 이메일 인증 없이 바로 로그인됨
-          console.log('✅ Auto-confirmed, redirecting to dashboard')
+          // 바로 로그인됨 (이메일 인증 비활성화 상태)
+          console.log('✅ 즉시 로그인, 대시보드로 이동')
           router.push('/dashboard')
         } else {
-          // 이메일 인증 필요
-          console.log('📧 Email confirmation required, showing success screen')
+          // 이메일 인증 필요 (정상적인 신규 가입)
+          console.log('📧 이메일 인증 필요, 안내 화면 표시')
           setUserEmail(cleanEmail)
           setSuccess(true)
         }
       } else {
-        console.error('🔴 No user returned from signup')
+        console.error('🔴 User 객체가 반환되지 않음')
         setError('회원가입 처리 중 문제가 발생했습니다.')
         setLoading(false)
       }
     } catch (err: any) {
-      console.error('🔴 Unexpected error:', err)
+      console.error('🔴 예상치 못한 에러:', err)
       setError(`회원가입 중 오류: ${err.message || '알 수 없는 오류'}`)
-    } finally {
       setLoading(false)
     }
   }
