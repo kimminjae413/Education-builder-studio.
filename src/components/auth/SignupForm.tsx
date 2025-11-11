@@ -14,6 +14,8 @@ export function SignupForm() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+  const [userEmail, setUserEmail] = useState('')
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,22 +39,30 @@ export function SignupForm() {
     try {
       const supabase = createClient()
       
+      // 이메일 정리
+      const cleanEmail = formData.email.trim().toLowerCase()
+      
       // 1. 회원가입
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
+        email: cleanEmail,
         password: formData.password,
         options: {
           data: {
             name: formData.name,
           },
+          emailRedirectTo: `${window.location.origin}/login`,
         },
       })
 
       if (signUpError) {
+        console.error('🔴 Signup error:', signUpError)
+        
         if (signUpError.message.includes('already registered')) {
           setError('이미 등록된 이메일입니다.')
+        } else if (signUpError.message.includes('Invalid email')) {
+          setError('올바른 이메일 형식이 아닙니다.')
         } else {
-          setError('회원가입 중 오류가 발생했습니다.')
+          setError(`회원가입 오류: ${signUpError.message}`)
         }
         setLoading(false)
         return
@@ -72,18 +82,124 @@ export function SignupForm() {
           console.error('Profile update error:', profileError)
         }
 
-        // 4. 로그인 페이지로 이동 (이메일 확인 필요 시)
-        alert('회원가입이 완료되었습니다! 로그인해주세요.')
-        router.push('/login')
+        // 4. ✅ 이메일 인증 필요 여부 확인
+        if (authData.session) {
+          // 이메일 인증 없이 바로 로그인됨
+          console.log('✅ Auto-confirmed, redirecting to dashboard')
+          router.push('/dashboard')
+        } else {
+          // 이메일 인증 필요
+          console.log('📧 Email confirmation required')
+          setUserEmail(cleanEmail)
+          setSuccess(true)
+        }
       }
-    } catch (err) {
-      setError('회원가입 중 오류가 발생했습니다.')
-      console.error(err)
+    } catch (err: any) {
+      console.error('🔴 Unexpected error:', err)
+      setError(`회원가입 중 오류: ${err.message || '알 수 없는 오류'}`)
     } finally {
       setLoading(false)
     }
   }
 
+  // ✅ 성공 화면 (이메일 인증 안내)
+  if (success) {
+    return (
+      <div className="space-y-6">
+        {/* 성공 아이콘 */}
+        <div className="text-center">
+          <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            회원가입이 완료되었습니다! 🎉
+          </h3>
+          <p className="text-gray-600">
+            마지막 단계가 남았습니다
+          </p>
+        </div>
+
+        {/* 이메일 인증 안내 */}
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+          <div className="flex items-start gap-3">
+            <svg className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <div className="flex-1">
+              <h4 className="font-semibold text-blue-900 mb-2">
+                📧 이메일 인증이 필요합니다
+              </h4>
+              <div className="bg-white px-4 py-3 rounded border border-blue-200 mb-3">
+                <p className="text-sm text-blue-800 mb-2">
+                  <strong>Supabase Auth</strong>
+                  <span className="text-gray-600"> &#60;</span>
+                  <span className="font-mono text-xs">noreply@mail.app.supabase.io</span>
+                  <span className="text-gray-600">&#62;</span>
+                </p>
+                <p className="text-sm text-blue-800 mb-2">
+                  위 주소로 다음 이메일에 인증 요청을 보냈습니다:
+                </p>
+                <div className="bg-blue-50 px-3 py-2 rounded border border-blue-300 font-mono text-sm text-blue-900">
+                  {userEmail}
+                </div>
+              </div>
+              <ol className="text-sm text-blue-800 space-y-1.5 list-decimal list-inside">
+                <li><strong>이메일함</strong>을 확인하세요 (스팸함도 확인!)</li>
+                <li><strong>Supabase Auth</strong>에서 보낸 메일을 찾으세요</li>
+                <li><strong>"이메일 인증하기"</strong> 또는 <strong>"Confirm your mail"</strong> 버튼을 클릭하세요</li>
+                <li>인증 완료 후 이 페이지로 돌아와 로그인하세요</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+        {/* 주의사항 */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-start gap-2">
+            <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <div className="text-sm text-yellow-800">
+              <strong>주의:</strong> 이메일 인증을 완료하지 않으면 로그인할 수 없습니다.
+            </div>
+          </div>
+        </div>
+
+        {/* 로그인 페이지로 버튼 */}
+        <button
+          onClick={() => router.push('/login')}
+          className="w-full py-3 px-4 bg-cobalt-500 hover:bg-cobalt-600 text-white font-medium rounded-lg transition-all shadow-cobalt-md hover:shadow-cobalt-lg active:scale-95"
+        >
+          인증 완료 후 로그인하기 →
+        </button>
+
+        {/* 이메일 재발송 */}
+        <div className="text-center">
+          <button
+            onClick={async () => {
+              const supabase = createClient()
+              const { error } = await supabase.auth.resend({
+                type: 'signup',
+                email: userEmail,
+              })
+              if (error) {
+                alert('재발송 실패: ' + error.message)
+              } else {
+                alert('✅ 인증 메일을 다시 보냈습니다!')
+              }
+            }}
+            className="text-sm text-gray-600 hover:text-cobalt-600 underline"
+          >
+            이메일을 받지 못하셨나요? 다시 보내기
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // 회원가입 폼
   return (
     <form onSubmit={handleSignup} className="space-y-4">
       {/* 에러 메시지 */}
@@ -124,6 +240,7 @@ export function SignupForm() {
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cobalt-500 focus:border-transparent transition-all disabled:bg-gray-100"
           placeholder="example@email.com"
           disabled={loading}
+          autoComplete="email"
         />
       </div>
 
@@ -141,6 +258,7 @@ export function SignupForm() {
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cobalt-500 focus:border-transparent transition-all disabled:bg-gray-100"
           placeholder="••••••••"
           disabled={loading}
+          autoComplete="new-password"
         />
         <p className="mt-1 text-xs text-gray-500">최소 6자 이상</p>
       </div>
@@ -159,6 +277,7 @@ export function SignupForm() {
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cobalt-500 focus:border-transparent transition-all disabled:bg-gray-100"
           placeholder="••••••••"
           disabled={loading}
+          autoComplete="new-password"
         />
       </div>
 
