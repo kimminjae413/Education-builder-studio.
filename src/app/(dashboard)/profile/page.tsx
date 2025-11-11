@@ -7,6 +7,9 @@ import { InstructorRank } from '@/lib/rank/types'
 import { ProfileEditForm } from '@/components/profile/ProfileEditForm'
 import { ProfileStats } from '@/components/profile/ProfileStats'
 
+// ✅ Dynamic rendering 명시
+export const dynamic = 'force-dynamic'
+
 export default async function ProfilePage() {
   try {
     const supabase = await createClient()
