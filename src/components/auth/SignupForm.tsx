@@ -44,6 +44,30 @@ export function SignupForm() {
       
       console.log('🔍 회원가입 시도:', cleanEmail)
       
+      // ⭐ 0. 먼저 이메일 중복 체크 (profiles 테이블에서)
+      console.log('🔍 이메일 중복 체크 중...')
+      const { data: existingProfile, error: checkError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('email', cleanEmail)
+        .maybeSingle()
+      
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('❌ 이메일 중복 체크 실패:', checkError)
+      }
+      
+      if (existingProfile) {
+        console.warn('⚠️ 이미 가입된 이메일:', cleanEmail)
+        setError('⚠️ 이미 가입된 이메일입니다. 3초 후 로그인 페이지로 이동합니다.')
+        setLoading(false)
+        setTimeout(() => {
+          router.push('/login')
+        }, 3000)
+        return
+      }
+      
+      console.log('✅ 이메일 사용 가능')
+      
       // 1. 회원가입
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: cleanEmail,
