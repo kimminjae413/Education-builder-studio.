@@ -1,9 +1,23 @@
 // src/app/api/admin/users/delete/route.ts
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createServerClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 export async function DELETE(request: Request) {
   try {
+    // ⭐ Service Role Key로 Supabase Admin 클라이언트 생성
+    const supabaseAdmin = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
+
+    // 일반 클라이언트 (권한 확인용)
+    const { createClient } = await import('@/lib/supabase/server')
     const supabase = await createClient()
     
     // 1. 현재 사용자 확인
@@ -80,7 +94,7 @@ export async function DELETE(request: Request) {
     // 7. Supabase Admin API로 사용자 완전 삭제
     // ⭐ 중요: 이 작업은 auth.users 테이블에서 사용자를 완전히 제거합니다
     // CASCADE 설정으로 profiles, teaching_materials 등도 자동 삭제됨
-    const { error: deleteError } = await supabase.auth.admin.deleteUser(userId)
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
 
     if (deleteError) {
       console.error('❌ 사용자 삭제 실패:', deleteError)
