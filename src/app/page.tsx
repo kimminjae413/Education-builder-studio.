@@ -305,7 +305,7 @@ export default function LandingPage() {
       <section ref={problemRef} className="relative py-32">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            {/* Section Title */}
+            {/* Section Title with Animated Graphic */}
             <div className="problem-title text-center mb-20">
               <span className="inline-block px-4 py-1.5 bg-red-500/10 border border-red-500/20 rounded-full text-red-400 text-sm font-medium mb-6">
                 문제점
@@ -314,6 +314,47 @@ export default function LandingPage() {
                 교육과정 설계,<br />
                 <span className="text-gray-500">왜 이렇게 힘들까요?</span>
               </h3>
+
+              {/* Chaos Animation Graphic */}
+              <div className="relative h-40 w-full max-w-md mx-auto my-12">
+                {/* Floating scattered documents */}
+                <div className="absolute top-0 left-[10%] w-12 h-16 bg-gradient-to-br from-red-500/20 to-red-600/10 rounded-lg border border-red-500/30 animate-float" style={{ animationDelay: '0s' }}>
+                  <div className="p-2 space-y-1">
+                    <div className="h-1 w-6 bg-red-500/40 rounded"></div>
+                    <div className="h-1 w-4 bg-red-500/30 rounded"></div>
+                    <div className="h-1 w-5 bg-red-500/20 rounded"></div>
+                  </div>
+                </div>
+                <div className="absolute top-8 left-[30%] w-10 h-14 bg-gradient-to-br from-orange-500/20 to-orange-600/10 rounded-lg border border-orange-500/30 animate-float rotate-12" style={{ animationDelay: '0.5s' }}>
+                  <div className="p-2 space-y-1">
+                    <div className="h-1 w-5 bg-orange-500/40 rounded"></div>
+                    <div className="h-1 w-3 bg-orange-500/30 rounded"></div>
+                  </div>
+                </div>
+                <div className="absolute top-4 right-[25%] w-14 h-18 bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-lg border border-yellow-500/30 animate-float -rotate-6" style={{ animationDelay: '1s' }}>
+                  <div className="p-2 space-y-1">
+                    <div className="h-1 w-8 bg-yellow-500/40 rounded"></div>
+                    <div className="h-1 w-6 bg-yellow-500/30 rounded"></div>
+                    <div className="h-1 w-4 bg-yellow-500/20 rounded"></div>
+                  </div>
+                </div>
+                <div className="absolute bottom-4 left-[20%] w-11 h-15 bg-gradient-to-br from-red-500/15 to-red-600/5 rounded-lg border border-red-500/20 animate-float rotate-6" style={{ animationDelay: '1.5s' }}>
+                  <div className="p-2 space-y-1">
+                    <div className="h-1 w-6 bg-red-500/30 rounded"></div>
+                    <div className="h-1 w-4 bg-red-500/20 rounded"></div>
+                  </div>
+                </div>
+                <div className="absolute bottom-0 right-[15%] w-12 h-16 bg-gradient-to-br from-orange-500/15 to-orange-600/5 rounded-lg border border-orange-500/20 animate-float -rotate-12" style={{ animationDelay: '2s' }}>
+                  <div className="p-2 space-y-1">
+                    <div className="h-1 w-7 bg-orange-500/30 rounded"></div>
+                    <div className="h-1 w-5 bg-orange-500/20 rounded"></div>
+                  </div>
+                </div>
+                {/* Question marks floating */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl font-black text-red-500/20 animate-pulse">?</div>
+                <div className="absolute top-[20%] right-[10%] text-3xl font-black text-orange-500/30 animate-bounce" style={{ animationDelay: '0.3s' }}>?</div>
+                <div className="absolute bottom-[20%] left-[5%] text-4xl font-black text-yellow-500/25 animate-bounce" style={{ animationDelay: '0.7s' }}>?</div>
+              </div>
             </div>
 
             {/* Problem Cards */}
@@ -357,7 +398,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             {/* Section Title */}
-            <div className="solution-title text-center mb-20">
+            <div className="solution-title text-center mb-12">
               <span className="inline-block px-4 py-1.5 bg-cobalt-500/10 border border-cobalt-500/20 rounded-full text-cobalt-400 text-sm font-medium mb-6">
                 해결책
               </span>
@@ -367,6 +408,43 @@ export default function LandingPage() {
                   스마트한 교육과정 설계
                 </span>
               </h3>
+            </div>
+
+            {/* AI Core Animation Graphic */}
+            <div className="relative h-64 w-full max-w-lg mx-auto mb-16">
+              {/* Outer rotating ring */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-48 h-48 rounded-full border-2 border-dashed border-cobalt-500/30 animate-[spin_20s_linear_infinite]"></div>
+              </div>
+              {/* Middle rotating ring - opposite direction */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-36 h-36 rounded-full border-2 border-cobalt-400/40 animate-[spin_15s_linear_infinite_reverse]"></div>
+              </div>
+              {/* Inner pulsing core */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-cobalt-500 to-neon-cyan animate-pulse shadow-neon-blue"></div>
+                  <div className="absolute inset-0 w-24 h-24 rounded-full bg-cobalt-500/50 animate-ping"></div>
+                  {/* AI Brain icon in center */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Brain className="w-10 h-10 text-white" />
+                  </div>
+                </div>
+              </div>
+              {/* Orbiting elements */}
+              <div className="absolute inset-0 animate-[spin_10s_linear_infinite]">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-4 bg-neon-cyan rounded-full shadow-neon-cyan"></div>
+              </div>
+              <div className="absolute inset-0 animate-[spin_8s_linear_infinite_reverse]">
+                <div className="absolute bottom-4 right-4 w-3 h-3 bg-neon-purple rounded-full shadow-neon-purple"></div>
+              </div>
+              <div className="absolute inset-0 animate-[spin_12s_linear_infinite]">
+                <div className="absolute top-1/4 left-0 w-2 h-2 bg-emerald-400 rounded-full"></div>
+              </div>
+              {/* Data flow lines */}
+              <div className="absolute top-1/2 left-0 w-16 h-px bg-gradient-to-r from-transparent via-cobalt-500/50 to-cobalt-500 animate-pulse"></div>
+              <div className="absolute top-1/2 right-0 w-16 h-px bg-gradient-to-l from-transparent via-cobalt-500/50 to-cobalt-500 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-12 bg-gradient-to-b from-transparent via-neon-cyan/50 to-neon-cyan animate-pulse" style={{ animationDelay: '1s' }}></div>
             </div>
 
             {/* Solution Steps */}
