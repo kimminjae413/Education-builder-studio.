@@ -395,10 +395,19 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Scroll Indicator */}
-        <div className="scroll-indicator absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-gray-500">
-          <span className="text-xs">스크롤하여 더 알아보기</span>
-          <ChevronDown className="w-5 h-5 animate-bounce" />
+        {/* Scroll Indicator - Mouse Animation */}
+        <div className="scroll-indicator absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
+          <span className="text-xs text-gray-500 tracking-wider uppercase">Scroll</span>
+          {/* Mouse Icon */}
+          <div className="relative w-6 h-10 border-2 border-gray-500/50 rounded-full flex justify-center">
+            {/* Scroll Wheel/Dot */}
+            <div className="absolute top-2 w-1.5 h-1.5 bg-cobalt-400 rounded-full animate-[scrollDown_1.5s_ease-in-out_infinite]" />
+          </div>
+          {/* Arrow Lines */}
+          <div className="flex flex-col items-center gap-1 -mt-1">
+            <ChevronDown className="w-4 h-4 text-gray-500/50 animate-[fadeDown_1.5s_ease-in-out_infinite]" />
+            <ChevronDown className="w-4 h-4 text-gray-500/30 -mt-2 animate-[fadeDown_1.5s_ease-in-out_infinite_0.15s]" />
+          </div>
         </div>
       </section>
 

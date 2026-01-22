@@ -103,6 +103,8 @@ const config: Config = {
         'scale-in': 'scaleIn 0.5s ease-out',
         'bounce-slow': 'bounce 3s infinite',
         'drive': 'driveAcross 8s ease-in-out infinite',
+        'scroll-down': 'scrollDown 1.5s ease-in-out infinite',
+        'fade-down': 'fadeDown 1.5s ease-in-out infinite',
       },
       keyframes: {
         rankUp: {
@@ -148,6 +150,16 @@ const config: Config = {
           '60%': { left: '58%', transform: 'translateY(0)' },
           '80%': { left: '75%', transform: 'translateY(-2px)' },
           '100%': { left: '90%', transform: 'translateY(0)' },
+        },
+        scrollDown: {
+          '0%': { transform: 'translateY(0)', opacity: '1' },
+          '50%': { transform: 'translateY(12px)', opacity: '0.5' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        fadeDown: {
+          '0%': { transform: 'translateY(-3px)', opacity: '0.3' },
+          '50%': { transform: 'translateY(3px)', opacity: '0.8' },
+          '100%': { transform: 'translateY(-3px)', opacity: '0.3' },
         },
       },
       backgroundImage: {
