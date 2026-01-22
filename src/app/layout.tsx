@@ -6,6 +6,9 @@ import { Suspense } from 'react'
 export const metadata: Metadata = {
   title: 'Education Builder Studio',
   description: '지혜를 설계하고, 경험을 공유하며, 교육의 미래를 함께 짓다',
+  icons: {
+    icon: '/icon.svg',
+  },
 }
 
 export default function RootLayout({
