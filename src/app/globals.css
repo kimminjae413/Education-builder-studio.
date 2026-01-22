@@ -217,6 +217,92 @@
   }
 }
 
+/* ⭐ CTA 버튼 효과 */
+@layer utilities {
+  /* Shimmer 효과 */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%) skewX(-15deg);
+    }
+    100% {
+      transform: translateX(200%) skewX(-15deg);
+    }
+  }
+
+  .btn-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-shimmer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transform: translateX(-100%) skewX(-15deg);
+  }
+
+  .btn-shimmer:hover::before {
+    animation: shimmer 0.8s ease-in-out;
+  }
+
+  /* 테두리 글로우 펄스 */
+  @keyframes borderGlow {
+    0%, 100% {
+      box-shadow:
+        0 0 5px rgba(0, 102, 255, 0.5),
+        0 0 20px rgba(0, 102, 255, 0.3),
+        inset 0 0 0 1px rgba(0, 102, 255, 0.2);
+    }
+    50% {
+      box-shadow:
+        0 0 10px rgba(0, 102, 255, 0.8),
+        0 0 40px rgba(0, 102, 255, 0.5),
+        0 0 60px rgba(0, 102, 255, 0.3),
+        inset 0 0 0 1px rgba(0, 102, 255, 0.4);
+    }
+  }
+
+  .btn-glow-pulse:hover {
+    animation: borderGlow 1.5s ease-in-out infinite;
+  }
+
+  /* 회전하는 테두리 그라데이션 */
+  @keyframes rotateBorder {
+    0% {
+      --angle: 0deg;
+    }
+    100% {
+      --angle: 360deg;
+    }
+  }
+
+  @property --angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+
+  .btn-rotating-border {
+    position: relative;
+    background: linear-gradient(#0a0a0a, #0a0a0a) padding-box,
+                conic-gradient(from var(--angle), #0066FF, #00f3ff, #0066FF) border-box;
+    border: 2px solid transparent;
+  }
+
+  .btn-rotating-border:hover {
+    animation: rotateBorder 2s linear infinite;
+  }
+}
+
 /* ⭐ 클릭 가능한 요소에 기본 피드백 */
 @layer components {
   /* 버튼 클릭 피드백 */

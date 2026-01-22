@@ -358,17 +358,22 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
               <Link
                 href="/signup"
-                className="hero-cta group relative px-8 py-4 bg-gradient-to-r from-cobalt-500 to-cobalt-600 text-white text-lg font-bold rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-glow flex items-center gap-2"
+                className="hero-cta group relative px-8 py-4 bg-gradient-to-r from-cobalt-500 to-cobalt-600 text-white text-lg font-bold rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 btn-shimmer btn-glow-pulse flex items-center gap-2"
               >
                 <span className="relative z-10">무료로 시작하기</span>
                 <ArrowRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                <div className="absolute inset-0 bg-gradient-to-r from-cobalt-400 to-neon-cyan opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                {/* Shimmer overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+                {/* Hover gradient */}
+                <div className="absolute inset-0 bg-gradient-to-r from-cobalt-400 to-cobalt-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </Link>
               <Link
                 href="#demo"
-                className="hero-cta px-8 py-4 bg-white/5 border border-white/10 text-white text-lg font-bold rounded-xl hover:bg-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-sm"
+                className="hero-cta group relative px-8 py-4 bg-white/5 border border-white/10 text-white text-lg font-bold rounded-xl hover:bg-white/10 hover:border-cobalt-500/50 transition-all duration-300 backdrop-blur-sm overflow-hidden"
               >
-                데모 영상 보기
+                <span className="relative z-10">데모 영상 보기</span>
+                {/* Subtle shimmer on hover */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cobalt-500/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
               </Link>
             </div>
 
@@ -783,10 +788,12 @@ export default function LandingPage() {
                 </p>
                 <Link
                   href="/signup"
-                  className="group inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-cobalt-500 to-cobalt-600 text-white text-xl font-bold rounded-xl hover:shadow-glow hover:scale-105 transition-all duration-300"
+                  className="group relative inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-cobalt-500 to-cobalt-600 text-white text-xl font-bold rounded-xl hover:scale-105 transition-all duration-300 btn-shimmer btn-glow-pulse overflow-hidden"
                 >
-                  <span>무료로 시작하기</span>
-                  <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                  <span className="relative z-10">무료로 시작하기</span>
+                  <ArrowRight className="relative z-10 w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
                 </Link>
                 <p className="mt-6 text-sm text-gray-500 flex items-center justify-center gap-4">
                   <span className="flex items-center gap-1">

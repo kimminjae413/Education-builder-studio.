@@ -15,7 +15,7 @@ Education Builder Studio는 프리랜서 강사들을 위한 AI 기반 교육과
 
 ## 기술 스택
 
-- **Frontend**: Next.js 15.1.5 (App Router), React 19, TypeScript, Tailwind CSS
+- **Frontend**: Next.js 15.5.9 (App Router), React 19, TypeScript, Tailwind CSS
 - **Backend**: Supabase (PostgreSQL, Authentication, Storage)
 - **AI**: Google Gemini API
 - **Deployment**: Vercel, Netlify
