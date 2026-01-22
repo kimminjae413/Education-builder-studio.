@@ -50,6 +50,13 @@ export default function LandingPage() {
           stagger: 0.2,
           ease: 'power3.out'
         }, '-=0.3')
+        .from('.hero-visual', {
+          opacity: 0,
+          y: 40,
+          scale: 0.95,
+          duration: 0.8,
+          ease: 'power3.out'
+        }, '-=0.4')
         .from('.hero-subtitle', {
           opacity: 0,
           y: 30,
@@ -185,15 +192,24 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-deep-black text-white overflow-x-hidden">
-      {/* 배경 그라디언트 오버레이 */}
-      <div className="fixed inset-0 bg-gradient-to-b from-cobalt-900/20 via-transparent to-transparent pointer-events-none" />
+      {/* 레이어 1: 그리드 패턴 배경 */}
+      <div className="fixed inset-0 bg-grid-dots pointer-events-none" />
 
-      {/* Floating orbs 배경 */}
+      {/* 레이어 2: 그라데이션 메시 */}
+      <div className="fixed inset-0 bg-mesh pointer-events-none" />
+
+      {/* 레이어 3: 상단 그라데이션 오버레이 */}
+      <div className="fixed inset-0 bg-gradient-to-b from-cobalt-900/30 via-transparent to-deep-black/50 pointer-events-none" />
+
+      {/* 레이어 4: Floating orbs 배경 */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="parallax-bg absolute -top-40 -left-40 w-96 h-96 bg-cobalt-500/20 rounded-full blur-[120px] animate-pulse-slow" />
-        <div className="parallax-bg absolute top-1/3 -right-40 w-80 h-80 bg-neon-purple/15 rounded-full blur-[100px] animate-pulse-slow" style={{ animationDelay: '1s' }} />
-        <div className="parallax-bg absolute bottom-1/4 left-1/4 w-64 h-64 bg-neon-cyan/10 rounded-full blur-[80px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
+        <div className="parallax-bg absolute -top-40 -left-40 w-[500px] h-[500px] bg-cobalt-500/20 rounded-full blur-[150px] animate-pulse-slow" />
+        <div className="parallax-bg absolute top-1/4 -right-20 w-[400px] h-[400px] bg-cobalt-400/15 rounded-full blur-[120px] animate-pulse-slow" style={{ animationDelay: '1s' }} />
+        <div className="parallax-bg absolute bottom-1/3 left-1/3 w-[300px] h-[300px] bg-cobalt-600/10 rounded-full blur-[100px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
       </div>
+
+      {/* 레이어 5: 노이즈 텍스처 오버레이 */}
+      <div className="fixed inset-0 bg-noise pointer-events-none" />
 
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-deep-black/80 backdrop-blur-xl border-b border-white/5">
@@ -251,6 +267,86 @@ export default function LandingPage() {
                 </span>
               </span>
             </h2>
+
+            {/* 레고 스타일 자율주행 애니메이션 */}
+            <div className="hero-visual relative w-full max-w-2xl mx-auto h-48 mb-12 overflow-hidden">
+              {/* 트랙/도로 */}
+              <div className="absolute bottom-8 left-0 right-0 h-16">
+                {/* 도로 배경 */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-dark-card to-transparent rounded-full" />
+                {/* 도로 라인 (점선) */}
+                <div className="absolute top-1/2 left-0 right-0 h-1 flex items-center justify-center gap-3">
+                  {[...Array(12)].map((_, i) => (
+                    <div key={i} className="w-8 h-1 bg-cobalt-500/30 rounded-full" />
+                  ))}
+                </div>
+                {/* 트랙 포인트들 */}
+                <div className="absolute top-1/2 -translate-y-1/2 left-[10%] w-3 h-3 bg-cobalt-400 rounded-full animate-pulse" />
+                <div className="absolute top-1/2 -translate-y-1/2 left-[30%] w-3 h-3 bg-emerald-400 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+                <div className="absolute top-1/2 -translate-y-1/2 left-[50%] w-3 h-3 bg-cobalt-400 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
+                <div className="absolute top-1/2 -translate-y-1/2 left-[70%] w-3 h-3 bg-emerald-400 rounded-full animate-pulse" style={{ animationDelay: '1.5s' }} />
+                <div className="absolute top-1/2 -translate-y-1/2 left-[90%] w-3 h-3 bg-cobalt-500 rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
+              </div>
+
+              {/* 레고 스타일 자동차 */}
+              <div className="absolute bottom-12 animate-[driveAcross_8s_ease-in-out_infinite]">
+                <div className="relative">
+                  {/* 자동차 본체 (레고 블록 스타일) */}
+                  <div className="relative">
+                    {/* 상단 블록 */}
+                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-8 h-6 bg-gradient-to-b from-cobalt-400 to-cobalt-500 rounded-t-lg border-2 border-cobalt-300">
+                      {/* 레고 스터드 */}
+                      <div className="absolute -top-1 left-1 w-2 h-2 bg-cobalt-300 rounded-full" />
+                      <div className="absolute -top-1 right-1 w-2 h-2 bg-cobalt-300 rounded-full" />
+                    </div>
+                    {/* 메인 바디 */}
+                    <div className="w-14 h-8 bg-gradient-to-b from-cobalt-500 to-cobalt-600 rounded-lg border-2 border-cobalt-400 flex items-center justify-center gap-1">
+                      {/* 센서 라이트 */}
+                      <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                      <div className="w-2 h-2 bg-neon-cyan rounded-full animate-pulse shadow-[0_0_8px_rgba(0,243,255,0.8)]" style={{ animationDelay: '0.3s' }} />
+                    </div>
+                    {/* 바퀴 */}
+                    <div className="absolute -bottom-2 left-0 w-4 h-4 bg-gray-700 rounded-full border-2 border-gray-500 animate-[spin_0.5s_linear_infinite]">
+                      <div className="absolute inset-1 bg-gray-600 rounded-full" />
+                    </div>
+                    <div className="absolute -bottom-2 right-0 w-4 h-4 bg-gray-700 rounded-full border-2 border-gray-500 animate-[spin_0.5s_linear_infinite]">
+                      <div className="absolute inset-1 bg-gray-600 rounded-full" />
+                    </div>
+                  </div>
+                  {/* 센서 빔 */}
+                  <div className="absolute -right-16 top-1/2 -translate-y-1/2 w-16 h-1 bg-gradient-to-r from-cobalt-400/80 to-transparent animate-pulse" />
+                  <div className="absolute -right-12 top-1/3 w-12 h-0.5 bg-gradient-to-r from-emerald-400/60 to-transparent rotate-12 animate-pulse" style={{ animationDelay: '0.2s' }} />
+                  <div className="absolute -right-12 bottom-1/3 w-12 h-0.5 bg-gradient-to-r from-emerald-400/60 to-transparent -rotate-12 animate-pulse" style={{ animationDelay: '0.4s' }} />
+                </div>
+              </div>
+
+              {/* 플로팅 코드 블록들 */}
+              <div className="absolute top-4 left-[5%] animate-float" style={{ animationDelay: '0s' }}>
+                <div className="px-3 py-1.5 bg-dark-card/90 border border-cobalt-500/30 rounded-lg font-mono text-xs text-cobalt-400 backdrop-blur-sm">
+                  if(obstacle)
+                </div>
+              </div>
+              <div className="absolute top-8 left-[25%] animate-float" style={{ animationDelay: '0.5s' }}>
+                <div className="px-3 py-1.5 bg-dark-card/90 border border-emerald-500/30 rounded-lg font-mono text-xs text-emerald-400 backdrop-blur-sm">
+                  turn_left()
+                </div>
+              </div>
+              <div className="absolute top-2 right-[30%] animate-float" style={{ animationDelay: '1s' }}>
+                <div className="px-3 py-1.5 bg-dark-card/90 border border-cobalt-500/30 rounded-lg font-mono text-xs text-cobalt-400 backdrop-blur-sm">
+                  speed = 50
+                </div>
+              </div>
+              <div className="absolute top-10 right-[10%] animate-float" style={{ animationDelay: '1.5s' }}>
+                <div className="px-3 py-1.5 bg-dark-card/90 border border-emerald-500/30 rounded-lg font-mono text-xs text-emerald-400 backdrop-blur-sm">
+                  go_forward()
+                </div>
+              </div>
+
+              {/* 장애물 블록 (레고 스타일) */}
+              <div className="absolute bottom-8 left-[45%] w-6 h-10 bg-gradient-to-b from-red-400 to-red-500 rounded border-2 border-red-300">
+                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-300 rounded-full" />
+              </div>
+            </div>
 
             {/* Subtitle */}
             <p className="hero-subtitle text-lg sm:text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed mb-12">

@@ -126,6 +126,97 @@
   }
 }
 
+/* ⭐ 배경 효과 */
+@layer utilities {
+  /* 노이즈/그레인 텍스처 */
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+  }
+
+  /* 도트 그리드 패턴 */
+  .bg-grid-dots {
+    background-image: radial-gradient(circle, rgba(0, 102, 255, 0.15) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* 라인 그리드 패턴 */
+  .bg-grid-lines {
+    background-image:
+      linear-gradient(rgba(0, 102, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 102, 255, 0.03) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  /* 그라데이션 메시 효과 */
+  .bg-mesh {
+    background:
+      radial-gradient(at 40% 20%, rgba(0, 102, 255, 0.15) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, rgba(0, 243, 255, 0.1) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, rgba(0, 102, 255, 0.1) 0px, transparent 50%),
+      radial-gradient(at 80% 50%, rgba(178, 58, 255, 0.08) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(0, 102, 255, 0.1) 0px, transparent 50%);
+  }
+
+  /* 빛나는 라인 효과 */
+  .bg-glow-lines {
+    background:
+      linear-gradient(90deg, transparent 0%, rgba(0, 102, 255, 0.05) 50%, transparent 100%);
+    background-size: 100% 1px;
+    background-position: 0 50%;
+    background-repeat: no-repeat;
+  }
+}
+
+/* ⭐ 자율주행 자동차 애니메이션 */
+@layer utilities {
+  @keyframes driveAcross {
+    0% {
+      left: 5%;
+      transform: translateY(0);
+    }
+    20% {
+      left: 25%;
+      transform: translateY(-2px);
+    }
+    35% {
+      left: 38%;
+      transform: translateY(0);
+    }
+    /* 장애물 앞에서 멈춤 */
+    40% {
+      left: 38%;
+      transform: translateY(-1px);
+    }
+    /* 위로 살짝 올라가며 회피 */
+    50% {
+      left: 42%;
+      transform: translateY(-15px);
+    }
+    55% {
+      left: 52%;
+      transform: translateY(-15px);
+    }
+    /* 다시 내려옴 */
+    60% {
+      left: 58%;
+      transform: translateY(0);
+    }
+    80% {
+      left: 75%;
+      transform: translateY(-2px);
+    }
+    100% {
+      left: 90%;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-drive {
+    animation: driveAcross 8s ease-in-out infinite;
+  }
+}
+
 /* ⭐ 클릭 가능한 요소에 기본 피드백 */
 @layer components {
   /* 버튼 클릭 피드백 */

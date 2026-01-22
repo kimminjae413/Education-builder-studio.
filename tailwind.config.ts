@@ -102,6 +102,7 @@ const config: Config = {
         'fade-in': 'fadeIn 0.8s ease-out',
         'scale-in': 'scaleIn 0.5s ease-out',
         'bounce-slow': 'bounce 3s infinite',
+        'drive': 'driveAcross 8s ease-in-out infinite',
       },
       keyframes: {
         rankUp: {
@@ -136,6 +137,17 @@ const config: Config = {
         scaleIn: {
           '0%': { transform: 'scale(0.9)', opacity: '0' },
           '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        driveAcross: {
+          '0%': { left: '5%', transform: 'translateY(0)' },
+          '20%': { left: '25%', transform: 'translateY(-2px)' },
+          '35%': { left: '38%', transform: 'translateY(0)' },
+          '40%': { left: '38%', transform: 'translateY(-1px)' },
+          '50%': { left: '42%', transform: 'translateY(-15px)' },
+          '55%': { left: '52%', transform: 'translateY(-15px)' },
+          '60%': { left: '58%', transform: 'translateY(0)' },
+          '80%': { left: '75%', transform: 'translateY(-2px)' },
+          '100%': { left: '90%', transform: 'translateY(0)' },
         },
       },
       backgroundImage: {
