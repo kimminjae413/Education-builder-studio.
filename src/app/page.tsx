@@ -82,68 +82,81 @@ export default function LandingPage() {
           ease: 'power3.out'
         }, '-=0.2')
 
-      // Problem 섹션 애니메이션
-      gsap.from('.problem-title', {
-        scrollTrigger: {
-          trigger: problemRef.current,
-          start: 'top 85%',
-          toggleActions: 'play none none none'
-        },
-        opacity: 0,
-        y: 30,
-        duration: 0.6
-      })
+      // Problem 섹션 애니메이션 - 개별 요소 애니메이션으로 변경
+      gsap.fromTo('.problem-title',
+        { opacity: 0, y: 30 },
+        {
+          scrollTrigger: {
+            trigger: problemRef.current,
+            start: 'top 90%',
+          },
+          opacity: 1,
+          y: 0,
+          duration: 0.6
+        }
+      )
 
-      gsap.from('.problem-card', {
-        scrollTrigger: {
-          trigger: problemRef.current,
-          start: 'top 80%',
-          toggleActions: 'play none none none'
-        },
-        opacity: 0,
-        y: 40,
-        duration: 0.5,
-        stagger: 0.1,
-        ease: 'power2.out'
+      document.querySelectorAll('.problem-card').forEach((card, i) => {
+        gsap.fromTo(card,
+          { opacity: 0, y: 30 },
+          {
+            scrollTrigger: {
+              trigger: card,
+              start: 'top 95%',
+            },
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            delay: i * 0.1
+          }
+        )
       })
 
       // Solution 섹션 애니메이션
-      gsap.from('.solution-title', {
-        scrollTrigger: {
-          trigger: solutionRef.current,
-          start: 'top 85%',
-          toggleActions: 'play none none none'
-        },
-        opacity: 0,
-        y: 30,
-        duration: 0.6
-      })
+      gsap.fromTo('.solution-title',
+        { opacity: 0, y: 30 },
+        {
+          scrollTrigger: {
+            trigger: solutionRef.current,
+            start: 'top 90%',
+          },
+          opacity: 1,
+          y: 0,
+          duration: 0.6
+        }
+      )
 
-      gsap.from('.solution-step', {
-        scrollTrigger: {
-          trigger: solutionRef.current,
-          start: 'top 80%',
-          toggleActions: 'play none none none'
-        },
-        opacity: 0,
-        y: 30,
-        duration: 0.5,
-        stagger: 0.1,
-        ease: 'power2.out'
+      document.querySelectorAll('.solution-step').forEach((step, i) => {
+        gsap.fromTo(step,
+          { opacity: 0, y: 30 },
+          {
+            scrollTrigger: {
+              trigger: step,
+              start: 'top 95%',
+            },
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            delay: i * 0.1
+          }
+        )
       })
 
       // Features 섹션 애니메이션
-      gsap.from('.feature-card', {
-        scrollTrigger: {
-          trigger: featuresRef.current,
-          start: 'top 85%',
-          toggleActions: 'play none none none'
-        },
-        opacity: 0,
-        y: 40,
-        duration: 0.5,
-        stagger: 0.1,
-        ease: 'power2.out'
+      document.querySelectorAll('.feature-card').forEach((card, i) => {
+        gsap.fromTo(card,
+          { opacity: 0, y: 30 },
+          {
+            scrollTrigger: {
+              trigger: card,
+              start: 'top 95%',
+            },
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            delay: i * 0.1
+          }
+        )
       })
 
       // Stats 카운터 애니메이션
