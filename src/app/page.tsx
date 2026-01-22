@@ -86,65 +86,64 @@ export default function LandingPage() {
       gsap.from('.problem-title', {
         scrollTrigger: {
           trigger: problemRef.current,
-          start: 'top 80%',
-          toggleActions: 'play none none reverse'
+          start: 'top 85%',
+          toggleActions: 'play none none none'
         },
         opacity: 0,
-        y: 50,
-        duration: 0.8
+        y: 30,
+        duration: 0.6
       })
 
       gsap.from('.problem-card', {
         scrollTrigger: {
           trigger: problemRef.current,
-          start: 'top 70%',
-          toggleActions: 'play none none reverse'
+          start: 'top 80%',
+          toggleActions: 'play none none none'
         },
         opacity: 0,
-        y: 60,
-        duration: 0.6,
-        stagger: 0.15,
-        ease: 'power3.out'
+        y: 40,
+        duration: 0.5,
+        stagger: 0.1,
+        ease: 'power2.out'
       })
 
       // Solution 섹션 애니메이션
       gsap.from('.solution-title', {
         scrollTrigger: {
           trigger: solutionRef.current,
-          start: 'top 80%',
-          toggleActions: 'play none none reverse'
+          start: 'top 85%',
+          toggleActions: 'play none none none'
         },
         opacity: 0,
-        y: 50,
-        duration: 0.8
+        y: 30,
+        duration: 0.6
       })
 
       gsap.from('.solution-step', {
         scrollTrigger: {
           trigger: solutionRef.current,
-          start: 'top 60%',
-          toggleActions: 'play none none reverse'
+          start: 'top 80%',
+          toggleActions: 'play none none none'
         },
         opacity: 0,
-        x: -50,
-        duration: 0.7,
-        stagger: 0.2,
-        ease: 'power3.out'
+        y: 30,
+        duration: 0.5,
+        stagger: 0.1,
+        ease: 'power2.out'
       })
 
       // Features 섹션 애니메이션
       gsap.from('.feature-card', {
         scrollTrigger: {
           trigger: featuresRef.current,
-          start: 'top 70%',
-          toggleActions: 'play none none reverse'
+          start: 'top 85%',
+          toggleActions: 'play none none none'
         },
         opacity: 0,
-        y: 80,
-        scale: 0.95,
-        duration: 0.7,
-        stagger: 0.15,
-        ease: 'power3.out'
+        y: 40,
+        duration: 0.5,
+        stagger: 0.1,
+        ease: 'power2.out'
       })
 
       // Stats 카운터 애니메이션
