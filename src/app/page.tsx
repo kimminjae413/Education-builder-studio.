@@ -430,9 +430,9 @@ export default function LandingPage() {
               {/* Problem 1 - 교육과정 설계 역량 부족 */}
               <div className="problem-card group relative p-8 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-red-500/40 transition-all duration-300 overflow-hidden">
                 {/* Background glow */}
-                <div className="absolute top-0 right-0 w-40 h-40 bg-red-500/5 rounded-full blur-3xl group-hover:bg-red-500/10 transition-colors" />
+                <div className="absolute top-0 right-0 w-40 h-40 bg-red-500/5 rounded-full blur-3xl group-hover:bg-red-500/10 transition-colors -z-10" />
 
-                <div className="relative">
+                <div className="relative z-10">
                   {/* Icon & Number */}
                   <div className="flex items-center gap-4 mb-6">
                     <div className="h-14 w-14 bg-red-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -470,9 +470,9 @@ export default function LandingPage() {
               {/* Problem 2 - 베테랑 경험 자산의 소멸 */}
               <div className="problem-card group relative p-8 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-orange-500/40 transition-all duration-300 overflow-hidden">
                 {/* Background glow */}
-                <div className="absolute top-0 right-0 w-40 h-40 bg-orange-500/5 rounded-full blur-3xl group-hover:bg-orange-500/10 transition-colors" />
+                <div className="absolute top-0 right-0 w-40 h-40 bg-orange-500/5 rounded-full blur-3xl group-hover:bg-orange-500/10 transition-colors -z-10" />
 
-                <div className="relative">
+                <div className="relative z-10">
                   {/* Icon & Number */}
                   <div className="flex items-center gap-4 mb-6">
                     <div className="h-14 w-14 bg-orange-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -623,8 +623,8 @@ export default function LandingPage() {
             <div className="grid md:grid-cols-2 gap-5">
               {/* Feature 1 - AI 설계 마법사 */}
               <div className="feature-card group relative p-6 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-cobalt-500/50 transition-all duration-300 overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-cobalt-500/5 rounded-full blur-2xl group-hover:bg-cobalt-500/15 transition-colors" />
-                <div className="relative flex gap-5">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-cobalt-500/5 rounded-full blur-2xl group-hover:bg-cobalt-500/15 transition-colors -z-10" />
+                <div className="relative z-10 flex gap-5">
                   <div className="flex-shrink-0 h-14 w-14 bg-gradient-to-br from-cobalt-400 to-cobalt-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-all shadow-neon-blue">
                     <Zap className="w-7 h-7 text-white" />
                   </div>
@@ -642,8 +642,8 @@ export default function LandingPage() {
 
               {/* Feature 2 - 경험 금고 (Experience Vault) */}
               <div className="feature-card group relative p-6 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-emerald-500/50 transition-all duration-300 overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/15 transition-colors" />
-                <div className="relative flex gap-5">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/15 transition-colors -z-10" />
+                <div className="relative z-10 flex gap-5">
                   <div className="flex-shrink-0 h-14 w-14 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-all">
                     <BookOpen className="w-7 h-7 text-white" />
                   </div>
@@ -661,8 +661,8 @@ export default function LandingPage() {
 
               {/* Feature 3 - 랭크 & 리워드 */}
               <div className="feature-card group relative p-6 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-gold-400/50 transition-all duration-300 overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gold-400/5 rounded-full blur-2xl group-hover:bg-gold-400/15 transition-colors" />
-                <div className="relative flex gap-5">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gold-400/5 rounded-full blur-2xl group-hover:bg-gold-400/15 transition-colors -z-10" />
+                <div className="relative z-10 flex gap-5">
                   <div className="flex-shrink-0 h-14 w-14 bg-gradient-to-br from-gold-400 to-gold-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-all">
                     <Trophy className="w-7 h-7 text-white" />
                   </div>
@@ -680,8 +680,8 @@ export default function LandingPage() {
 
               {/* Feature 4 - 콘텐츠 마켓플레이스 */}
               <div className="feature-card group relative p-6 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-neon-purple/50 transition-all duration-300 overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-neon-purple/5 rounded-full blur-2xl group-hover:bg-neon-purple/15 transition-colors" />
-                <div className="relative flex gap-5">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-neon-purple/5 rounded-full blur-2xl group-hover:bg-neon-purple/15 transition-colors -z-10" />
+                <div className="relative z-10 flex gap-5">
                   <div className="flex-shrink-0 h-14 w-14 bg-gradient-to-br from-neon-purple to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-all">
                     <Users className="w-7 h-7 text-white" />
                   </div>
