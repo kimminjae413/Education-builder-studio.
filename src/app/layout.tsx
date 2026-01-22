@@ -6,9 +6,20 @@ import { Suspense } from 'react'
 export const metadata: Metadata = {
   title: 'Education Builder Studio',
   description: '지혜를 설계하고, 경험을 공유하며, 교육의 미래를 함께 짓다',
+  manifest: '/manifest.json',
   icons: {
     icon: '/icon.svg',
+    apple: '/apple-icon',
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'EduBuilder',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  themeColor: '#0066FF',
 }
 
 export default function RootLayout({
