@@ -275,7 +275,7 @@ export default function LandingPage() {
               <span className="hero-title-line block text-white">교육과정 설계,</span>
               <span className="hero-title-line block mt-2">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cobalt-400 via-neon-cyan to-cobalt-400 animate-gradient bg-[length:200%_auto]">
-                  AI가 3초면 끝
+                  AI가 3분면 끝
                 </span>
               </span>
             </h2>
@@ -570,7 +570,7 @@ export default function LandingPage() {
                   <h4 className="text-lg font-bold text-white">AI 자동 설계</h4>
                 </div>
                 <p className="text-gray-400 text-sm leading-relaxed">
-                  <span className="text-white font-medium">3초 안에 3가지</span> 맞춤형 교육과정 생성
+                  <span className="text-white font-medium">3분 안에 3가지</span> 맞춤형 교육과정 생성
                 </p>
               </div>
 
@@ -643,7 +643,7 @@ export default function LandingPage() {
                   <div className="flex-1">
                     <h4 className="text-xl font-bold text-white mb-2">AI 설계 마법사</h4>
                     <p className="text-gray-400 text-sm leading-relaxed mb-3">
-                      Gemini API 기반 <span className="text-cobalt-400 font-medium">맞춤형 교육과정</span>을 3초 안에 자동 생성
+                      Gemini API 기반 <span className="text-cobalt-400 font-medium">맞춤형 교육과정</span>을 3분 안에 자동 생성
                     </p>
                     <div className="flex items-center text-cobalt-400 text-sm font-medium group-hover:translate-x-2 transition-transform">
                       자세히 보기 <ArrowRight className="w-4 h-4 ml-1" />
@@ -732,7 +732,7 @@ export default function LandingPage() {
               </div>
               <div className="stat-item text-center">
                 <div className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400 mb-2">
-                  3초
+                  3분
                 </div>
                 <div className="text-gray-500 font-medium">AI 설계 생성</div>
               </div>
