@@ -411,268 +411,288 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Problem Section */}
-      <section ref={problemRef} className="relative py-32">
+      {/* Problem Section - 2 Core Problems */}
+      <section ref={problemRef} className="relative py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            {/* Section Title with Animated Graphic */}
-            <div className="problem-title text-center mb-20">
-              <span className="inline-block px-4 py-1.5 bg-red-500/10 border border-red-500/20 rounded-full text-red-400 text-sm font-medium mb-6">
-                문제점
+            {/* Section Title */}
+            <div className="problem-title text-center mb-12">
+              <span className="inline-block px-4 py-1.5 bg-red-500/10 border border-red-500/20 rounded-full text-red-400 text-sm font-medium mb-4">
+                교육 현장의 문제
               </span>
-              <h3 className="text-4xl md:text-5xl font-black text-white mb-6">
-                교육과정 설계,<br />
-                <span className="text-gray-500">왜 이렇게 힘들까요?</span>
+              <h3 className="text-3xl md:text-4xl font-black text-white">
+                프리랜서 강사들이 직면한 <span className="text-red-400">2가지 난관</span>
               </h3>
+            </div>
 
-              {/* Chaos Animation Graphic */}
-              <div className="relative h-40 w-full max-w-md mx-auto my-12">
-                {/* Floating scattered documents */}
-                <div className="absolute top-0 left-[10%] w-12 h-16 bg-gradient-to-br from-red-500/20 to-red-600/10 rounded-lg border border-red-500/30 animate-float" style={{ animationDelay: '0s' }}>
-                  <div className="p-2 space-y-1">
-                    <div className="h-1 w-6 bg-red-500/40 rounded"></div>
-                    <div className="h-1 w-4 bg-red-500/30 rounded"></div>
-                    <div className="h-1 w-5 bg-red-500/20 rounded"></div>
+            {/* Two Core Problem Cards - Side by Side */}
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              {/* Problem 1 - 교육과정 설계 역량 부족 */}
+              <div className="problem-card group relative p-8 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-red-500/40 transition-all duration-300 overflow-hidden">
+                {/* Background glow */}
+                <div className="absolute top-0 right-0 w-40 h-40 bg-red-500/5 rounded-full blur-3xl group-hover:bg-red-500/10 transition-colors" />
+
+                <div className="relative">
+                  {/* Icon & Number */}
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="h-14 w-14 bg-red-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <AlertTriangle className="w-7 h-7 text-red-400" />
+                    </div>
+                    <span className="text-5xl font-black text-red-500/20">01</span>
+                  </div>
+
+                  <h4 className="text-xl font-bold text-white mb-4">교육과정 설계 역량 부족</h4>
+
+                  {/* Sub-problems */}
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <Clock className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-gray-400 text-sm leading-relaxed">
+                        수업 준비에만 <span className="text-white font-medium">몇 시간씩 소요</span>, 정작 교육 품질 향상에 쓸 시간이 없음
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <FileX className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-gray-400 text-sm leading-relaxed">
+                        검증된 프레임워크나 템플릿 없이 <span className="text-white font-medium">매번 처음부터 설계</span>
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Users className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-gray-400 text-sm leading-relaxed">
+                        다른 전문가의 노하우를 배울 기회가 없어 <span className="text-white font-medium">같은 실수 반복</span>
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div className="absolute top-8 left-[30%] w-10 h-14 bg-gradient-to-br from-orange-500/20 to-orange-600/10 rounded-lg border border-orange-500/30 animate-float rotate-12" style={{ animationDelay: '0.5s' }}>
-                  <div className="p-2 space-y-1">
-                    <div className="h-1 w-5 bg-orange-500/40 rounded"></div>
-                    <div className="h-1 w-3 bg-orange-500/30 rounded"></div>
+              </div>
+
+              {/* Problem 2 - 베테랑 경험 자산의 소멸 */}
+              <div className="problem-card group relative p-8 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-orange-500/40 transition-all duration-300 overflow-hidden">
+                {/* Background glow */}
+                <div className="absolute top-0 right-0 w-40 h-40 bg-orange-500/5 rounded-full blur-3xl group-hover:bg-orange-500/10 transition-colors" />
+
+                <div className="relative">
+                  {/* Icon & Number */}
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="h-14 w-14 bg-orange-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Trophy className="w-7 h-7 text-orange-400" />
+                    </div>
+                    <span className="text-5xl font-black text-orange-500/20">02</span>
+                  </div>
+
+                  <h4 className="text-xl font-bold text-white mb-4">베테랑 경험 자산의 소멸</h4>
+
+                  {/* Sub-problems */}
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <BookOpen className="w-5 h-5 text-orange-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-gray-400 text-sm leading-relaxed">
+                        10년 이상 축적된 <span className="text-white font-medium">교육 노하우가 체계화되지 않음</span>
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Star className="w-5 h-5 text-orange-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-gray-400 text-sm leading-relaxed">
+                        경험 공유에 대한 <span className="text-white font-medium">정당한 보상 체계 부재</span>
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Lightbulb className="w-5 h-5 text-orange-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-gray-400 text-sm leading-relaxed">
+                        은퇴 시 <span className="text-white font-medium">귀중한 교육 자산이 함께 사라짐</span>
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div className="absolute top-4 right-[25%] w-14 h-18 bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-lg border border-yellow-500/30 animate-float -rotate-6" style={{ animationDelay: '1s' }}>
-                  <div className="p-2 space-y-1">
-                    <div className="h-1 w-8 bg-yellow-500/40 rounded"></div>
-                    <div className="h-1 w-6 bg-yellow-500/30 rounded"></div>
-                    <div className="h-1 w-4 bg-yellow-500/20 rounded"></div>
-                  </div>
-                </div>
-                <div className="absolute bottom-4 left-[20%] w-11 h-15 bg-gradient-to-br from-red-500/15 to-red-600/5 rounded-lg border border-red-500/20 animate-float rotate-6" style={{ animationDelay: '1.5s' }}>
-                  <div className="p-2 space-y-1">
-                    <div className="h-1 w-6 bg-red-500/30 rounded"></div>
-                    <div className="h-1 w-4 bg-red-500/20 rounded"></div>
-                  </div>
-                </div>
-                <div className="absolute bottom-0 right-[15%] w-12 h-16 bg-gradient-to-br from-orange-500/15 to-orange-600/5 rounded-lg border border-orange-500/20 animate-float -rotate-12" style={{ animationDelay: '2s' }}>
-                  <div className="p-2 space-y-1">
-                    <div className="h-1 w-7 bg-orange-500/30 rounded"></div>
-                    <div className="h-1 w-5 bg-orange-500/20 rounded"></div>
-                  </div>
-                </div>
-                {/* Question marks floating */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl font-black text-red-500/20 animate-pulse">?</div>
-                <div className="absolute top-[20%] right-[10%] text-3xl font-black text-orange-500/30 animate-bounce" style={{ animationDelay: '0.3s' }}>?</div>
-                <div className="absolute bottom-[20%] left-[5%] text-4xl font-black text-yellow-500/25 animate-bounce" style={{ animationDelay: '0.7s' }}>?</div>
               </div>
             </div>
 
-            {/* Problem Cards */}
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="problem-card group p-8 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-red-500/30 transition-all duration-300">
-                <div className="h-14 w-14 bg-red-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <Clock className="w-7 h-7 text-red-400" />
-                </div>
-                <h4 className="text-xl font-bold text-white mb-3">시간 부족</h4>
-                <p className="text-gray-400 leading-relaxed">
-                  수업 준비에만 몇 시간씩 소요. 실제 교육 품질 향상에 쓸 시간이 없습니다.
-                </p>
-              </div>
-
-              <div className="problem-card group p-8 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-orange-500/30 transition-all duration-300">
-                <div className="h-14 w-14 bg-orange-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <AlertTriangle className="w-7 h-7 text-orange-400" />
-                </div>
-                <h4 className="text-xl font-bold text-white mb-3">체계 부재</h4>
-                <p className="text-gray-400 leading-relaxed">
-                  매번 처음부터 설계. 검증된 프레임워크나 템플릿 없이 혼자 고민합니다.
-                </p>
-              </div>
-
-              <div className="problem-card group p-8 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-yellow-500/30 transition-all duration-300">
-                <div className="h-14 w-14 bg-yellow-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <FileX className="w-7 h-7 text-yellow-400" />
-                </div>
-                <h4 className="text-xl font-bold text-white mb-3">참고 자료 부족</h4>
-                <p className="text-gray-400 leading-relaxed">
-                  다른 전문가의 노하우를 배울 기회가 없어 같은 실수를 반복합니다.
-                </p>
+            {/* Transition Arrow */}
+            <div className="flex justify-center">
+              <div className="flex flex-col items-center text-gray-500">
+                <ChevronDown className="w-6 h-6 animate-bounce" />
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Solution Section */}
-      <section ref={solutionRef} className="relative py-32 bg-gradient-to-b from-transparent via-cobalt-900/10 to-transparent">
+      {/* Solution Section - Integrated Platform */}
+      <section ref={solutionRef} className="relative py-16 bg-gradient-to-b from-cobalt-900/5 via-cobalt-900/10 to-transparent">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             {/* Section Title */}
-            <div className="solution-title text-center mb-12">
-              <span className="inline-block px-4 py-1.5 bg-cobalt-500/10 border border-cobalt-500/20 rounded-full text-cobalt-400 text-sm font-medium mb-6">
-                해결책
+            <div className="solution-title text-center mb-10">
+              <span className="inline-block px-4 py-1.5 bg-cobalt-500/10 border border-cobalt-500/20 rounded-full text-cobalt-400 text-sm font-medium mb-4">
+                EduBuilder Studio의 해결책
               </span>
-              <h3 className="text-4xl md:text-5xl font-black text-white mb-6">
-                3단계로 끝나는<br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cobalt-400 to-neon-cyan">
-                  스마트한 교육과정 설계
-                </span>
+              <h3 className="text-3xl md:text-4xl font-black text-white mb-4">
+                AI 기반 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cobalt-400 to-neon-cyan">교육과정 설계</span> +{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-400 to-orange-400">경험 자산화</span> 플랫폼
               </h3>
+              <p className="text-gray-400 max-w-2xl mx-auto">
+                신규 강사는 빠르게 성장하고, 베테랑 강사는 경험을 자산화하여 지속적인 수익을 창출합니다
+              </p>
             </div>
 
-            {/* AI Core Animation Graphic */}
-            <div className="relative h-64 w-full max-w-lg mx-auto mb-16">
+            {/* Solution Flow - 3 Steps Horizontal */}
+            <div className="grid md:grid-cols-3 gap-4 mb-12">
+              <div className="solution-step group p-6 bg-gradient-to-br from-dark-card/90 to-dark-bg rounded-xl border border-dark-border hover:border-cobalt-500/40 transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 bg-gradient-to-br from-cobalt-500 to-cobalt-600 rounded-xl flex items-center justify-center text-lg font-black text-white shadow-neon-blue group-hover:scale-110 transition-transform">
+                    1
+                  </div>
+                  <h4 className="text-lg font-bold text-white">정보 입력</h4>
+                </div>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  교육 대상, 주제, 목표만 입력하면 끝
+                </p>
+              </div>
+
+              <div className="solution-step group p-6 bg-gradient-to-br from-dark-card/90 to-dark-bg rounded-xl border border-dark-border hover:border-neon-purple/40 transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 bg-gradient-to-br from-neon-purple to-purple-600 rounded-xl flex items-center justify-center text-lg font-black text-white shadow-neon-purple group-hover:scale-110 transition-transform">
+                    2
+                  </div>
+                  <h4 className="text-lg font-bold text-white">AI 자동 설계</h4>
+                </div>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  <span className="text-white font-medium">3초 안에 3가지</span> 맞춤형 교육과정 생성
+                </p>
+              </div>
+
+              <div className="solution-step group p-6 bg-gradient-to-br from-dark-card/90 to-dark-bg rounded-xl border border-dark-border hover:border-emerald-500/40 transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center text-lg font-black text-white group-hover:scale-110 transition-transform">
+                    3
+                  </div>
+                  <h4 className="text-lg font-bold text-white">선택 & 활용</h4>
+                </div>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  설계안 선택 후 <span className="text-white font-medium">바로 수업에 활용</span>
+                </p>
+              </div>
+            </div>
+
+            {/* AI Core Animation - Smaller */}
+            <div className="relative h-48 w-full max-w-sm mx-auto mb-8">
               {/* Outer rotating ring */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-48 h-48 rounded-full border-2 border-dashed border-cobalt-500/30 animate-[spin_20s_linear_infinite]"></div>
+                <div className="w-36 h-36 rounded-full border-2 border-dashed border-cobalt-500/30 animate-[spin_20s_linear_infinite]"></div>
               </div>
-              {/* Middle rotating ring - opposite direction */}
+              {/* Middle rotating ring */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-36 h-36 rounded-full border-2 border-cobalt-400/40 animate-[spin_15s_linear_infinite_reverse]"></div>
+                <div className="w-28 h-28 rounded-full border-2 border-cobalt-400/40 animate-[spin_15s_linear_infinite_reverse]"></div>
               </div>
               {/* Inner pulsing core */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="relative">
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-cobalt-500 to-neon-cyan animate-pulse shadow-neon-blue"></div>
-                  <div className="absolute inset-0 w-24 h-24 rounded-full bg-cobalt-500/50 animate-ping"></div>
-                  {/* AI Brain icon in center */}
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cobalt-500 to-neon-cyan animate-pulse shadow-neon-blue"></div>
+                  <div className="absolute inset-0 w-20 h-20 rounded-full bg-cobalt-500/50 animate-ping"></div>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Brain className="w-10 h-10 text-white" />
+                    <Brain className="w-8 h-8 text-white" />
                   </div>
                 </div>
               </div>
               {/* Orbiting elements */}
               <div className="absolute inset-0 animate-[spin_10s_linear_infinite]">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-4 bg-neon-cyan rounded-full shadow-neon-cyan"></div>
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-neon-cyan rounded-full shadow-neon-cyan"></div>
               </div>
               <div className="absolute inset-0 animate-[spin_8s_linear_infinite_reverse]">
-                <div className="absolute bottom-4 right-4 w-3 h-3 bg-neon-purple rounded-full shadow-neon-purple"></div>
-              </div>
-              <div className="absolute inset-0 animate-[spin_12s_linear_infinite]">
-                <div className="absolute top-1/4 left-0 w-2 h-2 bg-emerald-400 rounded-full"></div>
-              </div>
-              {/* Data flow lines */}
-              <div className="absolute top-1/2 left-0 w-16 h-px bg-gradient-to-r from-transparent via-cobalt-500/50 to-cobalt-500 animate-pulse"></div>
-              <div className="absolute top-1/2 right-0 w-16 h-px bg-gradient-to-l from-transparent via-cobalt-500/50 to-cobalt-500 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-12 bg-gradient-to-b from-transparent via-neon-cyan/50 to-neon-cyan animate-pulse" style={{ animationDelay: '1s' }}></div>
-            </div>
-
-            {/* Solution Steps */}
-            <div className="space-y-8">
-              <div className="solution-step flex items-start gap-6 p-8 bg-gradient-to-r from-dark-card/80 to-transparent rounded-2xl border border-dark-border hover:border-cobalt-500/30 transition-all group">
-                <div className="flex-shrink-0 h-16 w-16 bg-gradient-to-br from-cobalt-500 to-cobalt-600 rounded-2xl flex items-center justify-center text-2xl font-black text-white shadow-neon-blue group-hover:scale-110 transition-transform">
-                  1
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
-                    <Target className="w-6 h-6 text-cobalt-400" />
-                    정보 입력
-                  </h4>
-                  <p className="text-gray-400 text-lg leading-relaxed">
-                    교육 대상, 주제, 목표, 시간만 입력하세요. 복잡한 양식 없이 간단한 질문에 답하면 됩니다.
-                  </p>
-                </div>
-              </div>
-
-              <div className="solution-step flex items-start gap-6 p-8 bg-gradient-to-r from-dark-card/80 to-transparent rounded-2xl border border-dark-border hover:border-neon-purple/30 transition-all group">
-                <div className="flex-shrink-0 h-16 w-16 bg-gradient-to-br from-neon-purple to-purple-600 rounded-2xl flex items-center justify-center text-2xl font-black text-white shadow-neon-purple group-hover:scale-110 transition-transform">
-                  2
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
-                    <Brain className="w-6 h-6 text-neon-purple" />
-                    AI 자동 설계
-                  </h4>
-                  <p className="text-gray-400 text-lg leading-relaxed">
-                    AI가 <span className="text-white font-semibold">3초 안에 3가지 맞춤형 교육과정</span>을 생성합니다. 베테랑 강사들의 데이터를 학습한 결과물입니다.
-                  </p>
-                </div>
-              </div>
-
-              <div className="solution-step flex items-start gap-6 p-8 bg-gradient-to-r from-dark-card/80 to-transparent rounded-2xl border border-dark-border hover:border-emerald-500/30 transition-all group">
-                <div className="flex-shrink-0 h-16 w-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center text-2xl font-black text-white group-hover:scale-110 transition-transform">
-                  3
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
-                    <Lightbulb className="w-6 h-6 text-emerald-400" />
-                    선택 & 활용
-                  </h4>
-                  <p className="text-gray-400 text-lg leading-relaxed">
-                    마음에 드는 설계안을 선택하고, 관련 자료까지 추천받으세요. 바로 수업에 활용할 수 있습니다.
-                  </p>
-                </div>
+                <div className="absolute bottom-4 right-8 w-2 h-2 bg-gold-400 rounded-full"></div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section ref={featuresRef} className="relative py-32">
+      {/* Features Section - 4 Core Features */}
+      <section ref={featuresRef} className="relative py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-20">
-              <span className="inline-block px-4 py-1.5 bg-gold-400/10 border border-gold-400/20 rounded-full text-gold-400 text-sm font-medium mb-6">
+            <div className="text-center mb-12">
+              <span className="inline-block px-4 py-1.5 bg-cobalt-500/10 border border-cobalt-500/20 rounded-full text-cobalt-400 text-sm font-medium mb-4">
                 핵심 기능
               </span>
-              <h3 className="text-4xl md:text-5xl font-black text-white mb-6">
-                강사님을 위한<br />
-                <span className="text-gray-500">완벽한 도구</span>
+              <h3 className="text-3xl md:text-4xl font-black text-white">
+                신규 강사와 베테랑 강사 <span className="text-gray-500">모두를 위한</span>
               </h3>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              {/* Feature 1 */}
-              <div className="feature-card group relative p-8 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-cobalt-500/50 transition-all duration-500 overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-cobalt-500/10 rounded-full blur-2xl group-hover:bg-cobalt-500/20 transition-colors" />
-                <div className="relative">
-                  <div className="h-16 w-16 bg-gradient-to-br from-cobalt-400 to-cobalt-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all shadow-neon-blue">
-                    <Zap className="w-8 h-8 text-white" />
+            <div className="grid md:grid-cols-2 gap-5">
+              {/* Feature 1 - AI 설계 마법사 */}
+              <div className="feature-card group relative p-6 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-cobalt-500/50 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-cobalt-500/5 rounded-full blur-2xl group-hover:bg-cobalt-500/15 transition-colors" />
+                <div className="relative flex gap-5">
+                  <div className="flex-shrink-0 h-14 w-14 bg-gradient-to-br from-cobalt-400 to-cobalt-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-all shadow-neon-blue">
+                    <Zap className="w-7 h-7 text-white" />
                   </div>
-                  <h4 className="text-2xl font-bold text-white mb-3">AI 설계 마법사</h4>
-                  <p className="text-gray-400 leading-relaxed mb-6">
-                    학습 대상, 주제를 입력하면 AI가 <span className="text-cobalt-400 font-medium">최적의 교육과정을 3초 안에</span> 추천해드립니다.
-                  </p>
-                  <div className="flex items-center text-cobalt-400 font-medium group-hover:translate-x-2 transition-transform">
-                    자세히 보기
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Feature 2 */}
-              <div className="feature-card group relative p-8 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-gold-400/50 transition-all duration-500 overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gold-400/10 rounded-full blur-2xl group-hover:bg-gold-400/20 transition-colors" />
-                <div className="relative">
-                  <div className="h-16 w-16 bg-gradient-to-br from-gold-400 to-gold-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all">
-                    <Trophy className="w-8 h-8 text-white" />
-                  </div>
-                  <h4 className="text-2xl font-bold text-white mb-3">랭크 & 리워드</h4>
-                  <p className="text-gray-400 leading-relaxed mb-6">
-                    콘텐츠 기여도에 따라 <span className="text-gold-400 font-medium">자동으로 랭크가 상승</span>하고, 다양한 리워드를 받으세요.
-                  </p>
-                  <div className="flex items-center text-gold-400 font-medium group-hover:translate-x-2 transition-transform">
-                    자세히 보기
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                  <div className="flex-1">
+                    <h4 className="text-xl font-bold text-white mb-2">AI 설계 마법사</h4>
+                    <p className="text-gray-400 text-sm leading-relaxed mb-3">
+                      Gemini API 기반 <span className="text-cobalt-400 font-medium">맞춤형 교육과정</span>을 3초 안에 자동 생성
+                    </p>
+                    <div className="flex items-center text-cobalt-400 text-sm font-medium group-hover:translate-x-2 transition-transform">
+                      자세히 보기 <ArrowRight className="w-4 h-4 ml-1" />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Feature 3 */}
-              <div className="feature-card group relative p-8 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-emerald-500/50 transition-all duration-500 overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-colors" />
-                <div className="relative">
-                  <div className="h-16 w-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all">
-                    <BookOpen className="w-8 h-8 text-white" />
+              {/* Feature 2 - 경험 금고 (Experience Vault) */}
+              <div className="feature-card group relative p-6 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-emerald-500/50 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/15 transition-colors" />
+                <div className="relative flex gap-5">
+                  <div className="flex-shrink-0 h-14 w-14 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-all">
+                    <BookOpen className="w-7 h-7 text-white" />
                   </div>
-                  <h4 className="text-2xl font-bold text-white mb-3">베테랑 라이브러리</h4>
-                  <p className="text-gray-400 leading-relaxed mb-6">
-                    <span className="text-emerald-400 font-medium">경력 10년 이상 강사들의 검증된</span> 교육 자료를 활용할 수 있습니다.
-                  </p>
-                  <div className="flex items-center text-emerald-400 font-medium group-hover:translate-x-2 transition-transform">
-                    자세히 보기
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                  <div className="flex-1">
+                    <h4 className="text-xl font-bold text-white mb-2">경험 금고 & 지혜 도서관</h4>
+                    <p className="text-gray-400 text-sm leading-relaxed mb-3">
+                      베테랑 강사의 <span className="text-emerald-400 font-medium">검증된 교육 자료</span>를 탐색하고 활용
+                    </p>
+                    <div className="flex items-center text-emerald-400 text-sm font-medium group-hover:translate-x-2 transition-transform">
+                      자세히 보기 <ArrowRight className="w-4 h-4 ml-1" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Feature 3 - 랭크 & 리워드 */}
+              <div className="feature-card group relative p-6 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-gold-400/50 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gold-400/5 rounded-full blur-2xl group-hover:bg-gold-400/15 transition-colors" />
+                <div className="relative flex gap-5">
+                  <div className="flex-shrink-0 h-14 w-14 bg-gradient-to-br from-gold-400 to-gold-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-all">
+                    <Trophy className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-xl font-bold text-white mb-2">랭크 & 리워드</h4>
+                    <p className="text-gray-400 text-sm leading-relaxed mb-3">
+                      기여도 기반 <span className="text-gold-400 font-medium">자동 랭크 상승</span>과 다양한 보상 혜택
+                    </p>
+                    <div className="flex items-center text-gold-400 text-sm font-medium group-hover:translate-x-2 transition-transform">
+                      자세히 보기 <ArrowRight className="w-4 h-4 ml-1" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Feature 4 - 콘텐츠 마켓플레이스 */}
+              <div className="feature-card group relative p-6 bg-gradient-to-br from-dark-card to-dark-bg rounded-2xl border border-dark-border hover:border-neon-purple/50 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-neon-purple/5 rounded-full blur-2xl group-hover:bg-neon-purple/15 transition-colors" />
+                <div className="relative flex gap-5">
+                  <div className="flex-shrink-0 h-14 w-14 bg-gradient-to-br from-neon-purple to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-all">
+                    <Users className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-xl font-bold text-white mb-2">콘텐츠 마켓플레이스</h4>
+                    <p className="text-gray-400 text-sm leading-relaxed mb-3">
+                      교육 자료 <span className="text-neon-purple font-medium">거래 및 수익화</span>로 지속적인 소득 창출
+                    </p>
+                    <div className="flex items-center text-neon-purple text-sm font-medium group-hover:translate-x-2 transition-transform">
+                      자세히 보기 <ArrowRight className="w-4 h-4 ml-1" />
+                    </div>
                   </div>
                 </div>
               </div>
