@@ -3,7 +3,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Pencil, Save, X } from 'lucide-react'
 
 interface ProfileEditFormProps {
@@ -43,20 +42,24 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
     }
 
     setLoading(true)
-    const supabase = createClient()
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
+      const response = await fetch('/api/profile/update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name: formData.name.trim(),
           phone: formData.phone.trim() || null,
           bio: formData.bio.trim() || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', profile.id)
+        }),
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to update profile')
+      }
 
       alert('프로필이 업데이트되었습니다! ✅')
       setIsEditing(false)

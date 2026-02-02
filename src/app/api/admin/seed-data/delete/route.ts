@@ -1,24 +1,19 @@
 // src/app/api/admin/seed-data/delete/route.ts
-import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthenticatedUser, isAdmin } from '@/lib/firebase/server-auth'
+import { getMaterial, deleteMaterial } from '@/lib/db/queries'
+import { deleteFile, extractPathFromUrl } from '@/lib/storage/gcs'
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
     // 1. 관리자 권한 확인
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getAuthenticatedUser(request)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
+    const adminCheck = await isAdmin(user.uid)
+    if (!adminCheck) {
       return NextResponse.json({ error: 'Admin only' }, { status: 403 })
     }
 
@@ -34,13 +29,9 @@ export async function DELETE(request: NextRequest) {
     }
 
     // 3. DB에서 자료 정보 조회
-    const { data: material, error: fetchError } = await supabase
-      .from('teaching_materials')
-      .select('file_url, is_seed_data')
-      .eq('id', materialId)
-      .single()
+    const material = await getMaterial(materialId)
 
-    if (fetchError || !material) {
+    if (!material) {
       return NextResponse.json(
         { error: 'Material not found' },
         { status: 404 }
@@ -55,37 +46,26 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // 5. Storage에서 파일 삭제
+    // 5. GCS에서 파일 삭제
     try {
-      // file_url에서 파일 경로 추출
-      // 예: https://xxx.supabase.co/storage/v1/object/public/teaching-materials/seed/material_123.pdf
-      const urlParts = material.file_url.split('/teaching-materials/')
-      if (urlParts.length === 2) {
-        const filePath = urlParts[1]
-        
-        const { error: storageError } = await supabase.storage
-          .from('teaching-materials')
-          .remove([filePath])
-
-        if (storageError) {
-          console.error('Storage deletion failed:', storageError)
-          // Storage 삭제 실패해도 DB는 삭제 진행
+      const gcsPath = material.gcs_path || extractPathFromUrl(material.file_url)
+      if (gcsPath) {
+        const deleted = await deleteFile(gcsPath)
+        if (!deleted) {
+          console.error('GCS deletion failed for:', gcsPath)
         }
       }
     } catch (storageError) {
       console.error('Storage deletion error:', storageError)
+      // Storage 삭제 실패해도 DB는 삭제 진행
     }
 
     // 6. DB에서 삭제
-    const { error: deleteError } = await supabase
-      .from('teaching_materials')
-      .delete()
-      .eq('id', materialId)
+    const deleted = await deleteMaterial(materialId)
 
-    if (deleteError) {
-      console.error('DB deletion failed:', deleteError)
+    if (!deleted) {
       return NextResponse.json(
-        { error: `Delete failed: ${deleteError.message}` },
+        { error: 'Delete failed' },
         { status: 500 }
       )
     }
@@ -94,7 +74,6 @@ export async function DELETE(request: NextRequest) {
       success: true,
       message: 'Material deleted successfully',
     })
-
   } catch (error) {
     console.error('Delete error:', error)
     return NextResponse.json(

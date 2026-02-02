@@ -1,66 +1,44 @@
 // src/app/(dashboard)/profile/page.tsx
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { verifyIdToken } from '@/lib/firebase/admin'
+import { getProfile, getUserMaterialStats } from '@/lib/db/queries'
 import { RankBadge } from '@/components/rank/RankBadge'
 import { RankProgress } from '@/components/rank/RankProgress'
 import { InstructorRank } from '@/lib/rank/types'
 import { ProfileEditForm } from '@/components/profile/ProfileEditForm'
 import { ProfileStats } from '@/components/profile/ProfileStats'
 
-// ✅ Dynamic rendering 명시
+// Dynamic rendering 명시
 export const dynamic = 'force-dynamic'
 
 export default async function ProfilePage() {
   try {
-    const supabase = await createClient()
-    
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) redirect('/login')
+    const cookieStore = await cookies()
+    const token = cookieStore.get('firebase-token')?.value
+    if (!token) { redirect('/login') }
+    const user = await verifyIdToken(token)
 
     // 프로필 조회 (에러 처리)
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
+    const profile = await getProfile(user.uid)
 
     // 프로필이 없으면 기본값 사용
     const safeProfile = profile || {
-      id: user.id,
-      email: user.email,
+      id: user.uid,
+      email: user.email || '',
       name: null,
       phone: null,
       bio: null,
       rank: 'newcomer',
-      rank_points: 0,
-      role: 'instructor',
+      points: 0,
+      role: 'user' as const,
       ai_usage_count_this_month: 0,
-      created_at: new Date().toISOString(),
+      created_at: new Date(),
+      updated_at: new Date(),
     }
 
-    // 콘텐츠 통계 (에러 시 0)
-    let materialCount = 0
-    let totalDownloads = 0
-    let avgRating = 0
-
-    try {
-      const { data: materials, count } = await supabase
-        .from('teaching_materials')
-        .select('download_count, rating, rating_count', { count: 'exact' })
-        .eq('user_id', user.id)
-        .eq('status', 'approved')
-
-      materialCount = count || 0
-      totalDownloads = materials?.reduce((sum, m) => sum + (m.download_count || 0), 0) || 0
-      
-      const ratedMaterials = materials?.filter(m => m.rating_count > 0) || []
-      avgRating = ratedMaterials.length > 0
-        ? ratedMaterials.reduce((sum, m) => sum + m.rating, 0) / ratedMaterials.length
-        : 0
-    } catch (error) {
-      console.error('Error fetching materials:', error)
-      // 통계 조회 실패해도 계속 진행
-    }
+    // 콘텐츠 통계
+    const materialStats = await getUserMaterialStats(user.uid)
 
     return (
       <div className="space-y-6">
@@ -83,7 +61,7 @@ export default async function ProfilePage() {
                     {safeProfile.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
                   </span>
                 </div>
-                
+
                 {/* 정보 */}
                 <div className="flex-1 min-w-0">
                   <h2 className="text-xl font-bold text-gray-900 truncate">
@@ -107,7 +85,7 @@ export default async function ProfilePage() {
                   자기소개
                 </label>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  {safeProfile.bio || '자기소개를 작성해주세요'}
+                  {(safeProfile as any).bio || '자기소개를 작성해주세요'}
                 </p>
               </div>
 
@@ -124,7 +102,7 @@ export default async function ProfilePage() {
                     핸드폰 번호
                   </label>
                   <p className="text-gray-900 text-sm">
-                    {safeProfile.phone || '등록된 번호가 없습니다'}
+                    {(safeProfile as any).phone || '등록된 번호가 없습니다'}
                   </p>
                 </div>
               </div>
@@ -144,7 +122,7 @@ export default async function ProfilePage() {
                     랭크 포인트
                   </label>
                   <p className="text-gray-900 text-sm font-mono">
-                    {safeProfile.rank_points?.toLocaleString() || 0}점
+                    {safeProfile.points?.toLocaleString() || 0}점
                   </p>
                 </div>
               </div>
@@ -155,18 +133,18 @@ export default async function ProfilePage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">랭크 진행 상황</h3>
               <RankProgress
                 currentRank={safeProfile.rank as InstructorRank}
-                currentPoints={safeProfile.rank_points || 0}
+                currentPoints={safeProfile.points || 0}
               />
             </div>
 
             {/* 프로필 편집 폼 */}
-            <ProfileEditForm 
+            <ProfileEditForm
               profile={{
                 id: safeProfile.id,
                 name: safeProfile.name,
-                phone: safeProfile.phone,
-                bio: safeProfile.bio,
-              }} 
+                phone: (safeProfile as any).phone,
+                bio: (safeProfile as any).bio,
+              }}
             />
           </div>
 
@@ -177,9 +155,9 @@ export default async function ProfilePage() {
                 rank: safeProfile.rank as InstructorRank,
               }}
               stats={{
-                materialCount,
-                totalDownloads,
-                avgRating,
+                materialCount: materialStats.totalCount,
+                totalDownloads: materialStats.totalDownloads,
+                avgRating: materialStats.avgRating,
                 aiUsageThisMonth: safeProfile.ai_usage_count_this_month || 0,
               }}
             />
@@ -187,7 +165,7 @@ export default async function ProfilePage() {
         </div>
 
         {/* 에러 안내 (프로필 없을 때만) */}
-        {profileError && (
+        {!profile && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
             <p className="text-sm text-amber-800">
               ⚠️ 프로필 정보를 불러오는 중 문제가 발생했습니다. 기본 정보로 표시됩니다.
@@ -198,7 +176,7 @@ export default async function ProfilePage() {
     )
   } catch (error) {
     console.error('Profile page error:', error)
-    
+
     // 완전 실패 시 기본 UI
     return (
       <div className="space-y-6">
@@ -213,7 +191,7 @@ export default async function ProfilePage() {
             프로필을 불러올 수 없습니다
           </h3>
           <p className="text-red-700 text-sm mb-4">
-            Supabase 데이터베이스가 설정되지 않았을 수 있습니다.
+            데이터베이스가 설정되지 않았을 수 있습니다.
           </p>
           <a
             href="/dashboard"

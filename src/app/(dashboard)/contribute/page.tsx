@@ -1,27 +1,26 @@
 // src/app/(dashboard)/contribute/page.tsx
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { verifyIdToken } from '@/lib/firebase/admin'
+import { getProfile, getMaterialsByUser } from '@/lib/db/queries'
 import { UploadForm } from '@/components/contribute/UploadForm'
 import { MyMaterials } from '@/components/contribute/MyMaterials'
 
 export default async function ContributePage() {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const cookieStore = await cookies()
+  const token = cookieStore.get('firebase-token')?.value
+  if (!token) { redirect('/login') }
+  const user = await verifyIdToken(token)
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  const profile = await getProfile(user.uid)
 
   // 사용자의 업로드된 콘텐츠 조회
-  const { data: materials } = await supabase
-    .from('teaching_materials')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
+  const materialsRaw = await getMaterialsByUser(user.uid)
+  const materials = materialsRaw.map(m => ({
+    ...m,
+    created_at: m.created_at?.toISOString?.() || String(m.created_at),
+    updated_at: m.updated_at?.toISOString?.() || String(m.updated_at),
+  }))
 
   return (
     <div className="space-y-6">
@@ -43,7 +42,7 @@ export default async function ContributePage() {
                 업로드 현황
               </h3>
               <p className="text-sm text-cobalt-700">
-                {profile.content_upload_count || 0}개 업로드됨
+                {materials?.length || 0}개 업로드됨
                 {profile.rank === 'newcomer' && ' · 최대 5개까지 업로드 가능'}
                 {profile.rank === 'junior' && ' · 최대 20개까지 업로드 가능'}
                 {profile.rank === 'intermediate' && ' · 최대 50개까지 업로드 가능'}

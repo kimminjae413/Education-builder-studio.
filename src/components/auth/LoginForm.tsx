@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { signIn, getIdToken } from '@/lib/firebase/auth'
 
 export function LoginForm() {
   const router = useRouter()
@@ -17,42 +17,36 @@ export function LoginForm() {
     setError(null)
 
     try {
-      const supabase = createClient()
-      
-      // 이메일 공백 제거
       const trimmedEmail = email.trim().toLowerCase()
-      
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: trimmedEmail,
-        password,
-      })
 
-      if (signInError) {
-        // 콘솔에 실제 에러 출력 (디버깅용)
-        console.error('🔴 Login error:', signInError)
-        console.error('🔴 Error message:', signInError.message)
-        console.error('🔴 Error status:', signInError.status)
-        
-        // 구체적인 에러 메시지
-        if (signInError.message.includes('Invalid login credentials')) {
+      const result = await signIn(trimmedEmail, password)
+
+      if (result.error) {
+        console.error('🔴 Login error:', result.error)
+
+        if (result.error.includes('user-not-found')) {
+          setError('등록되지 않은 이메일입니다.')
+        } else if (result.error.includes('wrong-password') || result.error.includes('invalid-credential')) {
           setError('이메일 또는 비밀번호가 올바르지 않습니다.')
-        } else if (signInError.message.includes('Email not confirmed')) {
-          setError('이메일 인증이 필요합니다. 이메일함을 확인해주세요.')
-        } else if (signInError.message.includes('Invalid email')) {
+        } else if (result.error.includes('invalid-email')) {
           setError('올바른 이메일 형식이 아닙니다.')
-        } else if (signInError.message.includes('User not found')) {
-          setError('등록되지 않은 이메일입니다. 회원가입을 먼저 진행해주세요.')
-        } else if (signInError.status === 400) {
-          setError(`입력 오류: ${signInError.message}`)
+        } else if (result.error.includes('too-many-requests')) {
+          setError('너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요.')
         } else {
-          // 개발 중에는 실제 에러 메시지 표시
-          setError(`로그인 실패: ${signInError.message}`)
+          setError(`로그인 실패: ${result.error}`)
         }
         return
       }
 
-      if (data.user) {
-        console.log('✅ Login success:', data.user.email)
+      if (result.user) {
+        console.log('✅ Login success:', result.user.email)
+
+        // ID 토큰을 쿠키에 저장
+        const token = await getIdToken()
+        if (token) {
+          document.cookie = `firebase-token=${token}; path=/; max-age=3600; SameSite=Lax`
+        }
+
         router.push('/dashboard')
         router.refresh()
       }
@@ -66,14 +60,12 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleLogin} className="space-y-4">
-      {/* 에러 메시지 */}
       {error && (
         <div className="p-3 rounded-lg bg-red-50 border border-red-200 animate-shake">
           <p className="text-sm text-red-600 whitespace-pre-wrap">{error}</p>
         </div>
       )}
 
-      {/* 이메일 */}
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
           이메일
@@ -89,12 +81,8 @@ export function LoginForm() {
           disabled={loading}
           autoComplete="email"
         />
-        <p className="mt-1 text-xs text-gray-500">
-          입력 예: hong@dankook.ac.kr
-        </p>
       </div>
 
-      {/* 비밀번호 */}
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
           비밀번호
@@ -112,13 +100,12 @@ export function LoginForm() {
         />
       </div>
 
-      {/* 로그인 버튼 */}
       <button
         type="submit"
         disabled={loading}
         className={`w-full py-3 px-4 rounded-lg font-medium transition-all shadow-cobalt-md flex items-center justify-center gap-2 ${
-          loading 
-            ? 'bg-cobalt-400 cursor-wait' 
+          loading
+            ? 'bg-cobalt-400 cursor-wait'
             : 'bg-cobalt-500 hover:bg-cobalt-600 hover:shadow-cobalt-lg active:scale-95'
         } text-white disabled:cursor-not-allowed transform`}
       >
@@ -134,15 +121,6 @@ export function LoginForm() {
           <span>로그인</span>
         )}
       </button>
-
-      {/* 개발 모드 디버그 정보 */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-xs text-blue-800 font-mono">
-            디버그: 브라우저 콘솔(F12)에서 상세 에러를 확인하세요
-          </p>
-        </div>
-      )}
     </form>
   )
 }

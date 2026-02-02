@@ -1,6 +1,8 @@
 // src/app/(dashboard)/design/courses/[id]/page.tsx
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { verifyIdToken } from '@/lib/firebase/admin'
+import { getCourseWithCreator, incrementCourseViews } from '@/lib/db/queries'
 import { ArrowLeft, Clock, Users, Calendar, Download, Share2, Bookmark, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { RecommendedMaterials } from '@/components/design/RecommendedMaterials'
@@ -13,33 +15,22 @@ interface CourseDetailPageProps {
 
 export default async function CourseDetailPage({ params }: CourseDetailPageProps) {
   const { id } = await params
-  const supabase = await createClient()
 
-  // 현재 사용자 확인
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const cookieStore = await cookies()
+  const token = cookieStore.get('firebase-token')?.value
+  if (!token) { redirect('/login') }
+  const user = await verifyIdToken(token)
 
   // 과정 데이터 가져오기
-  const { data: course, error } = await supabase
-    .from('courses')
-    .select(`
-      *,
-      profiles:user_id (
-        name,
-        email,
-        rank
-      )
-    `)
-    .eq('id', id)
-    .single()
+  const course = await getCourseWithCreator(id)
 
-  if (error || !course) {
+  if (!course) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold text-gray-900">과정을 찾을 수 없습니다</h1>
           <p className="text-gray-600">요청하신 과정이 존재하지 않거나 삭제되었습니다.</p>
-          <Link 
+          <Link
             href="/design"
             className="inline-flex items-center gap-2 px-4 py-2 bg-cobalt-500 text-white hover:bg-cobalt-600 rounded-lg transition-colors"
           >
@@ -52,20 +43,21 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
   }
 
   // activities 파싱 및 정규화
-  if (course.activities) {
+  let activities = course.activities as any
+  if (activities) {
     // JSON 문자열이면 파싱
-    if (typeof course.activities === 'string') {
+    if (typeof activities === 'string') {
       try {
-        course.activities = JSON.parse(course.activities)
+        activities = JSON.parse(activities)
       } catch (e) {
         console.error('Failed to parse activities:', e)
       }
     }
-    
+
     // activities가 배열이고, 각 요소가 세션 객체라면
-    if (Array.isArray(course.activities)) {
+    if (Array.isArray(activities)) {
       // 각 세션에서 activities 배열만 추출
-      course.activities = course.activities.map((session: any) => {
+      activities = activities.map((session: any) => {
         // 세션 객체에 activities 속성이 있으면 그것을 사용
         if (session && typeof session === 'object' && session.activities) {
           return session.activities
@@ -77,11 +69,8 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
   }
 
   // 조회수 증가
-  if (course.user_id !== user.id) {
-    await supabase
-      .from('courses')
-      .update({ views_count: (course.views_count || 0) + 1 })
-      .eq('id', id)
+  if (course.user_id !== user.uid) {
+    await incrementCourseViews(id)
   }
 
   return (
@@ -90,14 +79,14 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link 
+            <Link
               href="/design"
               className="inline-flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               뒤로 가기
             </Link>
-            
+
             <div className="flex items-center gap-2">
               <button className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
                 <Bookmark className="h-4 w-4" />
@@ -124,7 +113,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
               <h1 className="text-3xl font-bold text-gray-900 mb-4">
                 {course.title}
               </h1>
-              
+
               <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                 <div className="flex items-center gap-1.5">
                   <Users className="h-4 w-4" />
@@ -140,7 +129,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Eye className="h-4 w-4" />
-                  <span>조회 {course.views_count || 0}</span>
+                  <span>조회 {(course as any).views_count || 0}</span>
                 </div>
               </div>
             </div>
@@ -206,7 +195,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
           <h2 className="text-xl font-bold text-gray-900 mb-4">
             📚 학습 목표
           </h2>
-          
+
           {course.knowledge_goals && course.knowledge_goals.length > 0 && (
             <div className="mb-6">
               <h3 className="text-sm font-semibold text-gray-700 mb-2">
@@ -271,13 +260,13 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
         )}
 
         {/* 차시별 활동 */}
-        {course.activities && Array.isArray(course.activities) && course.activities.length > 0 && (
+        {activities && Array.isArray(activities) && activities.length > 0 && (
           <div className="bg-white rounded-lg border p-8 mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-6">
               🎯 차시별 활동
             </h2>
             <div className="space-y-10">
-              {course.activities.map((session: any, sessionIndex: number) => {
+              {activities.map((session: any, sessionIndex: number) => {
                 // 배열인 경우 (각 차시가 여러 활동을 포함)
                 if (Array.isArray(session)) {
                   return (
@@ -288,7 +277,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                           {sessionIndex + 1}차시
                         </h3>
                       </div>
-                      
+
                       <div className="space-y-6 pl-2">
                         {session.map((activity: any, activityIndex: number) => {
                           const type = activity.type || '활동'
@@ -322,19 +311,19 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                                       </span>
                                     )}
                                   </div>
-                                  
+
                                   {title && (
                                     <h4 className="text-lg font-bold text-gray-900 mb-2">
                                       {title}
                                     </h4>
                                   )}
-                                  
+
                                   {description && (
                                     <p className="text-gray-700 leading-relaxed mb-3">
                                       {description}
                                     </p>
                                   )}
-                                  
+
                                   {/* 필요 자료 */}
                                   {materials && Array.isArray(materials) && materials.length > 0 && (
                                     <div className="mt-3 p-3 bg-gray-50 rounded-lg">
@@ -356,7 +345,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                                   )}
                                 </div>
                               </div>
-                              
+
                               {/* 구분선 (마지막 활동 제외) */}
                               {activityIndex < session.length - 1 && (
                                 <div className="border-b border-gray-200 my-4"></div>
@@ -389,13 +378,13 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
         )}
 
         {/* 평가 방법 */}
-        {course.assessment_methods && course.assessment_methods.length > 0 && (
+        {(course as any).assessment_methods && (course as any).assessment_methods.length > 0 && (
           <div className="bg-white rounded-lg border p-8 mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">
               ✅ 평가 방법
             </h2>
             <div className="grid gap-3">
-              {course.assessment_methods.map((method: string, index: number) => (
+              {(course as any).assessment_methods.map((method: string, index: number) => (
                 <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <div className="w-8 h-8 rounded-full bg-cobalt-100 text-cobalt-600 flex items-center justify-center font-semibold text-sm">
                     {index + 1}

@@ -1,6 +1,8 @@
 // src/app/(admin)/layout.tsx
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
+import { verifyIdToken } from '@/lib/firebase/admin'
+import { getProfile } from '@/lib/db/queries'
 import { AdminLayoutClient } from '@/components/admin/AdminLayoutClient'
 
 export default async function AdminLayout({
@@ -8,17 +10,24 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const cookieStore = await cookies()
+  const token = cookieStore.get('firebase-auth-token')?.value
+
+  if (!token) redirect('/login')
+
+  let user
+  try {
+    const decodedToken = await verifyIdToken(token)
+    user = {
+      uid: decodedToken.uid,
+      email: decodedToken.email,
+    }
+  } catch {
+    redirect('/login')
+  }
 
   // 관리자 권한 확인
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+  const profile = await getProfile(user.uid)
 
   if (profile?.role !== 'admin') {
     redirect('/dashboard')

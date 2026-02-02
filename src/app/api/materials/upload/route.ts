@@ -1,6 +1,8 @@
 // src/app/api/materials/upload/route.ts
-import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthenticatedUser } from '@/lib/firebase/server-auth'
+import { createMaterial, getMaterialsByUser } from '@/lib/db/queries'
+import { uploadFile, getPublicUrl, deleteFile } from '@/lib/storage/gcs'
 
 // 허용 파일 타입
 const ALLOWED_MIME_TYPES = [
@@ -24,18 +26,11 @@ export async function POST(request: NextRequest) {
   try {
     console.log('📤 파일 업로드 요청 시작')
 
-    const supabase = await createClient()
-    
     // 1. 인증 확인
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError) {
-      console.error('❌ 인증 오류:', authError)
-      return NextResponse.json({ error: '인증 오류가 발생했습니다' }, { status: 401 })
-    }
+    const user = await getAuthenticatedUser(request)
 
     if (!user) {
-      console.error('❌ 사용자 없음')
+      console.error('❌ 인증 실패')
       return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 })
     }
 
@@ -62,7 +57,7 @@ export async function POST(request: NextRequest) {
       type: file?.type,
       title: title,
       targetCategory: targetCategory,
-      subjectCategory: subjectCategory
+      subjectCategory: subjectCategory,
     })
 
     // 3. 파일 존재 확인
@@ -95,51 +90,43 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 7. 파일명 생성 (충돌 방지 + 한글/특수문자 처리)
+    // 7. 파일명 생성 (충돌 방지)
     const timestamp = Date.now()
     const fileExt = file.name.split('.').pop()?.toLowerCase() || 'file'
-    
-    // 안전한 파일명 생성: timestamp + 확장자
-    // 원본 파일명은 DB의 filename 컬럼에 저장
-    const fileName = `${user.id}/${timestamp}.${fileExt}`
+    const gcsPath = `materials/${user.uid}/${timestamp}.${fileExt}`
 
-    console.log('☁️ Storage 업로드 시작:', fileName)
+    console.log('☁️ GCS 업로드 시작:', gcsPath)
     console.log('📄 원본 파일명:', file.name)
 
-    // 8. Supabase Storage에 업로드
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('teaching-materials')
-      .upload(fileName, file, {
-        contentType: file.type,
-        upsert: false,
-      })
+    // 8. Google Cloud Storage에 업로드
+    const fileBuffer = await file.arrayBuffer()
+    let fileUrl: string
 
-    if (uploadError) {
-      console.error('❌ Storage 업로드 실패:', uploadError)
+    try {
+      fileUrl = await uploadFile(fileBuffer, gcsPath, file.type, {
+        originalName: file.name,
+        uploadedBy: user.uid,
+      })
+    } catch (uploadError) {
+      console.error('❌ GCS 업로드 실패:', uploadError)
       return NextResponse.json(
-        { error: `파일 업로드 실패: ${uploadError.message}` },
+        { error: `파일 업로드 실패: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}` },
         { status: 500 }
       )
     }
 
-    console.log('✅ Storage 업로드 완료:', uploadData.path)
+    console.log('✅ GCS 업로드 완료:', fileUrl)
 
-    // 9. 파일 URL 생성
-    const { data: { publicUrl } } = supabase.storage
-      .from('teaching-materials')
-      .getPublicUrl(fileName)
-
-    console.log('🔗 Public URL 생성:', publicUrl)
-
-    // 10. teaching_materials 테이블에 메타데이터 저장
+    // 9. teaching_materials 테이블에 메타데이터 저장
     console.log('💾 데이터베이스 저장 시작')
 
-    const { data: material, error: dbError } = await supabase
-      .from('teaching_materials')
-      .insert({
-        user_id: user.id,
+    let material
+    try {
+      material = await createMaterial({
+        user_id: user.uid,
         filename: file.name,
-        file_url: publicUrl,
+        file_url: fileUrl,
+        gcs_path: gcsPath,
         file_size: file.size,
         file_type: file.type,
         title: title.trim(),
@@ -147,39 +134,34 @@ export async function POST(request: NextRequest) {
         target_category: targetCategory || null,
         subject_category: subjectCategory || null,
         status: 'pending', // 승인 대기
-        is_seed_data: false, // 기본값
+        is_seed_data: false,
+        vertex_indexed: false,
       })
-      .select()
-      .single()
-
-    if (dbError) {
+    } catch (dbError) {
       console.error('❌ 데이터베이스 저장 실패:', dbError)
-      
+
       // DB 저장 실패 시 업로드된 파일 삭제
       console.log('🗑️ 업로드된 파일 삭제 시도...')
-      await supabase.storage
-        .from('teaching-materials')
-        .remove([fileName])
-      
+      await deleteFile(gcsPath)
+
       return NextResponse.json(
-        { error: `데이터 저장 실패: ${dbError.message}` },
+        { error: `데이터 저장 실패: ${dbError instanceof Error ? dbError.message : 'Unknown error'}` },
         { status: 500 }
       )
     }
 
     console.log('✅ 데이터베이스 저장 완료:', material.id)
 
-    // 11. 성공 응답
+    // 10. 성공 응답
     return NextResponse.json({
       success: true,
       material,
       message: '파일이 성공적으로 업로드되었습니다',
     })
-
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ 업로드 중 예상치 못한 오류:', error)
     return NextResponse.json(
-      { error: `업로드 중 오류 발생: ${error.message || '알 수 없는 오류'}` },
+      { error: `업로드 중 오류 발생: ${error instanceof Error ? error.message : '알 수 없는 오류'}` },
       { status: 500 }
     )
   }
@@ -188,40 +170,30 @@ export async function POST(request: NextRequest) {
 // 파일 목록 조회
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 쿼리 파라미터
+    // 사용자의 자료 목록 조회
+    const materials = await getMaterialsByUser(user.uid)
+
+    // 쿼리 파라미터로 필터링 (선택)
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
     const isSeed = searchParams.get('is_seed')
 
-    let query = supabase
-      .from('teaching_materials')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+    let filteredMaterials = materials
 
     if (status) {
-      query = query.eq('status', status)
+      filteredMaterials = filteredMaterials.filter((m) => m.status === status)
     }
 
     if (isSeed === 'true') {
-      query = query.eq('is_seed_data', true)
+      filteredMaterials = filteredMaterials.filter((m) => m.is_seed_data)
     }
 
-    const { data: materials, error } = await query
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    return NextResponse.json({ materials })
-
+    return NextResponse.json({ materials: filteredMaterials })
   } catch (error) {
     console.error('Fetch error:', error)
     return NextResponse.json(

@@ -1,24 +1,27 @@
 // src/app/api/admin/seed-data/bulk-delete/route.ts
-import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthenticatedUser, isAdmin } from '@/lib/firebase/server-auth'
+import { getMaterial, deleteMaterial } from '@/lib/db/queries'
+import { deleteFile, extractPathFromUrl } from '@/lib/storage/gcs'
+import { query } from '@/lib/db/client'
+
+interface MaterialInfo {
+  id: string
+  file_url: string
+  gcs_path: string | null
+  is_seed_data: boolean
+}
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
     // 1. 관리자 권한 확인
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getAuthenticatedUser(request)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
+    const adminCheck = await isAdmin(user.uid)
+    if (!adminCheck) {
       return NextResponse.json({ error: 'Admin only' }, { status: 403 })
     }
 
@@ -34,20 +37,17 @@ export async function DELETE(request: NextRequest) {
     }
 
     // 3. 삭제할 자료들 조회
-    const { data: materials, error: fetchError } = await supabase
-      .from('teaching_materials')
-      .select('id, file_url, is_seed_data')
-      .in('id', materialIds)
+    const result = await query<MaterialInfo>(
+      `SELECT id, file_url, gcs_path, is_seed_data
+       FROM teaching_materials
+       WHERE id = ANY($1)`,
+      [materialIds]
+    )
 
-    if (fetchError) {
-      return NextResponse.json(
-        { error: `Fetch failed: ${fetchError.message}` },
-        { status: 500 }
-      )
-    }
+    const materials = result.rows
 
     // 4. 시드 데이터만 필터링
-    const seedDataMaterials = materials?.filter(m => m.is_seed_data) || []
+    const seedDataMaterials = materials.filter((m) => m.is_seed_data)
 
     if (seedDataMaterials.length === 0) {
       return NextResponse.json(
@@ -64,25 +64,19 @@ export async function DELETE(request: NextRequest) {
     // 5. 각 자료 삭제
     for (const material of seedDataMaterials) {
       try {
-        // Storage 파일 삭제
-        const urlParts = material.file_url.split('/teaching-materials/')
-        if (urlParts.length === 2) {
-          const filePath = urlParts[1]
-          await supabase.storage
-            .from('teaching-materials')
-            .remove([filePath])
+        // GCS 파일 삭제
+        const gcsPath = material.gcs_path || extractPathFromUrl(material.file_url)
+        if (gcsPath) {
+          await deleteFile(gcsPath)
         }
 
         // DB 삭제
-        const { error: deleteError } = await supabase
-          .from('teaching_materials')
-          .delete()
-          .eq('id', material.id)
+        const deleted = await deleteMaterial(material.id)
 
-        if (deleteError) {
+        if (!deleted) {
           results.failed.push({
             id: material.id,
-            error: deleteError.message,
+            error: 'Failed to delete from database',
           })
         } else {
           results.success.push(material.id)
@@ -101,7 +95,6 @@ export async function DELETE(request: NextRequest) {
       failed: results.failed.length,
       results,
     })
-
   } catch (error) {
     console.error('Bulk delete error:', error)
     return NextResponse.json(

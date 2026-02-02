@@ -1,6 +1,7 @@
 // src/app/api/admin/seed-data/[id]/route.ts
-import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthenticatedUser, isAdmin } from '@/lib/firebase/server-auth'
+import { updateMaterial } from '@/lib/db/queries'
 
 export async function PATCH(
   request: NextRequest,
@@ -8,21 +9,15 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params
-    const supabase = await createClient()
 
     // 관리자 권한 확인
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getAuthenticatedUser(request)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
+    const adminCheck = await isAdmin(user.uid)
+    if (!adminCheck) {
       return NextResponse.json({ error: 'Admin only' }, { status: 403 })
     }
 
@@ -31,31 +26,18 @@ export async function PATCH(
     const { is_seed_data } = body
 
     // teaching_materials 업데이트
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       is_seed_data,
-      updated_at: new Date().toISOString()
     }
 
     // 시드로 지정하는 경우
     if (is_seed_data) {
-      updateData.seed_approved_by = user.id
-      updateData.seed_approved_at = new Date().toISOString()
       updateData.status = 'approved' // 시드는 자동 승인
-    } else {
-      // 시드 해제하는 경우
-      updateData.seed_approved_by = null
-      updateData.seed_approved_at = null
     }
 
-    const { data, error } = await supabase
-      .from('teaching_materials')
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single()
+    const material = await updateMaterial(id, updateData as Parameters<typeof updateMaterial>[1])
 
-    if (error) {
-      console.error('Update error:', error)
+    if (!material) {
       return NextResponse.json(
         { error: 'Failed to update material' },
         { status: 500 }
@@ -64,9 +46,8 @@ export async function PATCH(
 
     return NextResponse.json({
       success: true,
-      material: data
+      material,
     })
-
   } catch (error) {
     console.error('Seed toggle error:', error)
     return NextResponse.json(

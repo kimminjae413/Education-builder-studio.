@@ -1,28 +1,26 @@
 // src/app/(dashboard)/design/page.tsx
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { verifyIdToken } from '@/lib/firebase/admin'
+import { getProfile, getCoursesByUser } from '@/lib/db/queries'
 import { AIDesignWizard } from '@/components/design/AIDesignWizard'
 import { MyCourses } from '@/components/design/MyCourses'
 
 export default async function DesignPage() {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const cookieStore = await cookies()
+  const token = cookieStore.get('firebase-token')?.value
+  if (!token) { redirect('/login') }
+  const user = await verifyIdToken(token)
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  const profile = await getProfile(user.uid)
 
   // 내가 만든 과정 조회
-  const { data: courses } = await supabase
-    .from('courses')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(10)
+  const coursesRaw = await getCoursesByUser(user.uid, 10)
+  const courses = coursesRaw.map(c => ({
+    ...c,
+    created_at: c.created_at?.toISOString?.() || String(c.created_at),
+    updated_at: c.updated_at?.toISOString?.() || String(c.updated_at),
+  }))
 
   return (
     <div className="space-y-6">

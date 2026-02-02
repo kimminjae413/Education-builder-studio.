@@ -5,10 +5,15 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Menu } from 'lucide-react'
 import { AdminSidebar } from '@/components/admin/AdminSidebar'
-import { User } from '@supabase/supabase-js'
+
+// 서버에서 전달받는 사용자 타입
+interface ServerUser {
+  uid: string
+  email: string | undefined
+}
 
 interface AdminLayoutClientProps {
-  user: User
+  user: ServerUser
   children: React.ReactNode
 }
 

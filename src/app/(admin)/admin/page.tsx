@@ -1,20 +1,24 @@
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
+import { verifyIdToken } from '@/lib/firebase/admin'
+import { getProfile, getAdminStats, getRecentUsers } from '@/lib/db/queries'
 
 export default async function AdminDashboardPage() {
-  const supabase = await createClient()
+  const cookieStore = await cookies()
+  const token = cookieStore.get('firebase-token')?.value
+  if (!token) { redirect('/login') }
+  const user = await verifyIdToken(token)
+
+  // 관리자 권한 확인
+  const profile = await getProfile(user.uid)
+  if (profile?.role !== 'admin') {
+    redirect('/dashboard')
+  }
 
   // 전체 통계 가져오기
-  const { data: stats } = await supabase
-    .from('admin_stats')
-    .select('*')
-    .single()
+  const stats = await getAdminStats()
 
-  const { data: recentUsers } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('role', 'instructor')
-    .order('created_at', { ascending: false })
-    .limit(5)
+  const recentUsers = await getRecentUsers(5)
 
   return (
     <div className="space-y-6">

@@ -1,24 +1,21 @@
-// src/app/(dashboard)/design/courses/page.tsx (새 파일)
+// src/app/(dashboard)/design/courses/page.tsx
 
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { verifyIdToken } from '@/lib/firebase/admin'
+import { getCoursesByUser } from '@/lib/db/queries'
 import Link from 'next/link'
 import { Clock, BookOpen, Calendar, Eye, Plus, ArrowLeft } from 'lucide-react'
 
 export default async function MyCoursesPage() {
-  const supabase = await createClient()
-  
-  // 인증 확인
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-  
+  const cookieStore = await cookies()
+  const token = cookieStore.get('firebase-token')?.value
+  if (!token) { redirect('/login') }
+  const user = await verifyIdToken(token)
+
   // 내가 만든 과정 불러오기
-  const { data: courses } = await supabase
-    .from('courses')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-  
+  const courses = await getCoursesByUser(user.uid)
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 헤더 */}
@@ -87,12 +84,12 @@ export default async function MyCoursesPage() {
                   <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 text-lg">
                     {course.title}
                   </h3>
-                  
+
                   {/* 설명 */}
                   <p className="text-sm text-gray-600 mb-4 line-clamp-3">
-                    {course.lesson_plan || course.ai_generated_content?.overview || '과정 설명이 없습니다'}
+                    {course.lesson_plan || (course.ai_generated_content as any)?.overview || '과정 설명이 없습니다'}
                   </p>
-                  
+
                   {/* 메타 정보 */}
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center gap-2 text-xs text-gray-500">
@@ -107,10 +104,10 @@ export default async function MyCoursesPage() {
                       <span>{new Date(course.created_at).toLocaleDateString('ko-KR')}</span>
                       <span className="text-gray-300">•</span>
                       <Eye className="h-3.5 w-3.5" />
-                      <span>조회 {course.views_count || 0}</span>
+                      <span>조회 {(course as any).views_count || 0}</span>
                     </div>
                   </div>
-                  
+
                   {/* 태그 */}
                   <div className="flex flex-wrap gap-1.5">
                     <span className="px-2 py-1 bg-cobalt-50 text-cobalt-700 rounded text-xs">
@@ -125,7 +122,7 @@ export default async function MyCoursesPage() {
             ))}
           </div>
         )}
-        
+
         {/* 통계 (선택사항) */}
         {courses && courses.length > 0 && (
           <div className="mt-8 grid grid-cols-3 gap-4">
@@ -137,7 +134,7 @@ export default async function MyCoursesPage() {
             </div>
             <div className="bg-white rounded-lg border p-4 text-center">
               <div className="text-2xl font-bold text-green-600">
-                {courses.reduce((sum, c) => sum + (c.views_count || 0), 0)}
+                {courses.reduce((sum, c) => sum + ((c as any).views_count || 0), 0)}
               </div>
               <div className="text-sm text-gray-600">총 조회수</div>
             </div>

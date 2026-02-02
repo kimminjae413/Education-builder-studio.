@@ -1,24 +1,21 @@
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
+import { verifyIdToken } from '@/lib/firebase/admin'
+import { getProfile, getMaterialsWithCount } from '@/lib/db/queries'
 import { RankBadge } from '@/components/rank/RankBadge'
 import { RankProgress } from '@/components/rank/RankProgress'
 import { InstructorRank } from '@/lib/rank/types'
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const cookieStore = await cookies()
+  const token = cookieStore.get('firebase-token')?.value
+  if (!token) { redirect('/login') }
+  const user = await verifyIdToken(token)
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  const profile = await getProfile(user.uid)
+  if (!profile) return null
 
-  const { data: materials, count: materialsCount } = await supabase
-    .from('teaching_materials')
-    .select('*', { count: 'exact' })
-    .eq('user_id', user.id)
+  const { materials, count: materialsCount } = await getMaterialsWithCount(user.uid)
 
   const approvedCount = materials?.filter(m => m.status === 'approved').length || 0
 
@@ -40,16 +37,16 @@ export default async function DashboardPage() {
           <h2 className="text-lg font-semibold text-gray-900">내 랭크</h2>
           <RankBadge rank={profile?.rank as InstructorRank} />
         </div>
-        
-        <RankProgress 
+
+        <RankProgress
           currentRank={profile?.rank as InstructorRank}
-          currentPoints={profile?.rank_points || 0}
+          currentPoints={profile?.points || 0}
         />
 
         <div className="mt-4 grid grid-cols-3 gap-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-cobalt-600">
-              {profile?.rank_points || 0}
+              {profile?.points || 0}
             </div>
             <div className="text-xs text-gray-600">총 포인트</div>
           </div>

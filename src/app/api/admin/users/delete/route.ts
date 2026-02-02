@@ -1,28 +1,15 @@
 // src/app/api/admin/users/delete/route.ts
-import { createClient as createServerClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuthenticatedUser, isAdmin } from '@/lib/firebase/server-auth'
+import { deleteUser as deleteFirebaseUser } from '@/lib/firebase/admin'
+import { getProfile } from '@/lib/db/queries'
+import { query as dbQuery } from '@/lib/db/client'
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
-    // ⭐ Service Role Key로 Supabase Admin 클라이언트 생성
-    const supabaseAdmin = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
-
-    // 일반 클라이언트 (권한 확인용)
-    const { createClient } = await import('@/lib/supabase/server')
-    const supabase = await createClient()
-    
     // 1. 현재 사용자 확인
-    const { data: { user: currentUser } } = await supabase.auth.getUser()
-    
+    const currentUser = await getAuthenticatedUser(request)
+
     if (!currentUser) {
       return NextResponse.json(
         { error: '인증되지 않은 사용자입니다.' },
@@ -31,13 +18,9 @@ export async function DELETE(request: Request) {
     }
 
     // 2. 관리자 권한 확인
-    const { data: currentProfile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', currentUser.id)
-      .single()
+    const adminCheck = await isAdmin(currentUser.uid)
 
-    if (currentProfile?.role !== 'admin') {
+    if (!adminCheck) {
       return NextResponse.json(
         { error: '관리자 권한이 필요합니다.' },
         { status: 403 }
@@ -55,7 +38,7 @@ export async function DELETE(request: Request) {
     }
 
     // 4. 자기 자신은 삭제 불가
-    if (userId === currentUser.id) {
+    if (userId === currentUser.uid) {
       return NextResponse.json(
         { error: '자기 자신은 삭제할 수 없습니다.' },
         { status: 400 }
@@ -63,11 +46,7 @@ export async function DELETE(request: Request) {
     }
 
     // 5. 삭제할 사용자 정보 가져오기 (로그용)
-    const { data: targetProfile } = await supabase
-      .from('profiles')
-      .select('email, name, role')
-      .eq('id', userId)
-      .single()
+    const targetProfile = await getProfile(userId)
 
     if (!targetProfile) {
       return NextResponse.json(
@@ -88,38 +67,43 @@ export async function DELETE(request: Request) {
       deletedBy: currentUser.email,
       targetUser: targetProfile.email,
       targetName: targetProfile.name,
-      userId
+      userId,
     })
 
-    // 7. Supabase Admin API로 사용자 완전 삭제
-    // ⭐ 중요: 이 작업은 auth.users 테이블에서 사용자를 완전히 제거합니다
-    // CASCADE 설정으로 profiles, teaching_materials 등도 자동 삭제됨
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
+    // 7. 관련 데이터 삭제 (CASCADE가 설정되어 있지 않은 경우)
+    // profiles 테이블에서 먼저 삭제
+    try {
+      await dbQuery('DELETE FROM profiles WHERE id = $1', [userId])
+    } catch (dbError) {
+      console.error('❌ 프로필 삭제 실패:', dbError)
+    }
 
-    if (deleteError) {
-      console.error('❌ 사용자 삭제 실패:', deleteError)
+    // 8. Firebase Auth에서 사용자 삭제
+    try {
+      await deleteFirebaseUser(userId)
+    } catch (deleteError) {
+      console.error('❌ Firebase 사용자 삭제 실패:', deleteError)
       return NextResponse.json(
-        { error: `삭제 실패: ${deleteError.message}` },
+        { error: `삭제 실패: ${deleteError instanceof Error ? deleteError.message : 'Unknown error'}` },
         { status: 500 }
       )
     }
 
     console.log('✅ 사용자 삭제 완료:', targetProfile.email)
 
-    // 8. 성공 응답
+    // 9. 성공 응답
     return NextResponse.json({
       success: true,
       message: `${targetProfile.name} (${targetProfile.email}) 계정이 완전히 삭제되었습니다.`,
       deletedUser: {
         email: targetProfile.email,
-        name: targetProfile.name
-      }
+        name: targetProfile.name,
+      },
     })
-
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ 예상치 못한 에러:', error)
     return NextResponse.json(
-      { error: error.message || '서버 오류가 발생했습니다.' },
+      { error: error instanceof Error ? error.message : '서버 오류가 발생했습니다.' },
       { status: 500 }
     )
   }

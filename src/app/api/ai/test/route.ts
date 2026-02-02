@@ -6,12 +6,12 @@ export async function GET() {
   try {
     // 1. API 키 유효성 확인
     const isValid = await validateGeminiAPI()
-    
+
     if (!isValid) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Gemini API 키가 유효하지 않습니다.' 
+        {
+          success: false,
+          error: 'Gemini API 키가 유효하지 않습니다.',
         },
         { status: 401 }
       )
@@ -24,16 +24,16 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      message: 'Gemini API 연결 성공! ✅',
+      message: 'Gemini API 연결 성공!',
       response: response,
       timestamp: new Date().toISOString(),
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Gemini Test Error:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error.message || 'API 테스트 중 오류 발생' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'API 테스트 중 오류 발생',
       },
       { status: 500 }
     )
@@ -58,12 +58,12 @@ export async function POST(request: Request) {
       prompt: prompt,
       response: response,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Gemini POST Error:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error.message 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     )

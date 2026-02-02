@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
+import { verifyIdToken } from '@/lib/firebase/admin'
+import { getProfile } from '@/lib/db/queries'
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { Sidebar } from '@/components/dashboard/Sidebar'
 import { BottomNav } from '@/components/dashboard/BottomNav'
@@ -9,17 +11,24 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const cookieStore = await cookies()
+  const token = cookieStore.get('firebase-auth-token')?.value
+
+  if (!token) redirect('/login')
+
+  let user
+  try {
+    const decodedToken = await verifyIdToken(token)
+    user = {
+      uid: decodedToken.uid,
+      email: decodedToken.email,
+    }
+  } catch {
+    redirect('/login')
+  }
 
   // 프로필 정보 가져오기
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  const profile = await getProfile(user.uid)
 
   return (
     <div className="min-h-screen bg-gray-50">

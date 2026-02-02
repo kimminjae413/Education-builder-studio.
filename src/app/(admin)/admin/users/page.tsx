@@ -1,46 +1,38 @@
 // src/app/(admin)/admin/users/page.tsx
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { verifyIdToken } from '@/lib/firebase/admin'
+import { getProfile, getAllProfilesWithMaterialCounts } from '@/lib/db/queries'
 import { UsersTable } from '@/components/admin/UsersTable'
 import { RankDistribution } from '@/components/admin/RankDistribution'
 
 export default async function UsersPage() {
-  const supabase = await createClient()
-
-  // 현재 사용자 확인
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const cookieStore = await cookies()
+  const token = cookieStore.get('firebase-token')?.value
+  if (!token) { redirect('/login') }
+  const user = await verifyIdToken(token)
 
   // 관리자 권한 확인
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+  const profile = await getProfile(user.uid)
 
   if (profile?.role !== 'admin') {
     redirect('/dashboard')
   }
 
-  // ✅ 모든 사용자 조회 (FK 명시: user_id)
-  const { data: allUsers, error: usersError } = await supabase
-    .from('profiles')
-    .select(`
-      *,
-      teaching_materials:teaching_materials!user_id (
-        id,
-        status
-      )
-    `)
-    .order('created_at', { ascending: false })
+  // 모든 사용자 조회 (자료 수 포함)
+  const allUsersRaw = await getAllProfilesWithMaterialCounts()
 
-  // 에러 로깅
-  if (usersError) {
-    console.error('❌ Users Query Error:', usersError)
-  }
+  // 형식 맞추기 (기존 컴포넌트와 호환)
+  const allUsers = allUsersRaw.map(u => ({
+    ...u,
+    teaching_materials: Array(u.material_count).fill({
+      id: 'placeholder',
+      status: u.approved_count > 0 ? 'approved' : 'pending'
+    })
+  }))
 
-  // ✅ 강사만 필터링 (통계용)
-  const instructors = allUsers?.filter(u => u.role === 'instructor') || []
+  // 강사만 필터링 (통계용)
+  const instructors = allUsers?.filter(u => u.role === 'user') || []
 
   // 랭크별 통계 (강사만)
   const rankCounts = {

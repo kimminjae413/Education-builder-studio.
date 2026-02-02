@@ -3,7 +3,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { RankBadge } from '@/components/rank/RankBadge'
 import { InstructorRank } from '@/lib/rank/types'
 import { Search, FileText, Download, Eye, CheckCircle, XCircle, X, ExternalLink } from 'lucide-react'
@@ -61,9 +60,9 @@ export function ContentsTable({ materials }: ContentsTableProps) {
   // 🆕 파일 다운로드 핸들러
   const handleDownload = async (material: any) => {
     try {
-      // Supabase Storage URL에서 직접 다운로드
+      // GCS URL에서 직접 다운로드
       const response = await fetch(material.file_url)
-      
+
       if (!response.ok) {
         throw new Error('파일을 가져올 수 없습니다')
       }
@@ -77,13 +76,6 @@ export function ContentsTable({ materials }: ContentsTableProps) {
       link.click()
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
-
-      // 다운로드 카운트 증가
-      const supabase = createClient()
-      await supabase
-        .from('teaching_materials')
-        .update({ download_count: (material.download_count || 0) + 1 })
-        .eq('id', material.id)
 
       router.refresh()
     } catch (error) {
@@ -116,29 +108,31 @@ export function ContentsTable({ materials }: ContentsTableProps) {
     if (!modal.material || !modal.action) return
 
     setIsSubmitting(true)
-    const supabase = createClient()
 
     try {
       const newStatus = modal.action === 'approve' ? 'approved' : 'rejected'
 
-      const { error } = await supabase
-        .from('teaching_materials')
-        .update({
+      const res = await fetch(`/api/admin/seed-data/${modal.material.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           status: newStatus,
           review_note: reviewNote.trim() || null,
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq('id', modal.material.id)
+        }),
+      })
 
-      if (error) throw error
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || '처리 실패')
+      }
 
       const actionText = modal.action === 'approve' ? '승인' : '거부'
       alert(`✅ 콘텐츠가 ${actionText}되었습니다!`)
       closeReviewModal()
       router.refresh()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error reviewing content:', error)
-      alert('❌ 처리 중 오류가 발생했습니다.')
+      alert(`❌ ${error.message || '처리 중 오류가 발생했습니다.'}`)
     } finally {
       setIsSubmitting(false)
     }

@@ -3,7 +3,8 @@
 import { LoginForm } from '@/components/auth/LoginForm'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { auth } from '@/lib/firebase/client'
+import { onAuthStateChanged } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
@@ -11,10 +12,7 @@ export default function LoginPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         // 이미 로그인됨 → 대시보드로
         router.push('/dashboard')
@@ -22,9 +20,9 @@ export default function LoginPage() {
         // 로그인 안됨 → 폼 표시
         setChecking(false)
       }
-    }
+    })
 
-    checkAuth()
+    return () => unsubscribe()
   }, [router])
 
   // 로딩 중

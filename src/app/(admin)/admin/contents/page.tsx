@@ -1,44 +1,41 @@
 // src/app/(admin)/admin/contents/page.tsx
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { verifyIdToken } from '@/lib/firebase/admin'
+import { getProfile, getAllMaterialsWithUploader } from '@/lib/db/queries'
 import { ContentsTable } from '@/components/admin/ContentsTable'
 import { ContentStats } from '@/components/admin/ContentStats'
 
 export default async function ContentsPage() {
-  const supabase = await createClient()
-
-  // 현재 사용자 확인
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const cookieStore = await cookies()
+  const token = cookieStore.get('firebase-token')?.value
+  if (!token) { redirect('/login') }
+  const user = await verifyIdToken(token)
 
   // 관리자 권한 확인
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+  const profile = await getProfile(user.uid)
 
   if (profile?.role !== 'admin') {
     redirect('/dashboard')
   }
 
   // 모든 콘텐츠 가져오기 (업로더 정보 포함)
-  const { data: materials } = await supabase
-    .from('teaching_materials')
-    .select(`
-      *,
-      uploader:user_id (
-        id,
-        name,
-        email,
-        rank
-      ),
-      reviewer:reviewed_by (
-        name,
-        email
-      )
-    `)
-    .order('created_at', { ascending: false })
+  const materialsRaw = await getAllMaterialsWithUploader()
+
+  // 형식 맞추기 (기존 컴포넌트와 호환)
+  const materials = materialsRaw.map(m => ({
+    ...m,
+    uploader: {
+      id: m.user_id,
+      name: m.uploader_name,
+      email: m.uploader_email,
+      rank: m.uploader_rank,
+    },
+    reviewer: m.reviewer_name ? {
+      name: m.reviewer_name,
+      email: m.reviewer_email,
+    } : null,
+  }))
 
   // 상태별 통계
   const stats = {

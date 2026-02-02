@@ -2,7 +2,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 interface UploadResult {
   filename: string
@@ -40,15 +39,12 @@ export function SeedDataManager() {
 
   const loadSeedData = async () => {
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('teaching_materials')
-        .select('id, filename, title, subject_category, target_category, file_size, created_at')
-        .eq('is_seed_data', true)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setSeedData(data || [])
+      const response = await fetch('/api/admin/seed-data/list')
+      if (!response.ok) {
+        throw new Error('Failed to fetch seed data')
+      }
+      const data = await response.json()
+      setSeedData(data.materials || [])
     } catch (error) {
       console.error('Failed to load seed data:', error)
     } finally {

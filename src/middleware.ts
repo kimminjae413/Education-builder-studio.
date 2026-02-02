@@ -1,82 +1,75 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+// src/middleware.ts
+// Firebase Auth 기반 미들웨어
+
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Edge Runtime에서는 Firebase Admin SDK를 직접 사용할 수 없으므로
+// 클라이언트에서 전송한 ID Token을 API Route에서 검증하는 방식으로 변경
+
+// 보호된 경로 목록
+const PROTECTED_PATHS = ['/dashboard', '/design', '/library', '/contribute', '/rewards', '/profile', '/admin']
+
+// 인증 쿠키 이름
+const AUTH_COOKIE_NAME = 'firebase-auth-token'
+
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
+  const { pathname } = request.nextUrl
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-        },
-      },
-    }
-  )
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  // 인증이 필요한 페이지
-  const protectedPaths = ['/dashboard', '/design', '/library', '/contribute', '/rewards', '/profile']
-  const isProtectedPath = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))
-
-  // 로그인하지 않았는데 보호된 페이지에 접근하면 로그인 페이지로
-  if (isProtectedPath && !user) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  // 정적 파일 및 API 경로는 제외
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname.includes('.') // 파일 확장자가 있는 경우
+  ) {
+    return NextResponse.next()
   }
 
-  // 이미 로그인했는데 로그인/회원가입 페이지에 접근하면 대시보드로
-  if ((request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup') && user) {
+  // 인증 토큰 확인 (쿠키 또는 Authorization 헤더)
+  const token = request.cookies.get(AUTH_COOKIE_NAME)?.value
+  const hasToken = !!token
+
+  // 보호된 페이지 접근 확인
+  const isProtectedPath = PROTECTED_PATHS.some((path) => pathname.startsWith(path))
+
+  // 로그인/회원가입 페이지
+  const isAuthPage = pathname === '/login' || pathname === '/signup'
+
+  // 보호된 페이지에 토큰 없이 접근 시 로그인 페이지로 리다이렉트
+  if (isProtectedPath && !hasToken) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  // 이미 로그인한 사용자가 로그인/회원가입 페이지 접근 시 대시보드로 리다이렉트
+  if (isAuthPage && hasToken) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  return response
+  // 토큰이 있으면 요청 헤더에 추가 (API 라우트에서 사용)
+  if (hasToken) {
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.set('x-firebase-token', token)
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
+  }
+
+  return NextResponse.next()
 }
 
 export const config = {
   matcher: [
+    /*
+     * 다음 경로를 제외한 모든 요청 경로에 적용:
+     * - _next/static (정적 파일)
+     * - _next/image (이미지 최적화)
+     * - favicon.ico (파비콘)
+     * - 이미지 파일들 (.svg, .png, .jpg, etc.)
+     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

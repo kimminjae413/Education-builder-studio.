@@ -4,13 +4,12 @@
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { signOut } from '@/lib/firebase/auth'
 import { RankBadge } from '@/components/rank/RankBadge'
-import { User } from '@supabase/supabase-js'
-import { 
-  Menu, 
-  X, 
-  LogOut, 
+import {
+  Menu,
+  X,
+  LogOut,
   User as UserIcon,
   LayoutDashboard,
   Wand2,
@@ -21,8 +20,14 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 
+// 서버에서 전달받는 사용자 타입
+interface ServerUser {
+  uid: string
+  email: string | undefined
+}
+
 interface DashboardHeaderProps {
-  user: User
+  user: ServerUser
   profile: any
 }
 
@@ -32,8 +37,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    await signOut()
     router.push('/login')
     router.refresh()
   }

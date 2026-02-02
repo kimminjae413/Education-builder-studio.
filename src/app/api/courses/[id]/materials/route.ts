@@ -1,18 +1,32 @@
 // src/app/api/courses/[id]/materials/route.ts
 
-import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthenticatedUser } from '@/lib/firebase/server-auth'
+import { getCourse, getMaterial, incrementDownloadCount } from '@/lib/db/queries'
+import { query } from '@/lib/db/client'
+
+interface MaterialResult {
+  id: string
+  filename: string
+  title: string
+  description: string | null
+  subject_category: string | null
+  target_category: string | null
+  file_url: string
+  file_type: string
+  usage_count: number
+  download_count: number
+}
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> } // ⭐ 타입 변경
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient()
-    const params = await context.params // ⭐ await 추가
-    
+    const params = await context.params
+
     // 인증 확인
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getAuthenticatedUser(request)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -20,87 +34,59 @@ export async function GET(
     console.log(`📚 과정 ${params.id}의 추천 자료 조회 시작...`)
 
     // 과정 정보 가져오기
-    const { data: course, error: courseError } = await supabase
-      .from('courses')
-      .select('recommended_materials')
-      .eq('id', params.id)
-      .single()
-
-    if (courseError) {
-      console.error('❌ 과정 조회 실패:', courseError)
-      return NextResponse.json({ 
-        materials: [],
-        count: 0 
-      })
-    }
+    const course = await getCourse(params.id)
 
     if (!course) {
       console.warn('⚠️ 과정을 찾을 수 없음')
-      return NextResponse.json({ 
+      return NextResponse.json({
         materials: [],
-        count: 0 
+        count: 0,
       })
     }
 
     // 추천 자료가 없으면 빈 배열 반환
     if (!course.recommended_materials || course.recommended_materials.length === 0) {
       console.log('ℹ️ 추천 자료 없음')
-      return NextResponse.json({ 
+      return NextResponse.json({
         materials: [],
         count: 0,
-        message: 'No recommendations yet'
+        message: 'No recommendations yet',
       })
     }
 
     console.log(`🔍 ${course.recommended_materials.length}개 자료 상세 정보 조회 중...`)
 
     // 추천 자료 상세 정보 가져오기
-    const { data: materials, error: materialsError } = await supabase
-      .from('teaching_materials')
-      .select(`
-        id, 
-        filename, 
-        title, 
-        description, 
-        subject_category, 
-        target_category, 
-        file_url, 
-        file_type,
-        usage_count,
-        download_count
-      `)
-      .in('id', course.recommended_materials)
-      .eq('status', 'approved')
-      .eq('is_seed_data', true)
+    const result = await query<MaterialResult>(
+      `SELECT id, filename, title, description, subject_category,
+              target_category, file_url, file_type, usage_count, download_count
+       FROM teaching_materials
+       WHERE id = ANY($1)
+         AND status = 'approved'
+         AND is_seed_data = true`,
+      [course.recommended_materials]
+    )
 
-    if (materialsError) {
-      console.error('❌ 자료 조회 실패:', materialsError)
-      return NextResponse.json({ 
-        materials: [],
-        count: 0,
-        error: 'Failed to fetch materials'
-      })
-    }
+    const materials = result.rows
 
     // 추천 순서대로 정렬
     const sortedMaterials = course.recommended_materials
-      .map((id: string) => materials?.find(m => m.id === id))
+      .map((id: string) => materials.find((m) => m.id === id))
       .filter(Boolean)
 
     console.log(`✅ ${sortedMaterials.length}개 자료 조회 완료`)
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       materials: sortedMaterials || [],
-      count: sortedMaterials?.length || 0
+      count: sortedMaterials?.length || 0,
     })
-
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Get materials error:', error)
     return NextResponse.json(
-      { 
-        error: error.message || 'Internal server error',
+      {
+        error: error instanceof Error ? error.message : 'Internal server error',
         materials: [],
-        count: 0
+        count: 0,
       },
       { status: 500 }
     )
@@ -109,14 +95,13 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> } // ⭐ 타입 변경
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient()
-    const params = await context.params // ⭐ await 추가
-    
+    const params = await context.params
+
     // 인증 확인
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getAuthenticatedUser(request)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -129,31 +114,17 @@ export async function POST(
     }
 
     // 다운로드 횟수 증가
-    // ⭐ FIX: supabase.raw() 대신 클라이언트 사이드 증가 사용
-    const { data: current } = await supabase
-      .from('teaching_materials')
-      .select('download_count')
-      .eq('id', materialId)
-      .single()
-    
-    const { error } = await supabase
-      .from('teaching_materials')
-      .update({ 
-        download_count: (current?.download_count || 0) + 1,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', materialId)
-
-    if (error) {
+    try {
+      await incrementDownloadCount(materialId)
+    } catch (error) {
       console.error('다운로드 카운트 증가 실패:', error)
     }
 
     return NextResponse.json({ success: true })
-
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('POST materials error:', error)
     return NextResponse.json(
-      { error: error.message },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }

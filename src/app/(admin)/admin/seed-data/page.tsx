@@ -1,43 +1,42 @@
 // src/app/(admin)/admin/seed-data/page.tsx
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { verifyIdToken } from '@/lib/firebase/admin'
+import { getProfile, getAllMaterialsWithUploader } from '@/lib/db/queries'
 import { SeedDataUpload } from '@/components/admin/SeedDataUpload'
 import { SeedDataTable } from '@/components/admin/SeedDataTable'
 
 export default async function SeedDataPage() {
-  const supabase = await createClient()
-
-  // 현재 사용자 확인
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const cookieStore = await cookies()
+  const token = cookieStore.get('firebase-token')?.value
+  if (!token) { redirect('/login') }
+  const user = await verifyIdToken(token)
 
   // 관리자 권한 확인
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+  const profile = await getProfile(user.uid)
 
   if (profile?.role !== 'admin') {
     redirect('/dashboard')
   }
 
   // 모든 교육 자료 가져오기
-  const { data: materials } = await supabase
-    .from('teaching_materials')
-    .select(`
-      *,
-      profiles:user_id (
-        name,
-        email,
-        rank
-      ),
-      seed_approver:seed_approved_by (
-        name,
-        email
-      )
-    `)
-    .order('created_at', { ascending: false })
+  const materialsRaw = await getAllMaterialsWithUploader()
+
+  // 형식 맞추기 (기존 컴포넌트와 호환 - Date를 string으로)
+  const materials = materialsRaw.map(m => ({
+    ...m,
+    created_at: m.created_at?.toISOString?.() || String(m.created_at),
+    seed_approved_at: m.seed_approved_at?.toISOString?.() || null,
+    profiles: {
+      name: m.uploader_name || '',
+      email: m.uploader_email || '',
+      rank: m.uploader_rank || 'newcomer',
+    },
+    seed_approver: m.reviewer_name ? {
+      name: m.reviewer_name,
+      email: m.reviewer_email || '',
+    } : null,
+  }))
 
   return (
     <div className="space-y-8">

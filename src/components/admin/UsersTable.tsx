@@ -3,7 +3,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { RankBadge } from '@/components/rank/RankBadge'
 import { InstructorRank } from '@/lib/rank/types'
 import { Search, Edit, X, Trash2, AlertTriangle } from 'lucide-react'
@@ -87,27 +86,29 @@ export function UsersTable({ users: initialUsers }: UsersTableProps) {
     }
 
     setIsSubmittingRank(true)
-    const supabase = createClient()
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
+      const res = await fetch('/api/admin/users/rank', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: rankModal.user.id,
           rank: selectedRank,
-          manual_rank_override: true,
-          manual_rank_reason: reason.trim(),
-          rank_updated_at: new Date().toISOString(),
-        })
-        .eq('id', rankModal.user.id)
+          reason: reason.trim(),
+        }),
+      })
 
-      if (error) throw error
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || '랭크 변경 실패')
+      }
 
       alert('✅ 랭크가 성공적으로 변경되었습니다!')
       closeRankModal()
       router.refresh()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating rank:', error)
-      alert('❌ 랭크 변경에 실패했습니다.')
+      alert(`❌ ${error.message || '랭크 변경에 실패했습니다.'}`)
     } finally {
       setIsSubmittingRank(false)
     }
