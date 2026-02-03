@@ -18,7 +18,7 @@ import {
 // GET: 기여자 순위 및 통계 조회
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
+    const searchParams = request.nextUrl.searchParams
     const action = searchParams.get('action') || 'top'
     const limit = parseInt(searchParams.get('limit') || '10')
 

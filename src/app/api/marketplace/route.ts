@@ -15,7 +15,7 @@ import {
 // GET: 마켓플레이스 검색 및 조회
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
+    const searchParams = request.nextUrl.searchParams
     const action = searchParams.get('action') || 'search'
 
     switch (action) {

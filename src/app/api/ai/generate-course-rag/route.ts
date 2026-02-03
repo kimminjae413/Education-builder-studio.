@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
 // GET: RAG 컨텍스트만 검색 (테스트용)
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
+    const searchParams = request.nextUrl.searchParams
     const query = searchParams.get('q')
 
     if (!query) {

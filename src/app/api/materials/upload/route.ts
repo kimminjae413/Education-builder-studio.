@@ -179,7 +179,7 @@ export async function GET(request: NextRequest) {
     const materials = await getMaterialsByUser(user.uid)
 
     // 쿼리 파라미터로 필터링 (선택)
-    const { searchParams } = new URL(request.url)
+    const searchParams = request.nextUrl.searchParams
     const status = searchParams.get('status')
     const isSeed = searchParams.get('is_seed')
 
