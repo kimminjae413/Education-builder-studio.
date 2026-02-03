@@ -11,6 +11,7 @@ export async function GET() {
         name VARCHAR(255),
         phone VARCHAR(50),
         bio TEXT,
+        profile_image_url TEXT,
         role VARCHAR(50) DEFAULT 'user',
         rank VARCHAR(50) DEFAULT 'newcomer',
         points INTEGER DEFAULT 0,
@@ -19,6 +20,12 @@ export async function GET() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       )
     `)
+
+    // profile_image_url 컬럼 추가 (기존 테이블 마이그레이션용)
+    await query(`
+      ALTER TABLE profiles
+      ADD COLUMN IF NOT EXISTS profile_image_url TEXT
+    `).catch(() => {})
 
     // teaching_materials 테이블 생성
     await query(`
