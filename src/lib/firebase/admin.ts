@@ -18,9 +18,13 @@ function getServiceAccountKey() {
   try {
     const parsed = JSON.parse(key)
 
-    // private_key의 \\n을 실제 줄바꿈으로 변환
+    // private_key 수정
     if (parsed.private_key) {
+      // \\n을 실제 줄바꿈으로 변환
       parsed.private_key = parsed.private_key.replace(/\\n/g, '\n')
+      // PEM 헤더/푸터의 여러 공백을 단일 공백으로 수정
+      parsed.private_key = parsed.private_key.replace(/-----BEGIN PRIVATE\s+KEY-----/g, '-----BEGIN PRIVATE KEY-----')
+      parsed.private_key = parsed.private_key.replace(/-----END PRIVATE\s+KEY-----/g, '-----END PRIVATE KEY-----')
     }
 
     return parsed
