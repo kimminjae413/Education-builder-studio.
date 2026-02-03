@@ -7,9 +7,10 @@ let storage: Storage | null = null
 let bucket: Bucket | null = null
 
 function getServiceAccountKey() {
-  // 여러 환경변수명 시도
+  // 여러 환경변수명 시도 (Firebase 서비스 계정도 GCS 접근 가능)
   const key = process.env.GCS_SERVICE_ACCOUNT_KEY
     || process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
+    || process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_KEY
     || process.env.GOOGLE_CREDENTIALS
 
   if (!key) {
