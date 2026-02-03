@@ -2,45 +2,44 @@
 
 import { SignupForm } from '@/components/auth/SignupForm'
 import Link from 'next/link'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { getFirebaseAuth } from '@/lib/firebase/client'
 import { onAuthStateChanged } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 
-// 쿠키 삭제 함수
-function clearAuthCookie() {
-  document.cookie = 'firebase-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-}
-
 export default function SignupPage() {
   const router = useRouter()
+  const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
-    // 페이지 로드 시 쿠키 정리 (리디렉션 루프 방지)
-    clearAuthCookie()
-
     let unsubscribe: (() => void) | undefined
+    let redirected = false
 
     try {
       const auth = getFirebaseAuth()
-      // 동기 콜백 사용 - async 콜백은 문제를 일으킬 수 있음
       unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user) {
+        if (user && !redirected) {
           // Firebase에 로그인되어 있으면 토큰 갱신 후 대시보드로
+          redirected = true
           user.getIdToken(true)
             .then((token) => {
               document.cookie = `firebase-token=${token}; path=/; max-age=3600; SameSite=Lax`
-              router.push('/dashboard')
+              // router.push 대신 window.location 사용 (더 확실한 네비게이션)
+              window.location.href = '/dashboard'
             })
             .catch((error) => {
               console.error('Token refresh failed:', error)
-              clearAuthCookie()
+              redirected = false
+              setIsChecking(false)
             })
+        } else if (!user) {
+          // user가 null이면 회원가입 폼 표시
+          setIsChecking(false)
         }
-        // user가 null이면 회원가입 폼 표시 (이미 표시 중)
       })
     } catch (error) {
       console.error('Firebase auth error:', error)
+      setIsChecking(false)
     }
 
     return () => {
@@ -48,7 +47,19 @@ export default function SignupPage() {
     }
   }, [router])
 
-  // 회원가입 폼 즉시 표시 (로딩 상태 제거)
+  // 인증 확인 중일 때 로딩 표시
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cobalt-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cobalt-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">인증 확인 중...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // 회원가입 폼 표시
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-cobalt-50 to-white flex items-center justify-center p-4">
