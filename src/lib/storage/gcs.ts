@@ -19,7 +19,14 @@ function getServiceAccountKey() {
   }
 
   try {
-    return JSON.parse(key)
+    const parsed = JSON.parse(key)
+
+    // private_key의 \n 문자열을 실제 줄바꿈으로 변환
+    if (parsed.private_key && typeof parsed.private_key === 'string') {
+      parsed.private_key = parsed.private_key.replace(/\\n/g, '\n')
+    }
+
+    return parsed
   } catch {
     console.warn('[GCS] Failed to parse service account key as JSON')
     return key
