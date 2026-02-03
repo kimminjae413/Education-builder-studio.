@@ -54,7 +54,8 @@ export function LoginForm() {
 
             if (profileRes.status === 404) {
               // 프로필이 없으면 생성
-              await fetch('/api/profile', {
+              console.log('Creating profile...')
+              const createRes = await fetch('/api/profile', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -62,6 +63,13 @@ export function LoginForm() {
                 },
                 body: JSON.stringify({ name: result.user.email?.split('@')[0] }),
               })
+
+              if (!createRes.ok) {
+                const errData = await createRes.json()
+                console.error('Profile creation failed:', errData)
+              } else {
+                console.log('Profile created successfully')
+              }
             }
           } catch (profileErr) {
             console.error('Profile check/create error:', profileErr)
