@@ -41,10 +41,16 @@ export function LoginForm() {
       if (result.user) {
         console.log('✅ Login success:', result.user.email)
 
-        // ID 토큰을 쿠키에 저장
+        // ID 토큰을 쿠키에 저장 (서버 API를 통해)
         const token = await getIdToken()
         if (token) {
-          document.cookie = `firebase-token=${token}; path=/; max-age=3600; SameSite=Lax`
+          // 서버 API를 통해 쿠키 설정
+          const setCookieRes = await fetch('/api/auth/set-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+          })
+          console.log('Cookie set response:', setCookieRes.status)
 
           // 프로필 확인 및 생성 (없으면 생성)
           try {
@@ -84,8 +90,8 @@ export function LoginForm() {
           }
         }
 
-        router.push('/dashboard')
-        router.refresh()
+        // 쿠키 설정 후 대시보드로 이동
+        window.location.href = '/dashboard'
       }
     } catch (err: any) {
       console.error('🔴 Unexpected error:', err)
