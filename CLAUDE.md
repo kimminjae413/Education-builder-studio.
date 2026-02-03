@@ -748,7 +748,7 @@ src/
 - 로그인/회원가입 폼: Firebase Auth 사용
 
 **Cloud SQL 정보:**
-- 호스트: `34.64.207.157`
+- 호스트: Cloud SQL 콘솔에서 확인
 - 데이터베이스: `education_builder`
 - 사용자: `edubuilder`
 

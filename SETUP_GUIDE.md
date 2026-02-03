@@ -17,7 +17,6 @@
 
 ### ✅ Cloud SQL
 - **인스턴스**: `edu-builder-db`
-- **IP**: `34.64.207.157`
 - **데이터베이스**: `education_builder`
 - **사용자**: `edubuilder`
 - **버전**: PostgreSQL 15
@@ -40,15 +39,15 @@
 
 | 변수 | 상태 | 설명 |
 |------|------|------|
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | ✅ 설정됨 | |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | ✅ 설정됨 | |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | ✅ 설정됨 | |
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | 필수 | Firebase 콘솔에서 복사 |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | 필수 | |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | 필수 | |
 | `FIREBASE_ADMIN_SERVICE_ACCOUNT_KEY` | ⚠️ ADC 사용 | 로컬: ADC, 배포: 키 필요 |
-| `DATABASE_URL` | ✅ 설정됨 | |
-| `GCS_PROJECT_ID` | ✅ 설정됨 | |
-| `GCS_BUCKET_NAME` | ✅ 설정됨 | |
+| `DATABASE_URL` | 필수 | Cloud SQL 연결 문자열 |
+| `GCS_PROJECT_ID` | 필수 | |
+| `GCS_BUCKET_NAME` | 필수 | |
 | `GCS_SERVICE_ACCOUNT_KEY` | ⚠️ ADC 사용 | 로컬: ADC, 배포: 키 필요 |
-| `GEMINI_API_KEY` | ✅ 설정됨 | |
+| `GEMINI_API_KEY` | 필수 | Google AI Studio에서 발급 |
 
 ---
 
@@ -60,15 +59,29 @@
 gcloud auth application-default login
 ```
 
-브라우저에서 `eid0318@eduinolab.com` 계정으로 로그인
+브라우저에서 Google 계정으로 로그인
 
-### 2. 의존성 설치
+### 2. 환경 변수 설정
+
+`.env.local` 파일 생성 (절대 git에 커밋하지 마세요!):
+
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=<your-firebase-api-key>
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=<your-project>.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=<your-project-id>
+DATABASE_URL=postgresql://<user>:<password>@<host>:5432/<database>?sslmode=require
+GCS_PROJECT_ID=<your-project-id>
+GCS_BUCKET_NAME=<your-bucket-name>
+GEMINI_API_KEY=<your-gemini-api-key>
+```
+
+### 3. 의존성 설치
 
 ```bash
 npm install
 ```
 
-### 3. 개발 서버 시작
+### 4. 개발 서버 시작
 
 ```bash
 npm run dev
@@ -79,7 +92,7 @@ npm run dev
 ## 스키마 마이그레이션 (최초 1회)
 
 ```bash
-psql "postgresql://edubuilder:EduBuilder2026!@34.64.207.157:5432/education_builder?sslmode=require" -f scripts/migrate-schema.sql
+psql "$DATABASE_URL" -f scripts/migrate-schema.sql
 ```
 
 또는 gcloud 사용:
@@ -96,24 +109,16 @@ gcloud sql connect edu-builder-db --user=edubuilder --project=edu-builder-studio
 
 ### 환경 변수 설정
 
-Netlify Dashboard → Site settings → Environment variables에 추가:
+Netlify Dashboard → Site settings → Environment variables에서 위 환경 변수들을 설정하세요.
 
-```
-NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyAMp-QTUbn3LQ-aVZf7XOMTwcf3ocqztx4
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=edu-builder-studio-20260202.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=edu-builder-studio-20260202
-DATABASE_URL=postgresql://edubuilder:EduBuilder2026!@34.64.207.157:5432/education_builder?sslmode=require
-GCS_PROJECT_ID=edu-builder-studio-20260202
-GCS_BUCKET_NAME=education-builder-materials
-GEMINI_API_KEY=AIzaSyAJ5mLRWWa3jP7qmODl85_t_D5bbuAqQHs
-```
+**⚠️ 절대로 API 키나 비밀번호를 코드에 하드코딩하지 마세요!**
 
 ### 서비스 계정 키 (필요시)
 
 조직 관리자에게 서비스 계정 키 생성 권한 요청 후:
 
 ```bash
-gcloud iam service-accounts keys create key.json --iam-account=edu-builder-sa@edu-builder-studio-20260202.iam.gserviceaccount.com
+gcloud iam service-accounts keys create key.json --iam-account=<service-account-email>
 ```
 
 생성된 JSON을 한 줄로 변환하여 환경 변수에 추가:
