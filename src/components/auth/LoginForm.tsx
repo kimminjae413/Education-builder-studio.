@@ -45,6 +45,27 @@ export function LoginForm() {
         const token = await getIdToken()
         if (token) {
           document.cookie = `firebase-token=${token}; path=/; max-age=3600; SameSite=Lax`
+
+          // 프로필 확인 및 생성 (없으면 생성)
+          try {
+            const profileRes = await fetch('/api/profile', {
+              headers: { 'Authorization': `Bearer ${token}` },
+            })
+
+            if (profileRes.status === 404) {
+              // 프로필이 없으면 생성
+              await fetch('/api/profile', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ name: result.user.email?.split('@')[0] }),
+              })
+            }
+          } catch (profileErr) {
+            console.error('Profile check/create error:', profileErr)
+          }
         }
 
         router.push('/dashboard')
