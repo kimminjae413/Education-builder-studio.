@@ -11,7 +11,7 @@ export default async function AdminLayout({
   children: React.ReactNode
 }) {
   const cookieStore = await cookies()
-  const token = cookieStore.get('firebase-auth-token')?.value
+  const token = cookieStore.get('firebase-token')?.value
 
   if (!token) redirect('/login')
 
