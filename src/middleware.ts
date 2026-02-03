@@ -41,10 +41,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // 이미 로그인한 사용자가 로그인/회원가입 페이지 접근 시 대시보드로 리다이렉트
-  if (isAuthPage && hasToken) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
+  // 로그인/회원가입 페이지는 클라이언트에서 인증 상태 확인 후 리디렉션 처리
+  // 미들웨어에서 리디렉션하면 무효 토큰일 때 루프 발생 가능
+  // if (isAuthPage && hasToken) {
+  //   return NextResponse.redirect(new URL('/dashboard', request.url))
+  // }
 
   // 토큰이 있으면 요청 헤더에 추가 (API 라우트에서 사용)
   if (hasToken) {
