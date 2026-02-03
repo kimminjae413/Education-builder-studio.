@@ -2,7 +2,7 @@
 // 관리자 계정 생성 API (일회성)
 
 import { NextRequest, NextResponse } from 'next/server'
-import { adminAuth } from '@/lib/firebase/admin'
+import { getAdminAuth } from '@/lib/firebase/admin'
 import { query } from '@/lib/db/client'
 
 export async function POST(request: NextRequest) {
@@ -24,15 +24,15 @@ export async function POST(request: NextRequest) {
 
     // 기존 사용자 확인
     try {
-      user = await adminAuth.getUserByEmail(email)
+      user = await getAdminAuth().getUserByEmail(email)
       console.log('기존 계정 발견:', user.uid)
       // 비밀번호 업데이트
-      await adminAuth.updateUser(user.uid, { password })
+      await getAdminAuth().updateUser(user.uid, { password })
       console.log('비밀번호 업데이트 완료')
     } catch (e: any) {
       if (e.code === 'auth/user-not-found') {
         // 새 사용자 생성
-        user = await adminAuth.createUser({
+        user = await getAdminAuth().createUser({
           email,
           password,
           emailVerified: true,
