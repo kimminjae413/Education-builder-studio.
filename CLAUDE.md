@@ -875,6 +875,47 @@ src/
 - Gemini API 키 교체
 - Netlify 환경변수 업데이트
 
+### 2026-02-03 ⭐ Firebase 로그인 인증 오류 해결
+
+**증상:**
+- 로그인 후 대시보드 접근 불가 (무한 리다이렉트 루프)
+- 로그인 페이지에서 "인증 확인 중..." 무한 로딩
+- 쿠키는 정상 설정되나 서버에서 토큰 검증 실패
+
+**원인 분석 과정:**
+1. `onAuthStateChanged`에서 async 콜백 사용 → 콜백이 제대로 호출 안됨
+2. 로그인 페이지에서 쿠키 삭제 후 재설정 → 리다이렉트 루프 발생
+3. **근본 원인**: Netlify 환경변수에 저장된 `FIREBASE_ADMIN_SERVICE_ACCOUNT_KEY`의 PEM private key 형식 손상
+
+**PEM 키 손상 문제:**
+```
+# 정상 형식
+-----BEGIN PRIVATE KEY-----
+
+# 손상된 형식 (Netlify 환경변수 저장 시 공백 제거됨)
+-----BEGIN PRIVATEKEY-----
+```
+
+**해결 방법:**
+`src/lib/firebase/admin.ts`에서 다양한 손상된 PEM 형식을 자동 수정:
+```typescript
+// PEM 헤더/푸터 정리 - 다양한 손상된 형식 처리
+// "PRIVATEKEY" -> "PRIVATE KEY" (공백 없는 경우)
+pk = pk.replace(/-----BEGIN\s*PRIVATE\s*KEY-----/gi, '-----BEGIN PRIVATE KEY-----')
+pk = pk.replace(/-----END\s*PRIVATE\s*KEY-----/gi, '-----END PRIVATE KEY-----')
+```
+
+**수정된 파일:**
+- `src/lib/firebase/admin.ts` - PEM 키 파싱 로직 강화
+- `src/app/(auth)/login/page.tsx` - 불필요한 인증 체크 및 쿠키 삭제 로직 제거
+- `src/app/(auth)/signup/page.tsx` - 동일하게 간소화
+- `src/app/api/debug/verify-token/route.ts` - 토큰 검증 디버그 API 추가 (임시)
+
+**교훈:**
+- Netlify 환경변수에 JSON 저장 시 특수문자/공백이 손상될 수 있음
+- Firebase Admin SDK의 PEM 키 형식은 매우 엄격함 ("PRIVATE KEY" 사이 공백 필수)
+- 디버그 API 엔드포인트를 만들어 서버측 에러를 확인하면 디버깅이 훨씬 쉬움
+
 ---
 
 ### 2026-02-02 ⭐ Supabase → Google Cloud 마이그레이션 완료
