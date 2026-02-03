@@ -12,18 +12,36 @@ export default function LoginPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const auth = getFirebaseAuth()
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // 이미 로그인됨 → 대시보드로
-        router.push('/dashboard')
-      } else {
-        // 로그인 안됨 → 폼 표시
-        setChecking(false)
-      }
-    })
+    let unsubscribe: (() => void) | null = null
 
-    return () => unsubscribe()
+    // 3초 타임아웃 - Firebase 초기화 실패 시 폼 표시
+    const timeout = setTimeout(() => {
+      console.log('Auth check timeout - showing form')
+      setChecking(false)
+    }, 3000)
+
+    try {
+      const auth = getFirebaseAuth()
+      unsubscribe = onAuthStateChanged(auth, (user) => {
+        clearTimeout(timeout)
+        if (user) {
+          // 이미 로그인됨 → 대시보드로
+          router.push('/dashboard')
+        } else {
+          // 로그인 안됨 → 폼 표시
+          setChecking(false)
+        }
+      })
+    } catch (error) {
+      console.error('Firebase auth error:', error)
+      clearTimeout(timeout)
+      setChecking(false)
+    }
+
+    return () => {
+      clearTimeout(timeout)
+      if (unsubscribe) unsubscribe()
+    }
   }, [router])
 
   // 로딩 중
