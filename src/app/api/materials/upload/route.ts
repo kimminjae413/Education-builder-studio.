@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
         subject_category: subjectCategory || null,
         status: 'pending', // 승인 대기
         is_seed_data: false,
-        vertex_indexed: false,
+        indexed: false,
       })
     } catch (dbError) {
       console.error('❌ 데이터베이스 저장 실패:', dbError)

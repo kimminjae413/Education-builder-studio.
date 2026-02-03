@@ -92,7 +92,7 @@ export interface TeachingMaterial {
   learning_objectives: string | null
   status: 'pending' | 'approved' | 'rejected'
   is_seed_data: boolean
-  vertex_indexed: boolean // Vertex AI 인덱싱 여부 추가
+  indexed: boolean // Gemini File Search 인덱싱 여부 (컬럼명은 레거시)
   usage_count: number
   download_count: number
   bookmark_count: number
@@ -142,7 +142,7 @@ export async function createMaterial(
     `INSERT INTO teaching_materials (
       user_id, filename, file_url, gcs_path, file_size, file_type, title, description,
       content_text, target_category, subject_category, tool_categories, method_categories,
-      difficulty, learning_objectives, status, is_seed_data, vertex_indexed, metadata
+      difficulty, learning_objectives, status, is_seed_data, indexed, metadata
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
     RETURNING *`,
     [
@@ -163,7 +163,7 @@ export async function createMaterial(
       material.learning_objectives || null,
       material.status || 'pending',
       material.is_seed_data || false,
-      material.vertex_indexed || false,
+      material.indexed || false,
       material.metadata || {},
     ]
   )
@@ -197,12 +197,13 @@ export async function incrementDownloadCount(id: string): Promise<void> {
   )
 }
 
-export async function getMaterialsForVertexIndexing(
+// Gemini File Search 인덱싱 대기 자료 조회
+export async function getMaterialsForIndexing(
   limit: number = 50
 ): Promise<TeachingMaterial[]> {
   const result = await query<TeachingMaterial>(
     `SELECT * FROM teaching_materials
-     WHERE status = 'approved' AND is_seed_data = true AND vertex_indexed = false
+     WHERE status = 'approved' AND is_seed_data = true AND indexed = false
      ORDER BY created_at ASC
      LIMIT $1`,
     [limit]
@@ -210,9 +211,10 @@ export async function getMaterialsForVertexIndexing(
   return result.rows
 }
 
-export async function markAsVertexIndexed(id: string): Promise<void> {
+// Gemini File Search 인덱싱 완료 표시
+export async function markAsIndexed(id: string): Promise<void> {
   await query(
-    'UPDATE teaching_materials SET vertex_indexed = true WHERE id = $1',
+    'UPDATE teaching_materials SET indexed = true WHERE id = $1',
     [id]
   )
 }
@@ -293,7 +295,7 @@ export async function createCourse(course: Partial<Course>): Promise<Course> {
 }
 
 // ==========================================
-// 벡터 검색 대체 (Vertex AI Search로 이동)
+// 벡터 검색 대체 (Gemini File Search API로 이동)
 // ==========================================
 
 // 키워드 기반 자료 검색 (폴백용)

@@ -41,7 +41,7 @@ export async function GET() {
         learning_objectives TEXT,
         status VARCHAR(50) DEFAULT 'pending',
         is_seed_data BOOLEAN DEFAULT FALSE,
-        vertex_indexed BOOLEAN DEFAULT FALSE,
+        indexed BOOLEAN DEFAULT FALSE,
         usage_count INTEGER DEFAULT 0,
         download_count INTEGER DEFAULT 0,
         bookmark_count INTEGER DEFAULT 0,

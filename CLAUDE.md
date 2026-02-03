@@ -5,7 +5,7 @@
 - **프로젝트명**: Education Builder Studio (EBS)
 - **슬로건**: "지혜를 설계하고, 경험을 공유하며, 교육의 미래를 함께 짓다"
 - **핵심 철학**: 지식과 지혜의 공유, 존중, 보상, 순환을 실현하는 교육 생태계
-- **기술 스택**: Next.js 15, React 19, TypeScript, Tailwind CSS, Firebase Auth, Cloud SQL (PostgreSQL), Google Cloud Storage, Vertex AI Search, Google Gemini API
+- **기술 스택**: Next.js 15, React 19, TypeScript, Tailwind CSS, Firebase Auth, Cloud SQL (PostgreSQL), Google Cloud Storage, Gemini File Search API, Google Gemini API
 - **배포 URL**: https://educationbuilderstudio.netlify.app/
 
 ---
@@ -834,7 +834,7 @@ GCS_BUCKET_NAME
 
 ## 참고 링크
 
-- **Supabase pgvector**: https://supabase.com/docs/guides/ai/vector-columns
+- **Gemini File Search API**: https://ai.google.dev/gemini-api/docs/file-search?hl=ko (RAG 검색에 사용)
 - **Google Cloud Storage**: https://cloud.google.com/storage/docs
 - **Gemini Embedding**: https://ai.google.dev/gemini-api/docs/embeddings
 - **RAG 패턴**: https://www.pinecone.io/learn/retrieval-augmented-generation/

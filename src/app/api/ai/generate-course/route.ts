@@ -199,7 +199,7 @@ JSON 형식으로 출력:
       )
     }
 
-    // 관련 자료 검색 (Vertex AI Search)
+    // 관련 자료 검색 (Gemini File Search API)
     const recommendedMaterials = await findRelatedMaterials(
       courseData,
       targetAudience,

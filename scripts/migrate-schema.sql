@@ -11,9 +11,9 @@ ALTER TABLE profiles
 
 -- ===========================================
 -- 2. 교육 자료 테이블 수정
--- embedding 컬럼 제거 (Vertex AI Search로 대체)
+-- embedding 컬럼 제거 (Gemini File Search API로 대체)
 -- gcs_path 컬럼 추가
--- vertex_indexed 컬럼 추가
+-- indexed 컬럼 추가
 -- ===========================================
 
 -- embedding 컬럼 제거
@@ -24,9 +24,9 @@ ALTER TABLE teaching_materials
 ALTER TABLE teaching_materials
   ADD COLUMN IF NOT EXISTS gcs_path TEXT;
 
--- vertex_indexed 컬럼 추가
+-- indexed 컬럼 추가 (Gemini File Search 인덱싱 여부)
 ALTER TABLE teaching_materials
-  ADD COLUMN IF NOT EXISTS vertex_indexed BOOLEAN DEFAULT FALSE;
+  ADD COLUMN IF NOT EXISTS indexed BOOLEAN DEFAULT FALSE;
 
 -- user_id 타입 변경
 ALTER TABLE teaching_materials
@@ -49,10 +49,10 @@ CREATE INDEX IF NOT EXISTS idx_materials_seed_approved
   ON teaching_materials (is_seed_data, status)
   WHERE is_seed_data = TRUE AND status = 'approved';
 
--- Vertex AI 인덱싱 대기 목록용
-CREATE INDEX IF NOT EXISTS idx_materials_vertex_pending
-  ON teaching_materials (vertex_indexed)
-  WHERE vertex_indexed = FALSE AND is_seed_data = TRUE AND status = 'approved';
+-- Gemini File Search 인덱싱 대기 목록용
+CREATE INDEX IF NOT EXISTS idx_materials_indexing_pending
+  ON teaching_materials (indexed)
+  WHERE indexed = FALSE AND is_seed_data = TRUE AND status = 'approved';
 
 -- 사용자별 자료 조회용
 CREATE INDEX IF NOT EXISTS idx_materials_user

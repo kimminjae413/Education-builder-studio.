@@ -213,7 +213,7 @@ ${parsedContent.summary}
         learning_objectives: aiCategories.learning_objectives,
         status: 'approved', // 시드 데이터는 자동 승인
         is_seed_data: true,
-        vertex_indexed: false, // Vertex AI 자동 인덱싱 대기
+        indexed: false, // Gemini File Search 인덱싱 대기
         metadata: {
           pageCount: parsedContent.pageCount,
           imageCount: parsedContent.imageCount,
