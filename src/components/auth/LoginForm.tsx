@@ -48,13 +48,15 @@ export function LoginForm() {
 
           // 프로필 확인 및 생성 (없으면 생성)
           try {
+            console.log('Checking profile...')
             const profileRes = await fetch('/api/profile', {
               headers: { 'Authorization': `Bearer ${token}` },
             })
+            console.log('Profile check response:', profileRes.status)
 
             if (profileRes.status === 404) {
               // 프로필이 없으면 생성
-              console.log('Creating profile...')
+              console.log('Profile not found, creating...')
               const createRes = await fetch('/api/profile', {
                 method: 'POST',
                 headers: {
@@ -63,13 +65,19 @@ export function LoginForm() {
                 },
                 body: JSON.stringify({ name: result.user.email?.split('@')[0] }),
               })
+              console.log('Profile creation response:', createRes.status)
 
               if (!createRes.ok) {
                 const errData = await createRes.json()
                 console.error('Profile creation failed:', errData)
               } else {
-                console.log('Profile created successfully')
+                const newProfile = await createRes.json()
+                console.log('Profile created:', newProfile)
               }
+            } else if (!profileRes.ok) {
+              console.error('Profile check failed:', profileRes.status)
+            } else {
+              console.log('Profile exists')
             }
           } catch (profileErr) {
             console.error('Profile check/create error:', profileErr)
