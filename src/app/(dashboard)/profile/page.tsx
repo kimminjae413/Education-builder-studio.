@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { verifyIdToken } from '@/lib/firebase/admin'
 import { getProfile, getUserMaterialStats } from '@/lib/db/queries'
+import Image from 'next/image'
 import { RankBadge } from '@/components/rank/RankBadge'
 import { RankProgress } from '@/components/rank/RankProgress'
 import { InstructorRank } from '@/lib/rank/types'
@@ -29,6 +30,7 @@ export default async function ProfilePage() {
       name: null,
       phone: null,
       bio: null,
+      profile_image_url: null,
       rank: 'newcomer',
       points: 0,
       role: 'user' as const,
@@ -56,10 +58,19 @@ export default async function ProfilePage() {
             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
               <div className="flex items-start gap-4 mb-6">
                 {/* 아바타 */}
-                <div className="h-20 w-20 rounded-full bg-gradient-to-br from-cobalt-400 to-cobalt-600 flex items-center justify-center text-white flex-shrink-0">
-                  <span className="text-3xl font-bold">
-                    {safeProfile.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
-                  </span>
+                <div className="relative h-20 w-20 rounded-full bg-gradient-to-br from-cobalt-400 to-cobalt-600 flex items-center justify-center text-white flex-shrink-0 overflow-hidden">
+                  {safeProfile.profile_image_url ? (
+                    <Image
+                      src={safeProfile.profile_image_url}
+                      alt="프로필 사진"
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <span className="text-3xl font-bold">
+                      {safeProfile.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
+                    </span>
+                  )}
                 </div>
 
                 {/* 정보 */}
@@ -142,8 +153,9 @@ export default async function ProfilePage() {
               profile={{
                 id: safeProfile.id,
                 name: safeProfile.name,
-                phone: (safeProfile as any).phone,
-                bio: (safeProfile as any).bio,
+                phone: safeProfile.phone,
+                bio: safeProfile.bio,
+                profile_image_url: safeProfile.profile_image_url,
               }}
             />
           </div>

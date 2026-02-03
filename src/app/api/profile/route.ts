@@ -67,7 +67,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const allowedFields = ['name', 'phone', 'bio']
+    const allowedFields = ['name', 'phone', 'bio', 'profile_image_url']
     const updates: Record<string, unknown> = {}
 
     for (const field of allowedFields) {

@@ -13,6 +13,7 @@ export interface Profile {
   name: string | null
   phone: string | null
   bio: string | null
+  profile_image_url: string | null // 프로필 이미지 URL
   role: 'user' | 'admin'
   rank: string
   points: number

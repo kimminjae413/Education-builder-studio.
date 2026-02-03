@@ -1,9 +1,10 @@
 // src/components/profile/ProfileEditForm.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Pencil, Save, X } from 'lucide-react'
+import { Pencil, Save, X, Camera, Trash2, Loader2 } from 'lucide-react'
+import Image from 'next/image'
 
 interface ProfileEditFormProps {
   profile: {
@@ -11,18 +12,98 @@ interface ProfileEditFormProps {
     name: string | null
     phone: string | null
     bio: string | null
+    profile_image_url?: string | null
   }
 }
 
 export function ProfileEditForm({ profile }: ProfileEditFormProps) {
   const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [imageLoading, setImageLoading] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(profile.profile_image_url || null)
   const [formData, setFormData] = useState({
     name: profile.name || '',
     phone: profile.phone || '',
     bio: profile.bio || '',
   })
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // 파일 타입 검증
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      alert('JPG, PNG, GIF, WebP 형식의 이미지만 업로드 가능합니다')
+      return
+    }
+
+    // 파일 크기 검증 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('파일 크기는 5MB 이하여야 합니다')
+      return
+    }
+
+    setImageLoading(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const response = await fetch('/api/profile/upload-image', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || '업로드 실패')
+      }
+
+      const data = await response.json()
+      setPreviewUrl(data.imageUrl)
+      alert('프로필 사진이 업로드되었습니다!')
+      router.refresh()
+    } catch (error) {
+      console.error('Image upload error:', error)
+      alert(error instanceof Error ? error.message : '이미지 업로드에 실패했습니다')
+    } finally {
+      setImageLoading(false)
+      // 파일 input 초기화
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleImageDelete = async () => {
+    if (!previewUrl) return
+
+    if (!confirm('프로필 사진을 삭제하시겠습니까?')) return
+
+    setImageLoading(true)
+
+    try {
+      const response = await fetch('/api/profile/upload-image', {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('삭제 실패')
+      }
+
+      setPreviewUrl(null)
+      alert('프로필 사진이 삭제되었습니다')
+      router.refresh()
+    } catch (error) {
+      console.error('Image delete error:', error)
+      alert('이미지 삭제에 실패했습니다')
+    } finally {
+      setImageLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -124,6 +205,69 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
+        {/* 프로필 사진 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            프로필 사진
+          </label>
+          <div className="flex items-center gap-4">
+            {/* 미리보기 */}
+            <div className="relative h-20 w-20 rounded-full overflow-hidden bg-gradient-to-br from-cobalt-400 to-cobalt-600 flex items-center justify-center text-white flex-shrink-0">
+              {previewUrl ? (
+                <Image
+                  src={previewUrl}
+                  alt="프로필 사진"
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <span className="text-3xl font-bold">
+                  {formData.name?.[0]?.toUpperCase() || 'U'}
+                </span>
+              )}
+              {imageLoading && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 text-white animate-spin" />
+                </div>
+              )}
+            </div>
+
+            {/* 버튼들 */}
+            <div className="flex flex-col gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={imageLoading}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-cobalt-600 hover:bg-cobalt-50 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <Camera className="h-4 w-4" />
+                {previewUrl ? '사진 변경' : '사진 업로드'}
+              </button>
+              {previewUrl && (
+                <button
+                  type="button"
+                  onClick={handleImageDelete}
+                  disabled={imageLoading}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  사진 삭제
+                </button>
+              )}
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            JPG, PNG, GIF, WebP 형식 / 최대 5MB
+          </p>
+        </div>
+
         {/* 이름 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
