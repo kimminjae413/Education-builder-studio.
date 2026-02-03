@@ -66,10 +66,7 @@ export async function POST(request: NextRequest) {
     const result = await processForRAG(materialId, options)
 
     if (result.success) {
-      return NextResponse.json({
-        success: true,
-        ...result,
-      })
+      return NextResponse.json(result)
     } else {
       return NextResponse.json(
         { success: false, error: result.error },
