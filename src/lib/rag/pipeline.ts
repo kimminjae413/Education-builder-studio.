@@ -78,7 +78,9 @@ export async function processForRAG(
 
     // 3. 텍스트 추출
     console.log('📖 텍스트 추출 중...')
-    const parsed = await parseFile(fileBuffer, material.file_type)
+    // Buffer를 ArrayBuffer로 변환
+    const arrayBuffer = fileBuffer.buffer.slice(fileBuffer.byteOffset, fileBuffer.byteOffset + fileBuffer.byteLength)
+    const parsed = await parseFile(arrayBuffer, material.file_type)
     const text = parsed.text
 
     if (!text || text.trim().length === 0) {
