@@ -5,20 +5,19 @@ import { initializeApp, getApps, FirebaseApp } from 'firebase/app'
 import { getAuth, Auth } from 'firebase/auth'
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
 }
 
-if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
-  console.error('Firebase configuration is missing. Please set NEXT_PUBLIC_FIREBASE_* environment variables.')
-}
-
-let app: FirebaseApp
-let auth: Auth
+let app: FirebaseApp | null = null
+let auth: Auth | null = null
 
 export function getFirebaseApp(): FirebaseApp {
   if (!app) {
+    if (!firebaseConfig.apiKey) {
+      throw new Error('Firebase configuration is missing. Please set NEXT_PUBLIC_FIREBASE_* environment variables.')
+    }
     if (getApps().length === 0) {
       app = initializeApp(firebaseConfig)
     } else {
@@ -35,5 +34,6 @@ export function getFirebaseAuth(): Auth {
   return auth
 }
 
-// 편의를 위한 export
-export { app, auth }
+// 편의를 위한 getter
+export function getApp() { return app }
+export function getAuthInstance() { return auth }
