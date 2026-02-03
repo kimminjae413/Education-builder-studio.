@@ -13,6 +13,7 @@
     "@google/generative-ai": "^0.21.0",
     "@studio-freight/lenis": "^1.0.42",
     "clsx": "^2.1.1",
+    "dotenv": "^17.2.3",
     "firebase": "^10.8.0",
     "firebase-admin": "^12.0.0",
     "gsap": "^3.13.0",
