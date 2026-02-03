@@ -15,7 +15,8 @@ export interface HWPParseResult {
 export async function parseHWP(buffer: Buffer): Promise<HWPParseResult> {
   try {
     // hwp.js는 동적 import 필요 (ESM 모듈)
-    const HWP = await import('hwp.js')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const HWP = await import('hwp.js') as any
 
     // HWP 파일 파싱
     const hwpDocument = await HWP.default.parse(buffer)
@@ -23,32 +24,24 @@ export async function parseHWP(buffer: Buffer): Promise<HWPParseResult> {
     // 텍스트 추출
     let text = ''
 
-    if (hwpDocument && hwpDocument.sections) {
-      for (const section of hwpDocument.sections) {
-        if (section.paragraphs) {
-          for (const paragraph of section.paragraphs) {
-            if (paragraph.texts) {
-              for (const textItem of paragraph.texts) {
-                if (typeof textItem === 'string') {
-                  text += textItem
-                } else if (textItem && textItem.text) {
-                  text += textItem.text
-                }
-              }
-              text += '\n'
-            }
-          }
-        }
+    // hwp.js의 구조에 맞게 텍스트 추출 시도
+    if (hwpDocument) {
+      // body.text가 있는 경우
+      if (hwpDocument.body?.text) {
+        text = hwpDocument.body.text
+      }
+      // sections가 있는 경우 재귀적으로 텍스트 추출
+      else if (hwpDocument.sections) {
+        text = extractTextFromObject(hwpDocument.sections)
+      }
+      // 전체 객체에서 텍스트 추출 시도
+      else {
+        text = extractTextFromObject(hwpDocument)
       }
     }
 
-    // 대체 방법: body.text가 있는 경우
-    if (!text.trim() && hwpDocument?.body?.text) {
-      text = hwpDocument.body.text
-    }
-
     // 단어 수 계산
-    const wordCount = text.split(/\s+/).filter(w => w.length > 0).length
+    const wordCount = text.split(/\s+/).filter((w: string) => w.length > 0).length
 
     return {
       text: text.trim(),
@@ -66,4 +59,41 @@ export async function parseHWP(buffer: Buffer): Promise<HWPParseResult> {
 
     throw new Error(`HWP 파싱 실패: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
+}
+
+/**
+ * 객체에서 재귀적으로 텍스트 추출
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractTextFromObject(obj: any): string {
+  if (!obj) return ''
+
+  if (typeof obj === 'string') return obj
+
+  if (Array.isArray(obj)) {
+    return obj.map(extractTextFromObject).join(' ')
+  }
+
+  if (typeof obj === 'object') {
+    let text = ''
+
+    // 일반적인 텍스트 속성들 확인
+    if (obj.text) text += obj.text + ' '
+    if (obj.content) text += extractTextFromObject(obj.content) + ' '
+    if (obj.value) text += obj.value + ' '
+
+    // 나머지 속성들 순회
+    for (const key of Object.keys(obj)) {
+      if (!['text', 'content', 'value'].includes(key)) {
+        const val = obj[key]
+        if (typeof val === 'object') {
+          text += extractTextFromObject(val) + ' '
+        }
+      }
+    }
+
+    return text
+  }
+
+  return ''
 }
