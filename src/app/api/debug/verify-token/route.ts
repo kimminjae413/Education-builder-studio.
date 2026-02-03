@@ -36,14 +36,46 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET for simple test
+// GET for simple test and key format check
 export async function GET() {
-  const envCheck = {
-    hasServiceAccountKey: !!process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_KEY,
-    keyLength: process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_KEY?.length || 0,
-    hasProjectId: !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  const key = process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_KEY
+  let keyInfo: any = { hasKey: false }
+
+  if (key) {
+    keyInfo.hasKey = true
+    keyInfo.keyLength = key.length
+
+    try {
+      const parsed = JSON.parse(key)
+      keyInfo.jsonValid = true
+      keyInfo.hasPrivateKey = !!parsed.private_key
+      keyInfo.projectId = parsed.project_id
+      keyInfo.clientEmail = parsed.client_email
+
+      if (parsed.private_key) {
+        const pk = parsed.private_key
+        keyInfo.pkLength = pk.length
+        keyInfo.pkStartsWith = pk.substring(0, 40)
+        keyInfo.pkEndsWith = pk.substring(pk.length - 40)
+        keyInfo.containsBackslashN = pk.includes('\\n')
+        keyInfo.containsRealNewline = pk.includes('\n')
+        keyInfo.newlineCount = (pk.match(/\n/g) || []).length
+        keyInfo.backslashNCount = (pk.match(/\\n/g) || []).length
+      }
+    } catch (e: any) {
+      keyInfo.jsonValid = false
+      keyInfo.parseError = e.message
+    }
   }
 
-  return NextResponse.json({ status: 'ok', envCheck })
+  return NextResponse.json({
+    status: 'ok',
+    envCheck: {
+      hasServiceAccountKey: !!key,
+      keyLength: key?.length || 0,
+      hasProjectId: !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    },
+    keyInfo,
+  })
 }
