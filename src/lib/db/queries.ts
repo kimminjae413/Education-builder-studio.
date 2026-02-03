@@ -569,3 +569,132 @@ export async function getUserMaterialStats(userId: string): Promise<UserMaterial
     avgRating: parseFloat(row?.avg_rating || '0'),
   }
 }
+
+// ==========================================
+// Document Chunks (RAG용 문서 청크)
+// ==========================================
+
+export interface DocumentChunk {
+  id: string
+  document_id: string
+  chunk_index: number
+  content: string
+  token_count: number
+  embedding: number[] | null
+  metadata: Record<string, unknown>
+  created_at: Date
+  document_title?: string
+  similarity?: number
+}
+
+export async function createChunk(chunk: {
+  document_id: string
+  chunk_index: number
+  content: string
+  token_count: number
+  embedding?: number[]
+  metadata?: Record<string, unknown>
+}): Promise<DocumentChunk> {
+  const embeddingStr = chunk.embedding ? `{${chunk.embedding.join(',')}}` : null
+
+  const result = await query<DocumentChunk>(
+    `INSERT INTO document_chunks (document_id, chunk_index, content, token_count, embedding, metadata)
+     VALUES ($1, $2, $3, $4, $5::double precision[], $6)
+     RETURNING *`,
+    [chunk.document_id, chunk.chunk_index, chunk.content, chunk.token_count, embeddingStr, JSON.stringify(chunk.metadata || {})]
+  )
+  return result.rows[0]
+}
+
+export async function createChunksBatch(chunks: {
+  document_id: string
+  chunk_index: number
+  content: string
+  token_count: number
+  embedding?: number[]
+  metadata?: Record<string, unknown>
+}[]): Promise<number> {
+  if (chunks.length === 0) return 0
+
+  const values: unknown[] = []
+  const placeholders: string[] = []
+
+  chunks.forEach((chunk, i) => {
+    const offset = i * 6
+    placeholders.push(`($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}::double precision[], $${offset + 6})`)
+    values.push(chunk.document_id, chunk.chunk_index, chunk.content, chunk.token_count, chunk.embedding ? `{${chunk.embedding.join(',')}}` : null, JSON.stringify(chunk.metadata || {}))
+  })
+
+  const result = await query(`INSERT INTO document_chunks (document_id, chunk_index, content, token_count, embedding, metadata) VALUES ${placeholders.join(', ')}`, values)
+  return result.rowCount || 0
+}
+
+export async function getChunksByDocumentId(documentId: string): Promise<DocumentChunk[]> {
+  const result = await query<DocumentChunk>('SELECT * FROM document_chunks WHERE document_id = $1 ORDER BY chunk_index', [documentId])
+  return result.rows
+}
+
+export async function deleteChunksByDocumentId(documentId: string): Promise<number> {
+  const result = await query('DELETE FROM document_chunks WHERE document_id = $1', [documentId])
+  return result.rowCount || 0
+}
+
+export async function updateMaterialChunkingStatus(materialId: string, status: string, chunkCount?: number): Promise<void> {
+  if (chunkCount !== undefined) {
+    await query('UPDATE teaching_materials SET chunking_status = $2, chunk_count = $3, updated_at = NOW() WHERE id = $1', [materialId, status, chunkCount])
+  } else {
+    await query('UPDATE teaching_materials SET chunking_status = $2, updated_at = NOW() WHERE id = $1', [materialId, status])
+  }
+}
+
+export async function searchSimilarChunks(queryEmbedding: number[], options: { topK?: number; minScore?: number; documentIds?: string[] } = {}): Promise<DocumentChunk[]> {
+  const { topK = 10, documentIds } = options
+  const embeddingStr = `{${queryEmbedding.join(',')}}`
+
+  // 문서 필터
+  const docFilter = documentIds && documentIds.length > 0 ? `AND dc.document_id = ANY($3::uuid[])` : ''
+
+  const result = await query<DocumentChunk>(
+    `SELECT dc.*, tm.title as document_title,
+      (SELECT SUM(a * b) / (SQRT(SUM(a * a)) * SQRT(SUM(b * b)))
+       FROM unnest(dc.embedding, $1::double precision[]) AS t(a, b)) as similarity
+     FROM document_chunks dc
+     JOIN teaching_materials tm ON dc.document_id = tm.id
+     WHERE dc.embedding IS NOT NULL ${docFilter}
+     ORDER BY similarity DESC NULLS LAST
+     LIMIT $2`,
+    documentIds && documentIds.length > 0 ? [embeddingStr, topK, documentIds] : [embeddingStr, topK]
+  )
+
+  return result.rows
+}
+
+// ==========================================
+// RAG Citations (인용 추적)
+// ==========================================
+
+export interface RAGCitation {
+  id: string
+  course_id: string
+  chunk_id: string
+  document_id: string
+  relevance_score: number
+  cited_in_output: boolean
+  created_at: Date
+}
+
+export async function createCitation(citation: { course_id: string; chunk_id: string; document_id: string; relevance_score: number; cited_in_output?: boolean }): Promise<RAGCitation> {
+  const result = await query<RAGCitation>(
+    `INSERT INTO rag_citations (course_id, chunk_id, document_id, relevance_score, cited_in_output) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    [citation.course_id, citation.chunk_id, citation.document_id, citation.relevance_score, citation.cited_in_output || false]
+  )
+  return result.rows[0]
+}
+
+export async function incrementDocumentReferenceCount(documentId: string): Promise<void> {
+  await query('UPDATE teaching_materials SET reference_count = COALESCE(reference_count, 0) + 1 WHERE id = $1', [documentId])
+}
+
+export async function incrementDocumentCitationCount(documentId: string): Promise<void> {
+  await query('UPDATE teaching_materials SET citation_count = COALESCE(citation_count, 0) + 1 WHERE id = $1', [documentId])
+}
