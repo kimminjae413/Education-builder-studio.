@@ -23,8 +23,9 @@ export default async function DashboardLayout({
       uid: decodedToken.uid,
       email: decodedToken.email,
     }
-  } catch {
-    redirect('/login')
+  } catch (error) {
+    console.error('Token verification failed in layout:', error)
+    redirect('/login?error=token-verify-failed')
   }
 
   // 프로필 정보 가져오기
