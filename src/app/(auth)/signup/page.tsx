@@ -2,28 +2,57 @@
 
 import { SignupForm } from '@/components/auth/SignupForm'
 import Link from 'next/link'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { getFirebaseAuth } from '@/lib/firebase/client'
 import { onAuthStateChanged } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 
+// 쿠키 삭제 함수
+function clearAuthCookie() {
+  document.cookie = 'firebase-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+}
+
 export default function SignupPage() {
   const router = useRouter()
+  const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
     try {
       const auth = getFirebaseAuth()
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (user) {
-          // 이미 로그인됨 → 대시보드로
-          router.push('/dashboard')
+          // Firebase에 로그인되어 있으면 토큰 갱신 후 대시보드로
+          try {
+            const token = await user.getIdToken(true)
+            document.cookie = `firebase-token=${token}; path=/; max-age=3600; SameSite=Lax`
+            router.push('/dashboard')
+          } catch (error) {
+            console.error('Token refresh failed:', error)
+            clearAuthCookie()
+            setIsChecking(false)
+          }
+        } else {
+          // Firebase에 로그인되어 있지 않으면 쿠키도 정리
+          clearAuthCookie()
+          setIsChecking(false)
         }
       })
       return () => unsubscribe()
     } catch (error) {
       console.error('Firebase auth error:', error)
+      clearAuthCookie()
+      setIsChecking(false)
     }
   }, [router])
+
+  // 인증 상태 확인 중일 때 로딩 표시
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cobalt-50 to-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cobalt-600"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-cobalt-50 to-white flex items-center justify-center p-4">
