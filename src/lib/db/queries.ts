@@ -92,7 +92,9 @@ export interface TeachingMaterial {
   learning_objectives: string | null
   status: 'pending' | 'approved' | 'rejected'
   is_seed_data: boolean
-  indexed: boolean // Gemini File Search 인덱싱 여부 (컬럼명은 레거시)
+  indexed: boolean // Gemini File Search 인덱싱 여부
+  chunking_status: string | null // RAG 청킹 상태: pending, processing, completed, failed
+  chunk_count: number | null // 청크 개수
   usage_count: number
   download_count: number
   bookmark_count: number
