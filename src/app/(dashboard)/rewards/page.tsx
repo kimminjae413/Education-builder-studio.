@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { auth } from '@/lib/firebase/client'
+import { getFirebaseAuth } from '@/lib/firebase/client'
 import { onAuthStateChanged, User } from 'firebase/auth'
 
 interface Contributor {
@@ -31,6 +31,7 @@ export default function RewardsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const auth = getFirebaseAuth()
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser)
       if (currentUser) {

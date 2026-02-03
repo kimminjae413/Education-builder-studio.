@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { auth } from '@/lib/firebase/client'
+import { getFirebaseAuth } from '@/lib/firebase/client'
 import { onAuthStateChanged, User } from 'firebase/auth'
 
 interface Material {
@@ -35,6 +35,7 @@ export default function LibraryPage() {
   const [sortBy, setSortBy] = useState('newest')
 
   useEffect(() => {
+    const auth = getFirebaseAuth()
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user)
     })
