@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminAuth } from '@/lib/firebase/admin'
 import { query } from '@/lib/db/client'
+import { getAuthenticatedUser } from '@/lib/firebase/server-auth'
 
 export async function GET(request: NextRequest) {
   const results: Record<string, unknown> = {}
@@ -24,9 +25,28 @@ export async function GET(request: NextRequest) {
     results.dbError = e.message
   }
 
-  // 환경 변수 확인
-  results.hasDatabaseUrl = !!process.env.DATABASE_URL
-  results.databaseUrlStart = process.env.DATABASE_URL?.substring(0, 30) || 'not set'
+  // 테이블 존재 확인
+  try {
+    const tables = await query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+    results.tables = tables.rows.map((r: any) => r.table_name)
+  } catch (e: any) {
+    results.tablesError = e.message
+  }
+
+  // 인증된 사용자가 있으면 프로필 조회 테스트
+  try {
+    const user = await getAuthenticatedUser(request)
+    if (user) {
+      results.authUser = user.uid
+      const profile = await query('SELECT * FROM profiles WHERE id = $1', [user.uid])
+      results.profileFound = profile.rows.length > 0
+      if (profile.rows.length > 0) {
+        results.profile = profile.rows[0]
+      }
+    }
+  } catch (e: any) {
+    results.profileError = e.message
+  }
 
   return NextResponse.json(results)
 }
