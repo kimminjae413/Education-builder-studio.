@@ -169,6 +169,149 @@ export async function parseDOC(buffer: ArrayBuffer): Promise<ParsedContent> {
 }
 
 /**
+ * HWP 파일에서 텍스트 추출
+ * hwp.js 라이브러리 사용 (한글 문서 형식)
+ */
+export async function parseHWP(buffer: ArrayBuffer): Promise<ParsedContent> {
+  try {
+    const { parse } = await import('hwp.js')
+
+    // HWP 문서 파싱 (Uint8Array로 변환)
+    const uint8Array = new Uint8Array(buffer)
+    const hwpDoc = parse(uint8Array as any)
+
+    // 텍스트 추출
+    let allText = ''
+    let imageCount = 0
+    let pageCount = 0
+
+    // 섹션별로 텍스트 추출
+    if (hwpDoc.sections) {
+      pageCount = hwpDoc.sections.length
+
+      for (const section of hwpDoc.sections) {
+        if (section.content) {
+          // 각 컨텐츠 요소에서 텍스트 추출
+          allText += extractTextFromHWPContent(section.content)
+        }
+      }
+    }
+
+    // 이미지 개수 세기 (binData 확인)
+    if (hwpDoc.info?.binData) {
+      imageCount = hwpDoc.info.binData.length
+    }
+
+    const hasTable = detectTable(allText)
+
+    return {
+      text: allText.trim(),
+      imageCount: imageCount,
+      hasTable: hasTable,
+      pageCount: pageCount,
+      summary: createSummary(allText),
+      metadata: {
+        hasImages: imageCount > 0,
+        hasTables: hasTable,
+        estimatedReadingTime: Math.ceil(allText.length / 1000)
+      }
+    }
+  } catch (error) {
+    console.error('HWP parsing error:', error)
+    throw new Error('HWP 파일을 읽을 수 없습니다. 파일이 손상되었거나 지원하지 않는 버전일 수 있습니다.')
+  }
+}
+
+/**
+ * HWP 컨텐츠에서 재귀적으로 텍스트 추출
+ */
+function extractTextFromHWPContent(content: any[]): string {
+  let text = ''
+
+  for (const item of content) {
+    if (typeof item === 'string') {
+      text += item
+    } else if (item && typeof item === 'object') {
+      // Paragraph 타입
+      if (item.type === 'Paragraph' && item.content) {
+        text += extractTextFromHWPContent(item.content) + '\n'
+      }
+      // Text 타입
+      else if (item.type === 'Text' && item.content) {
+        text += item.content
+      }
+      // Char 타입 (한글 문자)
+      else if (item.type === 'Char' && item.content) {
+        text += item.content
+      }
+      // 다른 컨텐츠가 있는 경우 재귀
+      else if (item.content && Array.isArray(item.content)) {
+        text += extractTextFromHWPContent(item.content)
+      }
+    }
+  }
+
+  return text
+}
+
+/**
+ * XLSX 파일에서 텍스트 추출
+ * SheetJS(xlsx) 라이브러리 사용
+ */
+export async function parseXLSX(buffer: ArrayBuffer): Promise<ParsedContent> {
+  try {
+    const XLSX = await import('xlsx')
+
+    // 워크북 로드
+    const workbook = XLSX.read(buffer, { type: 'array' })
+
+    let allText = ''
+    const sheetCount = workbook.SheetNames.length
+    let hasTable = true // 스프레드시트는 기본적으로 표 형식
+
+    // 각 시트에서 텍스트 추출
+    for (const sheetName of workbook.SheetNames) {
+      const sheet = workbook.Sheets[sheetName]
+
+      // 시트 제목 추가
+      allText += `[시트: ${sheetName}]\n`
+
+      // 시트를 텍스트로 변환
+      const sheetText = XLSX.utils.sheet_to_txt(sheet, {
+        blankrows: false,
+        skipHidden: true
+      })
+      allText += sheetText + '\n\n'
+    }
+
+    return {
+      text: allText.trim(),
+      imageCount: 0, // xlsx 라이브러리는 이미지 추출 제한적
+      hasTable: hasTable,
+      pageCount: sheetCount,
+      summary: createSummary(allText),
+      metadata: {
+        hasImages: false,
+        hasTables: hasTable,
+        estimatedReadingTime: Math.ceil(allText.length / 1000)
+      }
+    }
+  } catch (error) {
+    console.error('XLSX parsing error:', error)
+    throw new Error('XLSX 파일을 읽을 수 없습니다. 파일이 손상되었거나 암호화되어 있을 수 있습니다.')
+  }
+}
+
+/**
+ * XLS (이전 버전) 파일에서 텍스트 추출
+ * xlsx 라이브러리는 xls도 지원
+ */
+export async function parseXLS(buffer: ArrayBuffer): Promise<ParsedContent> {
+  // xlsx 라이브러리는 xls 형식도 지원
+  return parseXLSX(buffer)
+}
+
+/**
  * 메인 파서 함수 - 파일 타입에 따라 적절한 파서 선택
  */
 export async function parseFile(
@@ -176,7 +319,7 @@ export async function parseFile(
   fileType: string
 ): Promise<ParsedContent> {
   const normalizedType = fileType.toLowerCase()
-  
+
   if (normalizedType.includes('pdf')) {
     return parsePDF(buffer)
   } else if (normalizedType.includes('wordprocessingml') || normalizedType.includes('docx')) {
@@ -187,6 +330,12 @@ export async function parseFile(
     return parseDOC(buffer)
   } else if (normalizedType.includes('ms-powerpoint')) {
     return parsePPT(buffer)
+  } else if (normalizedType.includes('haansofthwp') || normalizedType.includes('x-hwp') || normalizedType.includes('hwp')) {
+    return parseHWP(buffer)
+  } else if (normalizedType.includes('spreadsheetml') || normalizedType.includes('xlsx')) {
+    return parseXLSX(buffer)
+  } else if (normalizedType.includes('ms-excel') || normalizedType.includes('xls')) {
+    return parseXLS(buffer)
   } else {
     throw new Error(`지원하지 않는 파일 형식입니다: ${fileType}`)
   }
@@ -261,12 +410,15 @@ function createSummary(text: string, maxLength: number = 3000): string {
 /**
  * 파일 타입 확인 (MIME type)
  */
-export function getFileType(mimeType: string): 'pdf' | 'docx' | 'pptx' | 'doc' | 'ppt' | 'unknown' {
+export function getFileType(mimeType: string): 'pdf' | 'docx' | 'pptx' | 'doc' | 'ppt' | 'hwp' | 'xlsx' | 'xls' | 'unknown' {
   if (mimeType.includes('pdf')) return 'pdf'
   if (mimeType.includes('wordprocessingml') || mimeType.includes('docx')) return 'docx'
   if (mimeType.includes('presentationml') || mimeType.includes('pptx')) return 'pptx'
   if (mimeType.includes('msword')) return 'doc'
   if (mimeType.includes('ms-powerpoint')) return 'ppt'
+  if (mimeType.includes('haansofthwp') || mimeType.includes('x-hwp') || mimeType.includes('hwp')) return 'hwp'
+  if (mimeType.includes('spreadsheetml') || mimeType.includes('xlsx')) return 'xlsx'
+  if (mimeType.includes('ms-excel') || mimeType.includes('xls')) return 'xls'
   return 'unknown'
 }
 

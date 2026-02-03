@@ -121,8 +121,8 @@
 | PDF | .pdf | `pdf-parse` | ✅ 구현됨 |
 | Word | .docx | `mammoth` | ✅ 구현됨 |
 | PowerPoint | .pptx | `jszip` + `xml2js` | ✅ 구현됨 |
-| **한글** | .hwp | `hwp.js` 또는 `hwpx-parser` | ❌ **추가 필요** |
-| **엑셀** | .xlsx | `xlsx` (SheetJS) | ❌ **추가 필요** |
+| **한글** | .hwp | `hwp.js` | ✅ 구현됨 |
+| **엑셀** | .xlsx, .xls | `xlsx` (SheetJS) | ✅ 구현됨 |
 
 ---
 
@@ -146,8 +146,8 @@
 | 기능 | 우선순위 | 설명 |
 |------|---------|------|
 | ~~Google Cloud Storage 연동~~ | ~~⭐⭐⭐~~ | ✅ 완료 |
-| HWP 파서 | ⭐⭐⭐ | 한글 문서 지원 |
-| XLSX 파서 | ⭐⭐⭐ | 엑셀 문서 지원 |
+| ~~HWP 파서~~ | ~~⭐⭐⭐~~ | ✅ 완료 (hwp.js) |
+| ~~XLSX 파서~~ | ~~⭐⭐⭐~~ | ✅ 완료 (SheetJS) |
 | 문서 청킹 시스템 | ⭐⭐⭐ | 긴 문서를 의미 단위로 분할 |
 | 청크별 임베딩 저장 | ⭐⭐⭐ | document_chunks 테이블 |
 | RAG 검색 파이프라인 | ⭐⭐⭐ | 유사 청크 검색 (Top-K) |
@@ -659,10 +659,10 @@ src/
 ## 개발 우선순위 체크리스트
 
 ### Week 1: RAG 인프라
-- [ ] Google Cloud Storage 연동
-- [ ] HWP 파서 구현
-- [ ] XLSX 파서 구현
-- [ ] 통합 파일 파서 완성
+- [x] Google Cloud Storage 연동 ✅ 2026-02-02
+- [x] HWP 파서 구현 ✅ 2026-02-03 (hwp.js)
+- [x] XLSX 파서 구현 ✅ 2026-02-03 (SheetJS)
+- [x] 통합 파일 파서 완성 ✅ 2026-02-03
 
 ### Week 2: 청킹 & 임베딩
 - [ ] 문서 청킹 시스템 구현
@@ -699,6 +699,13 @@ src/
 - 특허 명세서 & 사업계획서 분석
 - RAG 기반 시스템으로 개발 방향 전환
 - CLAUDE.md 전면 재작성 (RAG 아키텍처)
+
+### 2026-02-03 HWP/XLSX 파서 구현
+- HWP 파서 추가 (`hwp.js` 라이브러리)
+- XLSX 파서 추가 (`xlsx` SheetJS 라이브러리)
+- XLS (구버전 엑셀) 지원 추가
+- 업로드 API에 HWP/XLSX 파일 타입 추가
+- 파일 확장자 기반 폴백 타입 감지 추가
 
 ### 2026-02-02 ⭐ Supabase → Google Cloud 마이그레이션 완료
 **변경 사항:**

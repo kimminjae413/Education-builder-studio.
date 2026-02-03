@@ -39,11 +39,22 @@ export async function POST(request: NextRequest) {
       'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      // HWP (한글 문서)
+      'application/haansofthwp',
+      'application/x-hwp',
+      'application/hwp',
+      // Excel
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     ]
 
-    if (!allowedTypes.includes(file.type)) {
+    // 파일 확장자로도 검증 (MIME type이 정확하지 않을 수 있음)
+    const extension = file.name.split('.').pop()?.toLowerCase()
+    const allowedExtensions = ['pdf', 'ppt', 'pptx', 'doc', 'docx', 'hwp', 'xls', 'xlsx']
+
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(extension || '')) {
       return NextResponse.json(
-        { error: 'Unsupported file type' },
+        { error: `Unsupported file type: ${file.type} (${extension})` },
         { status: 400 }
       )
     }
@@ -81,7 +92,9 @@ export async function POST(request: NextRequest) {
     let parsedContent
     try {
       const fileBuffer = await file.arrayBuffer()
-      parsedContent = await parseFile(fileBuffer, file.type)
+      // MIME type이 부정확할 수 있으므로 확장자도 함께 전달
+      const fileTypeForParsing = file.type || extension || ''
+      parsedContent = await parseFile(fileBuffer, fileTypeForParsing)
 
       console.log('✅ 파일 파싱 완료:', {
         textLength: parsedContent.text.length,
