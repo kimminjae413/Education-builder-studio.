@@ -2,7 +2,7 @@
 
 import { LoginForm } from '@/components/auth/LoginForm'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { getFirebaseAuth } from '@/lib/firebase/client'
 import { onAuthStateChanged } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
@@ -14,47 +14,41 @@ function clearAuthCookie() {
 
 export default function LoginPage() {
   const router = useRouter()
-  const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
-    // 페이지 로드 시 먼저 쿠키 정리 (리디렉션 루프 방지)
-    // Firebase Auth 상태와 쿠키 상태 동기화
+    // 페이지 로드 시 쿠키 정리 (리디렉션 루프 방지)
+    clearAuthCookie()
+
+    let unsubscribe: (() => void) | undefined
+
     try {
       const auth = getFirebaseAuth()
-      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      // 동기 콜백 사용 - async 콜백은 문제를 일으킬 수 있음
+      unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user) {
           // Firebase에 로그인되어 있으면 토큰 갱신 후 대시보드로
-          try {
-            const token = await user.getIdToken(true)
-            document.cookie = `firebase-token=${token}; path=/; max-age=3600; SameSite=Lax`
-            router.push('/dashboard')
-          } catch (error) {
-            console.error('Token refresh failed:', error)
-            clearAuthCookie()
-            setIsChecking(false)
-          }
-        } else {
-          // Firebase에 로그인되어 있지 않으면 쿠키도 정리
-          clearAuthCookie()
-          setIsChecking(false)
+          user.getIdToken(true)
+            .then((token) => {
+              document.cookie = `firebase-token=${token}; path=/; max-age=3600; SameSite=Lax`
+              router.push('/dashboard')
+            })
+            .catch((error) => {
+              console.error('Token refresh failed:', error)
+              clearAuthCookie()
+            })
         }
+        // user가 null이면 로그인 폼 표시 (이미 표시 중)
       })
-      return () => unsubscribe()
     } catch (error) {
       console.error('Firebase auth error:', error)
-      clearAuthCookie()
-      setIsChecking(false)
+    }
+
+    return () => {
+      if (unsubscribe) unsubscribe()
     }
   }, [router])
 
-  // 인증 상태 확인 중일 때 로딩 표시
-  if (isChecking) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-cobalt-50 to-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cobalt-600"></div>
-      </div>
-    )
-  }
+  // 로그인 폼 즉시 표시 (로딩 상태 제거)
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-cobalt-50 to-white flex items-center justify-center p-4">
