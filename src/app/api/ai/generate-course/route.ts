@@ -3,7 +3,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { getAuthenticatedUser } from '@/lib/firebase/server-auth'
-import { getProfile, createCourse, incrementAIUsage, getApprovedSeedMaterials } from '@/lib/db/queries'
+import { getProfile, createCourse, incrementAIUsage, createCitation, incrementDocumentReferenceCount } from '@/lib/db/queries'
+import { buildRAGContext, RAGContext } from '@/lib/rag/retriever'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
@@ -11,56 +12,40 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 export const maxDuration = 30
 export const dynamic = 'force-dynamic'
 
-// DB에서 관련 자료 검색 (키워드 기반)
-async function findRelatedMaterials(
-  courseData: { title: string; overview: string; sessions?: { title: string }[] },
+/**
+ * RAG 기반 관련 자료 검색
+ * 벡터 유사도 검색을 사용하여 관련 자료 찾기
+ */
+async function findRelatedMaterialsWithRAG(
   targetAudience: string,
   subject: string,
-  tools: string[]
-) {
+  tools: string[],
+  goals: string[]
+): Promise<{ context: RAGContext | null; query: string }> {
   try {
-    console.log('🔍 관련 자료 검색 시작...')
+    // 검색 쿼리 구성
+    const query = [
+      `대상: ${targetAudience}`,
+      `주제: ${subject}`,
+      `도구: ${tools.join(', ')}`,
+      `목표: ${goals.join(', ')}`,
+    ].join('\n')
 
-    // DB에서 시드 데이터 조회
-    const seedMaterials = await getApprovedSeedMaterials(10)
+    console.log('🔍 RAG 검색 쿼리:', query.substring(0, 100) + '...')
 
-    // 키워드 매칭으로 점수 계산
-    const keywords = [
-      ...subject.toLowerCase().split(' '),
-      ...targetAudience.toLowerCase().split(' '),
-      ...tools.map(t => t.toLowerCase()),
-    ]
-
-    const scored = seedMaterials.map(m => {
-      let score = 0
-      const titleLower = m.title.toLowerCase()
-      const descLower = (m.description || '').toLowerCase()
-
-      keywords.forEach(kw => {
-        if (titleLower.includes(kw)) score += 2
-        if (descLower.includes(kw)) score += 1
-      })
-
-      return { ...m, score }
+    // RAG 컨텍스트 구성
+    const context = await buildRAGContext(query, {
+      topK: 10,
+      minScore: 0.5,
+      maxTokens: 4000,
     })
 
-    // 점수순 정렬 후 상위 5개
-    const topMaterials = scored
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 5)
+    console.log(`✅ RAG 검색 완료: ${context.results.length}개 청크, ${context.sources.length}개 문서`)
 
-    console.log(`✅ 관련 자료 ${topMaterials.length}개 발견`)
-
-    return topMaterials.map((m) => ({
-      id: m.id,
-      title: m.title,
-      content: m.description || '',
-      uri: m.file_url,
-      similarity: m.score,
-    }))
+    return { context, query }
   } catch (error) {
-    console.error('❌ 자료 검색 실패:', error)
-    return []
+    console.error('❌ RAG 검색 실패:', error)
+    return { context: null, query: '' }
   }
 }
 
@@ -112,16 +97,28 @@ export async function POST(request: NextRequest) {
       projectRatio,
     } = body
 
-    // 시드 데이터 조회 (RAG 컨텍스트용)
-    const seedMaterials = await getApprovedSeedMaterials(3)
+    // 모든 목표 합치기
+    const allGoals = [...(knowledgeGoals || []), ...(skillGoals || []), ...(attitudeGoals || [])]
 
-    // 시드 데이터 컨텍스트 생성
-    let seedContext = ''
-    if (seedMaterials.length > 0) {
-      seedContext = '\n\n참고 자료:\n'
-      seedMaterials.forEach((m, i) => {
-        seedContext += `${i + 1}. ${m.title}\n`
-      })
+    // RAG 기반 관련 자료 검색
+    const { context: ragContext } = await findRelatedMaterialsWithRAG(
+      targetAudience,
+      subject,
+      tools || [],
+      allGoals
+    )
+
+    // RAG 컨텍스트 프롬프트 구성
+    let ragPromptSection = ''
+    if (ragContext && ragContext.results.length > 0) {
+      ragPromptSection = `
+
+[베테랑 강사들의 검증된 참고 자료]
+다음은 비슷한 교육을 진행한 경험 많은 강사들의 자료입니다. 이 자료들을 참고하여 교육과정을 설계해주세요:
+
+${ragContext.contextText}
+
+위 참고 자료를 바탕으로 실제 교육 현장에서 검증된 내용을 반영해주세요.`
     }
 
     // Gemini 프롬프트
@@ -129,16 +126,16 @@ export async function POST(request: NextRequest) {
 
 대상: ${targetAudience}
 주제: ${subject}
-도구: ${tools.join(', ')}
+도구: ${(tools || []).join(', ')}
 시간: ${duration}분 × ${sessionCount}차시
 
 목표:
-- 지식: ${knowledgeGoals.join(', ')}
-- 기능: ${skillGoals.join(', ')}
-- 태도: ${attitudeGoals.join(', ')}
+- 지식: ${(knowledgeGoals || []).join(', ')}
+- 기능: ${(skillGoals || []).join(', ')}
+- 태도: ${(attitudeGoals || []).join(', ')}
 
 방법: 강의 ${lectureRatio}%, 실습 ${practiceRatio}%, 프로젝트 ${projectRatio}%
-${seedContext}
+${ragPromptSection}
 
 JSON 형식으로 출력:
 {
@@ -199,13 +196,12 @@ JSON 형식으로 출력:
       )
     }
 
-    // 관련 자료 검색 (Gemini File Search API)
-    const recommendedMaterials = await findRelatedMaterials(
-      courseData,
-      targetAudience,
-      subject,
-      tools
-    )
+    // 추천 자료 목록 구성
+    const recommendedMaterials = ragContext?.sources.map(source => ({
+      id: source.documentId,
+      title: source.documentTitle,
+      chunkCount: source.chunkCount,
+    })) || []
 
     // DB에 저장
     const course = await createCourse({
@@ -213,12 +209,12 @@ JSON 형식으로 출력:
       title: courseData.title,
       target_audience: targetAudience,
       subject: subject,
-      tools: tools,
+      tools: tools || [],
       duration: duration,
       session_count: sessionCount,
-      knowledge_goals: knowledgeGoals,
-      skill_goals: skillGoals,
-      attitude_goals: attitudeGoals,
+      knowledge_goals: knowledgeGoals || [],
+      skill_goals: skillGoals || [],
+      attitude_goals: attitudeGoals || [],
       lecture_ratio: lectureRatio,
       practice_ratio: practiceRatio,
       project_ratio: projectRatio,
@@ -233,6 +229,32 @@ JSON 형식으로 출력:
       recommended_materials: recommendedMaterials.map((m) => m.id),
     })
 
+    // RAG 인용 기록 및 참조 카운트 증가 (리워드 시스템용)
+    if (ragContext && ragContext.results.length > 0) {
+      const processedDocuments = new Set<string>()
+
+      for (const ragResult of ragContext.results) {
+        try {
+          // 인용 기록 저장
+          await createCitation({
+            course_id: course.id,
+            chunk_id: ragResult.chunkId,
+            document_id: ragResult.documentId,
+            relevance_score: ragResult.score,
+            cited_in_output: true,
+          })
+
+          // 문서별로 한 번만 참조 카운트 증가
+          if (!processedDocuments.has(ragResult.documentId)) {
+            await incrementDocumentReferenceCount(ragResult.documentId)
+            processedDocuments.add(ragResult.documentId)
+          }
+        } catch (citationError) {
+          console.error('인용 기록 저장 실패:', citationError)
+        }
+      }
+    }
+
     // AI 사용 횟수 증가
     await incrementAIUsage(user.uid)
 
@@ -241,6 +263,11 @@ JSON 형식으로 출력:
       course,
       generationTime,
       recommendedMaterials,
+      ragStats: ragContext ? {
+        chunksUsed: ragContext.results.length,
+        documentsReferenced: ragContext.sources.length,
+        totalTokens: ragContext.totalTokens,
+      } : null,
     })
   } catch (error: unknown) {
     console.error('AI generation error:', error)

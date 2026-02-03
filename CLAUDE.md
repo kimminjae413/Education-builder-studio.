@@ -141,20 +141,29 @@
 | 기본 벡터 검색 | 단일 임베딩 기반 추천 |
 | Gemini RAG | Gemini File API 기반 RAG 준비 |
 
-### ❌ 구현 필요 (RAG 시스템)
+### ✅ RAG 시스템 구현 완료
+
+| 기능 | 상태 | 설명 |
+|------|------|------|
+| Google Cloud Storage 연동 | ✅ 완료 | 파일 업로드/다운로드 |
+| HWP 파서 | ✅ 완료 | hwp.js 라이브러리 |
+| XLSX 파서 | ✅ 완료 | SheetJS 라이브러리 |
+| 문서 청킹 시스템 | ✅ 완료 | `src/lib/rag/chunker.ts` |
+| 청크별 임베딩 저장 | ✅ 완료 | `src/lib/rag/embedder.ts` |
+| RAG 검색 파이프라인 | ✅ 완료 | `src/lib/rag/retriever.ts` |
+| RAG 처리 파이프라인 | ✅ 완료 | `src/lib/rag/pipeline.ts` |
+| RAG 기반 AI 생성 | ✅ 완료 | `generate-course` API 통합 |
+| 복수 설계안 생성 | ✅ 완료 | `src/lib/ai/multi-generator.ts` |
+| 제약 조건 도출부 | ✅ 완료 | `src/lib/ai/constraint-extractor.ts` |
+| 리워드 분배 시스템 | ✅ 완료 | `src/lib/reward/reward-system.ts` |
+
+### 🔄 남은 작업
 
 | 기능 | 우선순위 | 설명 |
 |------|---------|------|
-| ~~Google Cloud Storage 연동~~ | ~~⭐⭐⭐~~ | ✅ 완료 |
-| ~~HWP 파서~~ | ~~⭐⭐⭐~~ | ✅ 완료 (hwp.js) |
-| ~~XLSX 파서~~ | ~~⭐⭐⭐~~ | ✅ 완료 (SheetJS) |
-| 문서 청킹 시스템 | ⭐⭐⭐ | 긴 문서를 의미 단위로 분할 |
-| 청크별 임베딩 저장 | ⭐⭐⭐ | document_chunks 테이블 |
-| RAG 검색 파이프라인 | ⭐⭐⭐ | 유사 청크 검색 (Top-K) |
-| RAG 기반 생성 | ⭐⭐⭐ | 검색 컨텍스트 + LLM |
-| 복수 설계안 생성 | ⭐⭐ | 3개 이상 설계안 |
-| 제약 조건 도출부 | ⭐⭐ | 입력에서 제약조건 추출 |
-| 리워드 분배 시스템 | ⭐ | 상위 10명 보상 |
+| 시드 데이터 RAG 처리 | ⭐⭐⭐ | 기존 시드 데이터 청킹/임베딩 처리 (관리자 → `/api/rag/process` 호출) |
+| 마켓플레이스 UI | ⭐⭐ | 콘텐츠 판매 페이지 구현 |
+| PG 결제 연동 | ⭐ | 마켓플레이스 실결제 |
 
 ---
 
@@ -773,6 +782,30 @@ src/
 - 특허 명세서 & 사업계획서 분석
 - RAG 기반 시스템으로 개발 방향 전환
 - CLAUDE.md 전면 재작성 (RAG 아키텍처)
+
+### 2026-02-03 ⭐ RAG 파이프라인 연결 완료
+**RAG 파이프라인 모듈 연결:**
+- `src/lib/rag/pipeline.ts` - RAG 처리 파이프라인 (업로드 → 파싱 → 청킹 → 임베딩 → DB)
+- `src/app/api/rag/process/route.ts` - RAG 처리 API 엔드포인트
+- `generate-course` API에 실제 RAG 벡터 검색 통합
+
+**신규 파서 모듈:**
+- `src/lib/parsers/index.ts` - 통합 파서
+- `src/lib/parsers/pdf-parser.ts` - PDF 파싱
+- `src/lib/parsers/docx-parser.ts` - DOCX 파싱
+- `src/lib/parsers/pptx-parser.ts` - PPTX 파싱
+- `src/lib/parsers/hwp-parser.ts` - HWP 파싱
+- `src/lib/parsers/xlsx-parser.ts` - XLSX 파싱
+
+**UI 업데이트:**
+- `SeedDataUpload.tsx` - HWP, XLSX 파일 지원 추가
+
+**AI 생성 API 개선:**
+- 키워드 기반 검색 → 벡터 유사도 검색으로 변경
+- RAG 인용 기록 자동 저장 (리워드 시스템 연동)
+- 참조 문서 카운트 자동 증가
+
+---
 
 ### 2026-02-03 RAG 시스템 구현 (Phase 1-3 완료)
 **Phase 1: 파일 파서**

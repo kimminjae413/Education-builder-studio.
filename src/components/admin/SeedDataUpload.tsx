@@ -37,7 +37,7 @@ export function SeedDataUpload() {
     const droppedFiles = Array.from(e.dataTransfer.files)
     const validFiles = droppedFiles.filter(file => {
       const ext = file.name.split('.').pop()?.toLowerCase()
-      return ['pdf', 'ppt', 'pptx', 'doc', 'docx'].includes(ext || '')
+      return ['pdf', 'ppt', 'pptx', 'doc', 'docx', 'hwp', 'xlsx', 'xls'].includes(ext || '')
     })
 
     setFiles(prev => [...prev, ...validFiles])
@@ -150,13 +150,13 @@ export function SeedDataUpload() {
               파일을 드래그하거나 클릭하여 선택하세요
             </p>
             <p className="text-sm text-gray-500 mb-4">
-              PDF, PPT, PPTX, DOC, DOCX 파일 지원
+              PDF, PPT, PPTX, DOC, DOCX, HWP, XLSX 파일 지원
             </p>
             <label className="inline-block">
               <input
                 type="file"
                 multiple
-                accept=".pdf,.ppt,.pptx,.doc,.docx"
+                accept=".pdf,.ppt,.pptx,.doc,.docx,.hwp,.xlsx,.xls"
                 onChange={handleFileSelect}
                 className="hidden"
               />
@@ -334,7 +334,7 @@ export function SeedDataUpload() {
           <li className="flex items-start gap-2">
             <span className="text-blue-600 mt-0.5">•</span>
             <span>
-              <strong>지원 파일:</strong> PDF, PPT, PPTX, DOC, DOCX
+              <strong>지원 파일:</strong> PDF, PPT, PPTX, DOC, DOCX, HWP (아래아 한글), XLSX/XLS (엑셀)
             </span>
           </li>
           <li className="flex items-start gap-2">
