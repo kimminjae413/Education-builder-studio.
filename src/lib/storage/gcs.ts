@@ -7,15 +7,20 @@ let storage: Storage | null = null
 let bucket: Bucket | null = null
 
 function getServiceAccountKey() {
+  // 여러 환경변수명 시도
   const key = process.env.GCS_SERVICE_ACCOUNT_KEY
+    || process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
+    || process.env.GOOGLE_CREDENTIALS
+
   if (!key) {
-    // 서비스 계정 키가 없으면 ADC 사용
+    console.warn('[GCS] No service account key found in environment variables')
     return null
   }
 
   try {
     return JSON.parse(key)
   } catch {
+    console.warn('[GCS] Failed to parse service account key as JSON')
     return key
   }
 }
@@ -29,10 +34,14 @@ function getStorage(): Storage {
 
     const credentials = getServiceAccountKey()
 
-    // 서비스 계정 키가 있으면 사용, 없으면 ADC 사용
-    storage = credentials
-      ? new Storage({ projectId, credentials })
-      : new Storage({ projectId })
+    if (!credentials) {
+      throw new Error(
+        'GCS 서비스 계정 키가 설정되지 않았습니다. ' +
+        'Netlify 환경변수에 GCS_SERVICE_ACCOUNT_KEY 또는 GOOGLE_APPLICATION_CREDENTIALS_JSON을 설정하세요.'
+      )
+    }
+
+    storage = new Storage({ projectId, credentials })
   }
   return storage
 }
