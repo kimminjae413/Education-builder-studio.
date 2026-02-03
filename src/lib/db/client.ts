@@ -14,7 +14,7 @@ function getPool(): Pool {
 
     pool = new Pool({
       connectionString,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined,
+      ssl: { rejectUnauthorized: false },
       max: 10, // 최대 연결 수
       idleTimeoutMillis: 30000, // 유휴 연결 타임아웃
       connectionTimeoutMillis: 5000, // 연결 타임아웃
