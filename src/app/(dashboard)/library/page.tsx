@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/components/providers/AuthProvider'
+import { auth } from '@/lib/firebase/client'
+import { onAuthStateChanged, User } from 'firebase/auth'
 
 interface Material {
   id: string
@@ -25,13 +26,20 @@ interface Category {
 }
 
 export default function LibraryPage() {
-  const { user } = useAuth()
+  const [user, setUser] = useState<User | null>(null)
   const [materials, setMaterials] = useState<Material[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [sortBy, setSortBy] = useState('newest')
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user)
+    })
+    return () => unsubscribe()
+  }, [])
 
   useEffect(() => {
     fetchData()
