@@ -12,12 +12,19 @@ function getPool(): Pool {
       throw new Error('DATABASE_URL is not set')
     }
 
+    // URL에서 연결 정보 파싱 (SSL 설정을 명시적으로 제어)
+    const url = new URL(connectionString)
+
     pool = new Pool({
-      connectionString,
+      host: url.hostname,
+      port: parseInt(url.port) || 5432,
+      database: url.pathname.slice(1),
+      user: url.username,
+      password: decodeURIComponent(url.password),
       ssl: { rejectUnauthorized: false },
-      max: 10, // 최대 연결 수
-      idleTimeoutMillis: 30000, // 유휴 연결 타임아웃
-      connectionTimeoutMillis: 5000, // 연결 타임아웃
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
     })
 
     // 에러 핸들링
