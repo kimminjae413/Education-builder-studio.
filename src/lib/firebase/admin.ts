@@ -14,9 +14,16 @@ function getServiceAccountKey() {
     return null
   }
 
-  // JSON 문자열이면 파싱, 아니면 그대로 반환
+  // JSON 문자열이면 파싱
   try {
-    return JSON.parse(key)
+    const parsed = JSON.parse(key)
+
+    // private_key의 \\n을 실제 줄바꿈으로 변환
+    if (parsed.private_key) {
+      parsed.private_key = parsed.private_key.replace(/\\n/g, '\n')
+    }
+
+    return parsed
   } catch {
     return key
   }
