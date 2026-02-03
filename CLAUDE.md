@@ -672,10 +672,10 @@ src/
 - [ ] 업로드 파이프라인 수정 (Phase 3에서 통합)
 
 ### Week 3: RAG 검색 & 생성
-- [ ] RAG 검색 엔진 구현
-- [ ] RAG 기반 생성 로직
-- [ ] API 엔드포인트 수정
-- [ ] 참조 자료 출처 표시 UI
+- [x] RAG 검색 엔진 구현 ✅ 2026-02-03 (retriever.ts)
+- [x] RAG 기반 생성 로직 ✅ 2026-02-03 (generator.ts)
+- [x] API 엔드포인트 수정 ✅ 2026-02-03 (generate-course-rag)
+- [ ] 참조 자료 출처 표시 UI (프론트엔드)
 
 ### Week 4: 고도화
 - [ ] 복수 설계안 생성
@@ -700,6 +700,21 @@ src/
 - 특허 명세서 & 사업계획서 분석
 - RAG 기반 시스템으로 개발 방향 전환
 - CLAUDE.md 전면 재작성 (RAG 아키텍처)
+
+### 2026-02-03 RAG 시스템 구현 (Phase 1-3 완료)
+**Phase 1: 파일 파서**
+- HWP 파서 추가 (hwp.js)
+- XLSX/XLS 파서 추가 (SheetJS)
+
+**Phase 2: 청킹 & 임베딩**
+- chunker.ts: 문단/문장/고정크기 청킹
+- embedder.ts: Gemini text-embedding-004
+- document_chunks, rag_citations 테이블
+
+**Phase 3: RAG 검색 & 생성**
+- retriever.ts: 벡터 유사도 검색
+- generator.ts: RAG 기반 교육과정 생성
+- /api/ai/generate-course-rag 엔드포인트
 
 ### 2026-02-03 HWP/XLSX 파서 구현
 - HWP 파서 추가 (`hwp.js` 라이브러리)
