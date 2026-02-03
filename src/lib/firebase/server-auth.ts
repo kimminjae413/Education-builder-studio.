@@ -27,7 +27,7 @@ function extractToken(request: NextRequest): string | null {
   }
 
   // 3. 쿠키 확인
-  const cookieToken = request.cookies.get('firebase-auth-token')?.value
+  const cookieToken = request.cookies.get('firebase-token')?.value
   if (cookieToken) {
     return cookieToken
   }
