@@ -30,13 +30,14 @@ function getServiceAccountKey() {
       // 3. 리터럴 백슬래시+n 문자열
       pk = pk.split('\\n').join('\n')
 
-      // PEM 헤더/푸터 정리
-      pk = pk.replace(/-----BEGIN PRIVATE\s+KEY-----/g, '-----BEGIN PRIVATE KEY-----')
-      pk = pk.replace(/-----END PRIVATE\s+KEY-----/g, '-----END PRIVATE KEY-----')
+      // PEM 헤더/푸터 정리 - 다양한 손상된 형식 처리
+      // "PRIVATEKEY" -> "PRIVATE KEY" (공백 없는 경우)
+      pk = pk.replace(/-----BEGIN\s*PRIVATE\s*KEY-----/gi, '-----BEGIN PRIVATE KEY-----')
+      pk = pk.replace(/-----END\s*PRIVATE\s*KEY-----/gi, '-----END PRIVATE KEY-----')
 
-      // 헤더와 푸터 사이에 공백이 있으면 제거
-      pk = pk.replace(/-----BEGIN PRIVATE KEY-----\s+/g, '-----BEGIN PRIVATE KEY-----\n')
-      pk = pk.replace(/\s+-----END PRIVATE KEY-----/g, '\n-----END PRIVATE KEY-----')
+      // 헤더/푸터 주변 공백 정리
+      pk = pk.replace(/-----BEGIN PRIVATE KEY-----\s*/g, '-----BEGIN PRIVATE KEY-----\n')
+      pk = pk.replace(/\s*-----END PRIVATE KEY-----/g, '\n-----END PRIVATE KEY-----')
 
       parsed.private_key = pk
 
