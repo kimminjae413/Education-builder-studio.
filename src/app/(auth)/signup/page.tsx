@@ -14,17 +14,28 @@ export default function SignupPage() {
   useEffect(() => {
     let unsubscribe: (() => void) | undefined
     let redirected = false
+    let authResolved = false
+
+    // 3초 타임아웃 - Firebase 응답이 없으면 회원가입 폼 표시
+    const timeout = setTimeout(() => {
+      if (!authResolved) {
+        console.log('Auth check timeout - showing signup form')
+        setIsChecking(false)
+      }
+    }, 3000)
 
     try {
       const auth = getFirebaseAuth()
       unsubscribe = onAuthStateChanged(auth, (user) => {
+        authResolved = true
+        clearTimeout(timeout)
+
         if (user && !redirected) {
           // Firebase에 로그인되어 있으면 토큰 갱신 후 대시보드로
           redirected = true
           user.getIdToken(true)
             .then((token) => {
               document.cookie = `firebase-token=${token}; path=/; max-age=3600; SameSite=Lax`
-              // router.push 대신 window.location 사용 (더 확실한 네비게이션)
               window.location.href = '/dashboard'
             })
             .catch((error) => {
@@ -39,10 +50,12 @@ export default function SignupPage() {
       })
     } catch (error) {
       console.error('Firebase auth error:', error)
+      clearTimeout(timeout)
       setIsChecking(false)
     }
 
     return () => {
+      clearTimeout(timeout)
       if (unsubscribe) unsubscribe()
     }
   }, [router])
