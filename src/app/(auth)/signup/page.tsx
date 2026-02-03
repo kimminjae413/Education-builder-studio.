@@ -3,7 +3,7 @@
 import { SignupForm } from '@/components/auth/SignupForm'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { auth } from '@/lib/firebase/client'
+import { getFirebaseAuth } from '@/lib/firebase/client'
 import { onAuthStateChanged } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 
@@ -12,6 +12,7 @@ export default function SignupPage() {
   const router = useRouter()
 
   useEffect(() => {
+    const auth = getFirebaseAuth()
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         // 이미 로그인됨 → 대시보드로
