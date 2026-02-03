@@ -639,10 +639,29 @@ src/
 │   │   ├── index.ts
 │   │   ├── pdf-parser.ts
 │   │   ├── docx-parser.ts
-│   │   └── pptx-parser.ts
+│   │   ├── pptx-parser.ts
+│   │   ├── hwp-parser.ts                 # HWP 파서 (hwp.js)
+│   │   └── xlsx-parser.ts                # XLSX/XLS 파서 (SheetJS)
 │   │
-│   └── ai/
-│       └── gemini.ts
+│   ├── rag/                              ✅ 신규 (RAG 시스템)
+│   │   ├── chunker.ts                    # 문서 청킹
+│   │   ├── embedder.ts                   # 임베딩 생성
+│   │   ├── retriever.ts                  # 유사 청크 검색
+│   │   └── generator.ts                  # RAG 기반 생성
+│   │
+│   ├── ai/
+│   │   ├── gemini.ts
+│   │   ├── multi-generator.ts            # 복수 설계안 생성
+│   │   ├── constraint-extractor.ts       # 제약조건 추출
+│   │   ├── feedback-system.ts            # 피드백 시스템
+│   │   └── auto-classifier.ts            # 자동 분류
+│   │
+│   ├── reward/                           ✅ 신규 (리워드 시스템)
+│   │   ├── usage-tracker.ts              # 사용률 추적
+│   │   └── reward-system.ts              # 리워드 분배
+│   │
+│   └── marketplace/                      ✅ 신규 (마켓플레이스)
+│       └── marketplace.ts                # 리스팅/구매/검색
 │
 └── components/
     ├── auth/
@@ -678,15 +697,15 @@ src/
 - [ ] 참조 자료 출처 표시 UI (프론트엔드)
 
 ### Week 4: 고도화
-- [ ] 복수 설계안 생성
-- [ ] 제약 조건 도출부
-- [ ] 피드백 수집/반영
-- [ ] AI 자동 분류
+- [x] 복수 설계안 생성 ✅ 2026-02-03 (multi-generator.ts)
+- [x] 제약 조건 도출부 ✅ 2026-02-03 (constraint-extractor.ts)
+- [x] 피드백 수집/반영 ✅ 2026-02-03 (feedback-system.ts)
+- [x] AI 자동 분류 ✅ 2026-02-03 (auto-classifier.ts)
 
 ### Week 5-6: 리워드 & 마켓
-- [ ] 사용률/인용 횟수 측정
-- [ ] 리워드 분배 시스템
-- [ ] 콘텐츠 마켓플레이스
+- [x] 사용률/인용 횟수 측정 ✅ 2026-02-03 (usage-tracker.ts)
+- [x] 리워드 분배 시스템 ✅ 2026-02-03 (reward-system.ts)
+- [x] 콘텐츠 마켓플레이스 ✅ 2026-02-03 (marketplace.ts)
 
 ---
 
@@ -722,6 +741,54 @@ src/
 - XLS (구버전 엑셀) 지원 추가
 - 업로드 API에 HWP/XLSX 파일 타입 추가
 - 파일 확장자 기반 폴백 타입 감지 추가
+
+### 2026-02-03 ⭐ Week 4-6 기능 구현 완료 (RAG 독립 기능 + 리워드 + 마켓플레이스)
+
+**Week 4: RAG 독립 기능**
+- `src/lib/ai/multi-generator.ts` - 3가지 유형 복수 설계안 생성 (강의/실습/PBL 중심)
+- `src/lib/ai/constraint-extractor.ts` - 입력에서 제약조건 자동 추출 (Gemini 기반)
+- `src/lib/ai/feedback-system.ts` - 피드백 수집/분석/반영 시스템
+- `src/lib/ai/auto-classifier.ts` - AI 자동 카테고리/태그 분류
+
+**Week 5-6: 리워드 시스템 & 마켓플레이스**
+- `src/lib/reward/usage-tracker.ts` - 조회/다운로드/인용 추적
+- `src/lib/reward/reward-system.ts` - 월간 상위 기여자 리워드 분배
+- `src/lib/marketplace/marketplace.ts` - 콘텐츠 마켓플레이스 (리스팅/구매/평가)
+
+**신규 API 엔드포인트:**
+- `/api/ai/multi-generate` - 복수 설계안 생성
+- `/api/ai/extract-constraints` - 제약조건 추출
+- `/api/ai/feedback` - 피드백 제출/조회
+- `/api/ai/auto-classify` - 자동 분류
+- `/api/reward/contributors` - 기여자 순위/통계
+- `/api/reward/distribute` - 리워드 분배 (관리자)
+- `/api/marketplace` - 마켓플레이스 검색/리스팅
+- `/api/marketplace/[id]` - 상세조회/구매
+
+**신규 데이터베이스 테이블:**
+- `material_views` - 자료 조회 기록
+- `material_downloads` - 다운로드 기록
+- `material_ratings` - 평가/만족도
+- `reward_distributions` - 리워드 분배 이력
+- `point_transactions` - 포인트 거래 내역
+- `marketplace_listings` - 마켓플레이스 리스팅
+- `marketplace_purchases` - 구매 기록
+
+**teaching_materials 테이블 컬럼 추가:**
+- `view_count`, `download_count`, `reference_count`, `citation_count`, `satisfaction_score`
+
+**버그 수정:**
+- `uploaded_by` → `user_id` 컬럼명 오류 수정 (usage-tracker.ts)
+- DATABASE_URL 특수문자(`#`) 인코딩 문제 해결 (`%23`)
+- SSL 인증서 검증 오류 해결 (db/client.ts - URL 수동 파싱)
+
+**보안 이슈 해결:**
+- GitGuardian 감지: 하드코딩된 API 키 제거 (SETUP_GUIDE.md, firebase/client.ts)
+- PostgreSQL 비밀번호 원격 변경
+- Gemini API 키 교체
+- Netlify 환경변수 업데이트
+
+---
 
 ### 2026-02-02 ⭐ Supabase → Google Cloud 마이그레이션 완료
 **변경 사항:**
