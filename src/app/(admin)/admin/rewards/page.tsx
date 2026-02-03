@@ -127,7 +127,7 @@ export default async function AdminRewardsPage() {
                   <th className="pb-3 font-medium">순위</th>
                   <th className="pb-3 font-medium">사용자</th>
                   <th className="pb-3 font-medium text-right">자료 수</th>
-                  <th className="pb-3 font-medium text-right">조회</th>
+                  <th className="pb-3 font-medium text-right">참조</th>
                   <th className="pb-3 font-medium text-right">다운로드</th>
                   <th className="pb-3 font-medium text-right">인용</th>
                   <th className="pb-3 font-medium text-right">기여 점수</th>
@@ -159,10 +159,10 @@ export default async function AdminRewardsPage() {
                       </div>
                     </td>
                     <td className="py-3 text-right text-gray-700">
-                      {contributor.materialCount}
+                      {contributor.totalMaterials}
                     </td>
                     <td className="py-3 text-right text-gray-700">
-                      {contributor.totalViews.toLocaleString()}
+                      {contributor.totalReferences.toLocaleString()}
                     </td>
                     <td className="py-3 text-right text-gray-700">
                       {contributor.totalDownloads.toLocaleString()}
