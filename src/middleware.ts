@@ -10,7 +10,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 const PROTECTED_PATHS = ['/dashboard', '/design', '/library', '/contribute', '/rewards', '/profile', '/admin']
 
 // 인증 쿠키 이름
-const AUTH_COOKIE_NAME = 'firebase-auth-token'
+const AUTH_COOKIE_NAME = 'firebase-token'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
