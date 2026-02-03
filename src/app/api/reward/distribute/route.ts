@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
 
     // 관리자 권한 확인
     const adminCheck = await query(
-      'SELECT role FROM users WHERE id = $1',
+      'SELECT role FROM profiles WHERE id = $1',
       [user.uid]
     )
 

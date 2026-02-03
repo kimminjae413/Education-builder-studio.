@@ -17,12 +17,9 @@ export async function POST() {
     `)
     console.log('✅ teaching_materials 컬럼 추가')
 
-    // 2. users에 포인트 컬럼 추가
-    await query(`
-      ALTER TABLE users
-      ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 0
-    `)
-    console.log('✅ users.points 컬럼 추가')
+    // 2. profiles에 포인트 컬럼이 이미 있음 (스킵)
+    // profiles 테이블은 이미 points 컬럼을 가지고 있음
+    console.log('✅ profiles.points 컬럼 확인 (이미 존재)')
 
     // 3. material_views 테이블
     await query(`

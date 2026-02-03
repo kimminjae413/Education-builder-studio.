@@ -188,7 +188,7 @@ async function addUserPoints(
 
   // 사용자 총 포인트 업데이트
   await query(
-    `UPDATE users
+    `UPDATE profiles
      SET points = COALESCE(points, 0) + $1
      WHERE id = $2`,
     [points, userId]
@@ -241,7 +241,7 @@ export async function getMonthlyRewardSummary(period: string): Promise<MonthlyRe
        rd.reward_points,
        rd.tier_title
      FROM reward_distributions rd
-     JOIN users u ON rd.user_id = u.id
+     JOIN profiles u ON rd.user_id = u.id
      WHERE rd.period = $1
      ORDER BY rd.rank ASC`,
     [period]

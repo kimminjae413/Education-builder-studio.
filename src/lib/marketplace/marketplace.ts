@@ -191,7 +191,7 @@ export async function searchListings(
        ml.created_at,
        ml.updated_at
      FROM marketplace_listings ml
-     JOIN users u ON ml.seller_id = u.id
+     JOIN profiles u ON ml.seller_id = u.id
      WHERE ${conditions.join(' AND ')}
      ORDER BY ${orderBy}
      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
@@ -243,7 +243,7 @@ export async function getListingDetail(listingId: string): Promise<MarketplaceLi
        ml.created_at,
        ml.updated_at
      FROM marketplace_listings ml
-     JOIN users u ON ml.seller_id = u.id
+     JOIN profiles u ON ml.seller_id = u.id
      WHERE ml.id = $1`,
     [listingId]
   )
@@ -295,7 +295,7 @@ export async function purchaseListing(
   // 무료 리스팅이 아닌 경우 포인트 확인
   if (listing.listingType !== 'free') {
     const userResult = await query(
-      'SELECT points FROM users WHERE id = $1',
+      'SELECT points FROM profiles WHERE id = $1',
       [buyerId]
     )
 
@@ -306,14 +306,14 @@ export async function purchaseListing(
 
     // 포인트 차감
     await query(
-      'UPDATE users SET points = points - $1 WHERE id = $2',
+      'UPDATE profiles SET points = points - $1 WHERE id = $2',
       [listing.price, buyerId]
     )
 
     // 판매자에게 포인트 지급 (수수료 10% 제외)
     const sellerPoints = Math.round(listing.price * 0.9)
     await query(
-      'UPDATE users SET points = COALESCE(points, 0) + $1 WHERE id = $2',
+      'UPDATE profiles SET points = COALESCE(points, 0) + $1 WHERE id = $2',
       [sellerPoints, listing.sellerId]
     )
 

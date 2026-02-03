@@ -175,17 +175,17 @@ function calculateTotalScore(stats: any): number {
 export async function getContributorStats(userId: string): Promise<ContributorStats | null> {
   const result = await query(
     `SELECT
-       u.id as user_id,
-       u.name as user_name,
+       p.id as user_id,
+       p.name as user_name,
        COUNT(m.id) as total_materials,
        SUM(COALESCE(m.reference_count, 0)) as total_references,
        SUM(COALESCE(m.citation_count, 0)) as total_citations,
        SUM(COALESCE(m.download_count, 0)) as total_downloads,
        AVG(COALESCE(m.satisfaction_score, 0)) as avg_satisfaction
-     FROM users u
-     LEFT JOIN teaching_materials m ON u.id = m.uploaded_by
-     WHERE u.id = $1
-     GROUP BY u.id, u.name`,
+     FROM profiles p
+     LEFT JOIN teaching_materials m ON p.id = m.uploaded_by
+     WHERE p.id = $1
+     GROUP BY p.id, p.name`,
     [userId]
   )
 
@@ -243,8 +243,8 @@ function calculateContributionScore(stats: any): number {
 export async function getTopContributors(limit: number = 10): Promise<ContributorStats[]> {
   const result = await query(
     `SELECT
-       u.id as user_id,
-       u.name as user_name,
+       p.id as user_id,
+       p.name as user_name,
        COUNT(m.id) as total_materials,
        SUM(COALESCE(m.reference_count, 0)) as total_references,
        SUM(COALESCE(m.citation_count, 0)) as total_citations,
@@ -254,9 +254,9 @@ export async function getTopContributors(limit: number = 10): Promise<Contributo
            COALESCE(m.reference_count, 0) * 5 +
            COALESCE(m.download_count, 0) * 3 +
            COALESCE(m.satisfaction_score, 0) * 20) as contribution_score
-     FROM users u
-     LEFT JOIN teaching_materials m ON u.id = m.uploaded_by
-     GROUP BY u.id, u.name
+     FROM profiles p
+     LEFT JOIN teaching_materials m ON p.id = m.uploaded_by
+     GROUP BY p.id, p.name
      HAVING COUNT(m.id) > 0
      ORDER BY contribution_score DESC
      LIMIT $1`,
