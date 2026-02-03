@@ -9,11 +9,22 @@ import { InstructorRank } from '@/lib/rank/types'
 export default async function DashboardPage() {
   const cookieStore = await cookies()
   const token = cookieStore.get('firebase-token')?.value
-  if (!token) { redirect('/login') }
-  const user = await verifyIdToken(token)
+  if (!token) {
+    redirect('/login')
+  }
+
+  let user
+  try {
+    user = await verifyIdToken(token)
+  } catch (error) {
+    console.error('Token verification failed:', error)
+    redirect('/login')
+  }
 
   const profile = await getProfile(user.uid)
-  if (!profile) return null
+  if (!profile) {
+    redirect('/login?error=no-profile')
+  }
 
   const { materials, count: materialsCount } = await getMaterialsWithCount(user.uid)
 
