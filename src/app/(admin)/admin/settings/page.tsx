@@ -161,33 +161,33 @@ export default async function AdminSettingsPage() {
             </thead>
             <tbody className="divide-y">
               <tr>
-                <td className="py-3">🌱 뉴비 (Newcomer)</td>
+                <td className="py-3">🌱 새싹 (Newcomer)</td>
                 <td className="py-3">0</td>
-                <td className="py-3">3회</td>
-              </tr>
-              <tr>
-                <td className="py-3">🙋 헬퍼 (Helper)</td>
-                <td className="py-3">100</td>
                 <td className="py-3">10회</td>
               </tr>
               <tr>
-                <td className="py-3">📚 가이드 (Guide)</td>
+                <td className="py-3">📘 초급 (Junior)</td>
+                <td className="py-3">100</td>
+                <td className="py-3">30회</td>
+              </tr>
+              <tr>
+                <td className="py-3">📗 중급 (Intermediate)</td>
                 <td className="py-3">500</td>
-                <td className="py-3">20회</td>
-              </tr>
-              <tr>
-                <td className="py-3">🎓 멘토 (Mentor)</td>
-                <td className="py-3">1,500</td>
-                <td className="py-3">50회</td>
-              </tr>
-              <tr>
-                <td className="py-3">⭐ 베테랑 (Veteran)</td>
-                <td className="py-3">5,000</td>
                 <td className="py-3">100회</td>
               </tr>
               <tr>
-                <td className="py-3">👑 마스터 (Master)</td>
-                <td className="py-3">15,000</td>
+                <td className="py-3">📕 고급 (Senior)</td>
+                <td className="py-3">2,000</td>
+                <td className="py-3">무제한</td>
+              </tr>
+              <tr>
+                <td className="py-3">🏆 베테랑 (Veteran)</td>
+                <td className="py-3">5,000</td>
+                <td className="py-3">무제한</td>
+              </tr>
+              <tr>
+                <td className="py-3">💎 마스터 (Master)</td>
+                <td className="py-3">10,000</td>
                 <td className="py-3">무제한</td>
               </tr>
             </tbody>
