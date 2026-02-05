@@ -1,5 +1,38 @@
 # CLAUDE.md - Education Builder Studio 개발 가이드
 
+---
+
+## 🔴 Gemini 검수 필수 (배포 전)
+
+**Claude가 코드를 작성/수정한 후, 커밋하기 전에 반드시 Gemini 검수를 실행해야 함.**
+
+```bash
+# 변경사항 검수 (git diff 기반)
+node scripts/review-code.cjs
+
+# 특정 파일 검수
+node scripts/review-code.cjs --file src/app/page.tsx
+
+# 계획/설계 검수
+node scripts/review-code.cjs --plan "계획 내용"
+```
+
+### 검수 결과 처리:
+| 결과 | 행동 |
+|------|------|
+| 🔴 심각 | **반드시 수정 후 재검수** |
+| 🟡 주의 | 사용자에게 알리고 판단 요청 |
+| 🟢 개선 | 선택적 반영 (사용자 결정) |
+| ✅ 통과 | 커밋 진행 |
+
+### 검수 없이 커밋 금지:
+```
+❌ 코드 작성 → 바로 커밋
+✅ 코드 작성 → 검수 실행 → 결과 공유 → 문제 해결 → 커밋
+```
+
+---
+
 ## 프로젝트 개요
 
 - **프로젝트명**: Education Builder Studio (EBS)
