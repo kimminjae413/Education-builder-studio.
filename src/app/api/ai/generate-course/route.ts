@@ -217,30 +217,39 @@ ${ragPromptSection}
     })) || []
 
     // DB에 저장
-    const course = await createCourse({
-      user_id: user.uid,
-      title: courseData.title,
-      target_audience: targetAudience,
-      subject: subject,
-      tools: tools || [],
-      duration: duration,
-      session_count: sessionCount,
-      knowledge_goals: knowledgeGoals || [],
-      skill_goals: skillGoals || [],
-      attitude_goals: attitudeGoals || [],
-      lecture_ratio: lectureRatio,
-      practice_ratio: practiceRatio,
-      project_ratio: projectRatio,
-      ai_generated_content: courseData,
-      lesson_plan: courseData.overview,
-      activities: courseData.sessions || [],
-      materials_needed: courseData.overall_materials,
-      ai_model_used: 'gemini-2.0-flash',
-      ai_prompt_used: prompt,
-      generation_time_ms: generationTime,
-      status: 'completed',
-      recommended_materials: recommendedMaterials.map((m) => m.id),
-    })
+    let course
+    try {
+      course = await createCourse({
+        user_id: user.uid,
+        title: courseData.title,
+        target_audience: targetAudience,
+        subject: subject,
+        tools: tools || [],
+        duration: duration,
+        session_count: sessionCount,
+        knowledge_goals: knowledgeGoals || [],
+        skill_goals: skillGoals || [],
+        attitude_goals: attitudeGoals || [],
+        lecture_ratio: lectureRatio,
+        practice_ratio: practiceRatio,
+        project_ratio: projectRatio,
+        ai_generated_content: courseData,
+        lesson_plan: courseData.overview,
+        activities: courseData.sessions || [],
+        materials_needed: courseData.overall_materials,
+        ai_model_used: 'gemini-2.0-flash',
+        ai_prompt_used: prompt,
+        generation_time_ms: generationTime,
+        status: 'completed',
+        recommended_materials: recommendedMaterials.map((m) => m.id),
+      })
+    } catch (dbError) {
+      console.error('DB 저장 실패:', dbError)
+      return NextResponse.json(
+        { error: 'AI 생성은 성공했으나 저장에 실패했습니다. 다시 시도해주세요.' },
+        { status: 500 }
+      )
+    }
 
     // RAG 인용 기록 및 참조 카운트 증가 (리워드 시스템용)
     if (ragContext && ragContext.results.length > 0) {
@@ -268,7 +277,7 @@ ${ragPromptSection}
       }
     }
 
-    // AI 사용 횟수 증가
+    // AI 사용 횟수 증가 - 모든 과정이 성공한 후에만 카운팅
     await incrementAIUsage(user.uid)
 
     return NextResponse.json({
@@ -283,6 +292,7 @@ ${ragPromptSection}
       } : null,
     })
   } catch (error: unknown) {
+    // 여기 도달 = AI 호출 자체 실패 등 → 카운팅 없음
     console.error('AI generation error:', error)
     const message = error instanceof Error ? error.message : '과정 생성 실패'
     return NextResponse.json({ error: message }, { status: 500 })
