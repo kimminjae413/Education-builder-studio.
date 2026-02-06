@@ -45,7 +45,7 @@ export interface GenerationResult {
   }
 }
 
-const GEMINI_MODEL = 'gemini-2.0-flash-exp'
+const GEMINI_MODEL = 'gemini-2.0-flash'
 
 let genAI: GoogleGenerativeAI | null = null
 

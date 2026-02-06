@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
       const prompt = `다음 교육 자료를 분석하여 JSON 형식으로 분류해주세요:
 

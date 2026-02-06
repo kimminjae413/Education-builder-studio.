@@ -25,7 +25,7 @@ export async function generateWithFileSearch(
   systemInstruction?: string
 ): Promise<RAGResponse> {
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-exp',
+    model: 'gemini-2.0-flash',
     generationConfig: {
       maxOutputTokens: 8192,
       temperature: 0.7,
@@ -54,7 +54,7 @@ export async function generateWithFileSearch(
       uri: f.uri,
       fileId: f.name,
     })),
-    modelUsed: 'gemini-2.0-flash-exp',
+    modelUsed: 'gemini-2.0-flash',
   }
 }
 
@@ -82,7 +82,7 @@ export async function generateCourseWithFileSearch(
   const startTime = Date.now()
 
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-exp',
+    model: 'gemini-2.0-flash',
     generationConfig: {
       maxOutputTokens: 4096,
       temperature: 0.7,
@@ -168,7 +168,7 @@ export async function generateWithContext(
   sources: RAGSource[]
 ): Promise<RAGResponse> {
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-exp',
+    model: 'gemini-2.0-flash',
     generationConfig: {
       maxOutputTokens: 8192,
       temperature: 0.7,
@@ -192,7 +192,7 @@ ${context}
   return {
     text: responseText,
     sources,
-    modelUsed: 'gemini-2.0-flash-exp',
+    modelUsed: 'gemini-2.0-flash',
   }
 }
 
@@ -210,7 +210,7 @@ export async function explainRecommendation(
   }
 ): Promise<string> {
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-exp',
+    model: 'gemini-2.0-flash',
     generationConfig: {
       maxOutputTokens: 500,
       temperature: 0.5,

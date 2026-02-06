@@ -168,7 +168,7 @@ JSON 형식으로 출력:
     // Gemini API 호출
     const startTime = Date.now()
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.0-flash',
       generationConfig: {
         maxOutputTokens: 4096,
         temperature: 0.7,
@@ -222,7 +222,7 @@ JSON 형식으로 출력:
       lesson_plan: courseData.overview,
       activities: courseData.sessions || [],
       materials_needed: courseData.overall_materials,
-      ai_model_used: 'gemini-2.0-flash-exp',
+      ai_model_used: 'gemini-2.0-flash',
       ai_prompt_used: prompt,
       generation_time_ms: generationTime,
       status: 'completed',
