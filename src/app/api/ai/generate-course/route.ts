@@ -122,55 +122,68 @@ ${ragContext.contextText}
     }
 
     // Gemini 프롬프트
-    const prompt = `당신은 교육과정 설계 전문가입니다.
+    const prompt = `당신은 10년 이상 경력의 교육과정 설계 전문가입니다. 실제 교육 현장에서 바로 사용할 수 있는 상세하고 구체적인 교육과정을 설계해주세요.
 
-대상: ${targetAudience}
-주제: ${subject}
-도구: ${(tools || []).join(', ')}
-시간: ${duration}분 × ${sessionCount}차시
+## 교육과정 요청 정보
+- 교육 대상: ${targetAudience}
+- 주제: ${subject}
+- 사용 도구/교구: ${(tools || []).join(', ')}
+- 수업 시간: ${duration}분 × ${sessionCount}차시
 
-목표:
-- 지식: ${(knowledgeGoals || []).join(', ')}
-- 기능: ${(skillGoals || []).join(', ')}
-- 태도: ${(attitudeGoals || []).join(', ')}
+## 학습 목표
+- 지식 목표: ${(knowledgeGoals || []).join(', ')}
+- 기능 목표: ${(skillGoals || []).join(', ')}
+- 태도 목표: ${(attitudeGoals || []).join(', ')}
 
-방법: 강의 ${lectureRatio}%, 실습 ${practiceRatio}%, 프로젝트 ${projectRatio}%
+## 교수 방법 비율
+강의(이론 설명) ${lectureRatio}% / 실습(따라하기) ${practiceRatio}% / 프로젝트(창작) ${projectRatio}%
 ${ragPromptSection}
 
-JSON 형식으로 출력:
+## 작성 지침
+1. 각 활동의 description은 최소 3문장 이상으로 구체적으로 작성하세요. 강사가 바로 수업할 수 있도록 진행 방법, 핵심 질문, 유의사항을 포함하세요.
+2. overview는 교육과정의 전체 흐름과 기대 효과를 5문장 이상으로 상세히 설명하세요.
+3. 각 차시별 활동은 최소 4개 이상 포함하세요. 도입-전개-정리-평가 흐름으로 구성하세요.
+4. 각 활동의 시간 합이 차시당 시간(${duration}분)과 정확히 일치해야 합니다.
+5. materials는 구체적인 준비물 목록을 상세하게 작성하세요 (예: "아두이노 UNO R3 보드", "온도 센서(DHT11)" 등).
+6. assessment는 차시별 3개 이상의 평가 항목을 포함하세요.
+7. tips는 실제 수업 운영 시 유용한 노하우를 5개 이상 작성하세요.
+8. overall_materials는 전체 과정에 필요한 모든 준비물을 빠짐없이 나열하세요.
+9. ${targetAudience} 수준에 맞는 용어와 난이도로 작성하세요.
+
+## 출력 JSON 형식
 {
-  "title": "과정명",
-  "overview": "개요 (2문장)",
+  "title": "창의적이고 매력적인 과정명",
+  "overview": "교육과정의 전체 흐름, 학습 목표 달성 방법, 기대 효과를 5문장 이상으로 상세히 설명",
   "sessions": [
     {
       "session_number": 1,
-      "title": "차시명",
+      "title": "흥미를 끄는 차시명",
       "duration": ${duration},
-      "objectives": ["목표1", "목표2"],
+      "objectives": ["구체적인 학습목표1 (행동 동사 사용)", "구체적인 학습목표2"],
       "activities": [
         {
           "type": "강의|실습|프로젝트",
-          "duration": 20,
+          "duration": 10,
           "title": "활동명",
-          "description": "내용",
-          "materials": ["자료1"]
+          "description": "3문장 이상의 상세한 활동 설명. 진행 방법, 핵심 질문, 유의사항을 포함.",
+          "materials": ["구체적인 준비물1", "준비물2"]
         }
       ],
-      "assessment": ["평가1"]
+      "assessment": ["평가항목1", "평가항목2", "평가항목3"]
     }
   ],
-  "overall_materials": ["전체 자료"],
-  "tips": ["팁1"]
+  "overall_materials": ["전체 과정 준비물 상세 목록"],
+  "tips": ["강사를 위한 실전 팁 5개 이상"]
 }
 
-중요: 유효한 JSON만 출력, 코드블록 사용 금지`
+중요: 유효한 JSON만 출력하세요. 코드블록(\`\`\`)이나 다른 텍스트 없이 순수 JSON만 출력하세요.`
 
     // Gemini API 호출
     const startTime = Date.now()
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.0-flash',
       generationConfig: {
-        maxOutputTokens: 4096,
+        maxOutputTokens: 8192,
         temperature: 0.7,
       },
     })
