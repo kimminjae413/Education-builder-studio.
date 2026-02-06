@@ -183,7 +183,7 @@ ${ragPromptSection}
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.0-flash',
       generationConfig: {
-        maxOutputTokens: 8192,
+        maxOutputTokens: 16384,
         temperature: 0.7,
       },
     })
