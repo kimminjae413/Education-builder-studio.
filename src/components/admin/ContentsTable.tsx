@@ -57,25 +57,20 @@ export function ContentsTable({ materials }: ContentsTableProps) {
       return sortOrder === 'asc' ? aVal - (bVal as number) : (bVal as number) - aVal
     })
 
-  // 🆕 파일 다운로드 핸들러
+  // 🆕 파일 다운로드 핸들러 (Signed URL 사용)
   const handleDownload = async (material: any) => {
     try {
-      // GCS URL에서 직접 다운로드
-      const response = await fetch(material.file_url)
+      const res = await fetch(`/api/materials/${material.id}/preview`)
+      if (!res.ok) throw new Error('다운로드 URL 생성 실패')
+      const { url } = await res.json()
 
-      if (!response.ok) {
-        throw new Error('파일을 가져올 수 없습니다')
-      }
-
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
       link.download = material.filename || `${material.title}.pdf`
+      link.target = '_blank'
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
 
       router.refresh()
     } catch (error) {
@@ -97,10 +92,10 @@ export function ContentsTable({ materials }: ContentsTableProps) {
 
       const ext = material.filename?.split('.').pop()?.toLowerCase() || ''
 
-      // Office 파일: Google Docs Viewer로 미리보기
+      // Office 파일: Microsoft Office Online Viewer로 미리보기 (대용량 파일 지원)
       if (['docx', 'doc', 'pptx', 'ppt', 'xlsx', 'xls'].includes(ext)) {
         if (previewWindow) {
-          previewWindow.location.href = `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`
+          previewWindow.location.href = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`
         }
         return
       }
