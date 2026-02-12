@@ -163,10 +163,10 @@ export async function getSignedUploadUrl(
   return url
 }
 
-// Public URL 생성
+// Public URL 생성 (프록시 API를 통해 제공)
 export function getPublicUrl(path: string): string {
-  const bucketName = process.env.GCS_BUCKET_NAME
-  return `https://storage.googleapis.com/${bucketName}/${path}`
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://educationbuilderstudio.netlify.app'
+  return `${appUrl}/api/storage/${path}`
 }
 
 // 파일 존재 여부 확인
@@ -200,12 +200,30 @@ export async function listFiles(prefix: string): Promise<string[]> {
   return files.map((file: File) => file.name)
 }
 
-// URL에서 GCS 경로 추출
+// URL에서 GCS 경로 추출 (GCS URL과 프록시 URL 모두 지원)
 export function extractPathFromUrl(url: string): string | null {
+  // 프록시 URL: /api/storage/profiles/xxx/avatar.png
+  const proxyMatch = url.match(/\/api\/storage\/(.+)/)
+  if (proxyMatch) return proxyMatch[1]
+
+  // GCS URL: https://storage.googleapis.com/bucket/path
   const bucketName = process.env.GCS_BUCKET_NAME
   const pattern = new RegExp(`https://storage\\.googleapis\\.com/${bucketName}/(.+)`)
   const match = url.match(pattern)
   return match ? match[1] : null
+}
+
+// GCS 직접 URL을 프록시 URL로 변환
+export function toProxyUrl(url: string | null | undefined): string | null {
+  if (!url) return null
+  // 이미 프록시 URL이면 그대로 반환
+  if (url.includes('/api/storage/')) return url
+  // GCS URL이면 프록시 URL로 변환
+  const path = extractPathFromUrl(url)
+  if (path) {
+    return `/api/storage/${path}`
+  }
+  return url
 }
 
 // CORS 설정 확인 (한 번만 설정)
