@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import { X, Send } from 'lucide-react'
+import { getFirebaseAuth } from '@/lib/firebase/client'
 
 interface Props {
   onCreated: (inquiry: any) => void
@@ -20,8 +21,7 @@ export function InquiryForm({ onCreated, onCancel }: Props) {
 
     setSending(true)
     try {
-      const { getAuth } = await import('firebase/auth')
-      const auth = getAuth()
+      const auth = getFirebaseAuth()
       const token = await auth.currentUser?.getIdToken()
 
       const res = await fetch('/api/inquiries', {

@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { Pin, Eye, EyeOff, Pencil, Trash2, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { AnnouncementForm } from './AnnouncementForm'
+import { getFirebaseAuth } from '@/lib/firebase/client'
 
 interface Announcement {
   id: string
@@ -29,8 +30,7 @@ export function AnnouncementAdminList({ initialAnnouncements }: Props) {
   const [loading, setLoading] = useState<string | null>(null)
 
   async function getAuthHeaders() {
-    const { getAuth } = await import('firebase/auth')
-    const auth = getAuth()
+    const auth = getFirebaseAuth()
     const token = await auth.currentUser?.getIdToken()
     return {
       'Content-Type': 'application/json',

@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { Clock, CheckCircle, AlertCircle, XCircle, Shield, User, Send } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
+import { getFirebaseAuth } from '@/lib/firebase/client'
 
 type InquiryStatus = 'pending' | 'in_progress' | 'resolved' | 'closed'
 
@@ -56,8 +57,7 @@ export function InquiryThread({ inquiry, initialReplies }: Props) {
 
     setSending(true)
     try {
-      const { getAuth } = await import('firebase/auth')
-      const auth = getAuth()
+      const auth = getFirebaseAuth()
       const token = await auth.currentUser?.getIdToken()
 
       const res = await fetch(`/api/inquiries/${inquiry.id}/reply`, {

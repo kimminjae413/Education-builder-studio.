@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { Clock, CheckCircle, AlertCircle, XCircle, Shield, User, Send } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
+import { getFirebaseAuth } from '@/lib/firebase/client'
 
 type InquiryStatus = 'pending' | 'in_progress' | 'resolved' | 'closed'
 
@@ -51,8 +52,7 @@ export function InquiryAdminDetail({ inquiry, initialReplies }: Props) {
   const [changingStatus, setChangingStatus] = useState(false)
 
   async function getAuthHeaders() {
-    const { getAuth } = await import('firebase/auth')
-    const auth = getAuth()
+    const auth = getFirebaseAuth()
     const token = await auth.currentUser?.getIdToken()
     return {
       'Content-Type': 'application/json',

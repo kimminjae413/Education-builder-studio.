@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import { X } from 'lucide-react'
+import { getFirebaseAuth } from '@/lib/firebase/client'
 
 interface Announcement {
   id: string
@@ -27,8 +28,7 @@ export function AnnouncementForm({ editTarget, onCreated, onUpdated, onCancel }:
   const [saving, setSaving] = useState(false)
 
   async function getAuthHeaders() {
-    const { getAuth } = await import('firebase/auth')
-    const auth = getAuth()
+    const auth = getFirebaseAuth()
     const token = await auth.currentUser?.getIdToken()
     return {
       'Content-Type': 'application/json',
