@@ -76,7 +76,7 @@ export function AdminSidebar({ isMobileOpen, onClose }: AdminSidebarProps) {
           // 데스크톱: 항상 표시
           "lg:block lg:sticky lg:top-16 lg:w-64",
           // 모바일: 슬라이드 애니메이션
-          "fixed top-16 left-0 bottom-0 w-64 z-50 transition-transform duration-300 lg:translate-x-0",
+          "fixed top-16 left-0 bottom-0 w-64 z-50 transition-transform duration-300 lg:translate-x-0 lg:relative lg:top-auto lg:left-auto lg:bottom-auto lg:z-auto",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

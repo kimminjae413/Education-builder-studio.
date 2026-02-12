@@ -246,7 +246,7 @@ export default function LandingPage() {
               </Link>
               <Link
                 href="/signup"
-                className="group relative px-5 py-2.5 bg-gradient-to-r from-cobalt-500 to-cobalt-600 text-white font-semibold rounded-lg overflow-hidden transition-all hover:shadow-neon-blue"
+                className="group relative px-3 sm:px-5 py-2.5 bg-gradient-to-r from-cobalt-500 to-cobalt-600 text-white font-semibold rounded-lg overflow-hidden transition-all hover:shadow-neon-blue whitespace-nowrap"
               >
                 <span className="relative z-10">시작하기</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-cobalt-400 to-cobalt-500 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -865,7 +865,7 @@ export default function LandingPage() {
               </div>
               <div className="text-center md:text-right">
                 <p className="text-gray-500 text-sm">
-                  © 2025 Education Builder Studio. All rights reserved.
+                  © 2026 Education Builder Studio. All rights reserved.
                 </p>
                 <p className="text-gray-600 text-xs mt-1">
                   에듀이노랩

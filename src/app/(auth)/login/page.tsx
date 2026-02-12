@@ -41,7 +41,7 @@ export default function LoginPage() {
 
         {/* 푸터 */}
         <p className="text-center text-xs text-gray-500">
-          © 2025 에듀이노랩. All rights reserved.
+          © 2026 에듀이노랩. All rights reserved.
         </p>
       </div>
     </div>

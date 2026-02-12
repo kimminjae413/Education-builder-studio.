@@ -59,7 +59,7 @@ export function AdminLayoutClient({ user, children }: AdminLayoutClientProps) {
       </header>
 
       <div className="container mx-auto p-4 lg:p-8">
-        <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
+        <div className="grid gap-4 lg:grid-cols-[16rem_1fr]">
           {/* 🔴 관리자 사이드바 */}
           <AdminSidebar 
             isMobileOpen={sidebarOpen}

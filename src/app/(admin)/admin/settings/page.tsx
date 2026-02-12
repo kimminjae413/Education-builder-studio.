@@ -203,7 +203,7 @@ export default async function AdminSettingsPage() {
             <div className="text-sm text-gray-500">버전 0.3.0</div>
           </div>
           <div className="text-right text-sm text-gray-500">
-            <div>© 2025 EduinoLab</div>
+            <div>© 2026 EduinoLab</div>
             <div>Powered by Next.js 15 & Gemini AI</div>
           </div>
         </div>
