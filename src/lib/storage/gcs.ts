@@ -21,13 +21,27 @@ function getServiceAccountKey() {
   try {
     const parsed = JSON.parse(key)
 
-    // private_key 수정 (Firebase Admin과 동일한 방식)
+    // private_key 수정 (Firebase Admin과 동일한 강력한 방식)
     if (parsed.private_key && typeof parsed.private_key === 'string') {
-      // \\n을 실제 줄바꿈으로 변환
-      parsed.private_key = parsed.private_key.replace(/\\n/g, '\n')
-      // PEM 헤더/푸터의 여러 공백을 단일 공백으로 수정
-      parsed.private_key = parsed.private_key.replace(/-----BEGIN PRIVATE\s+KEY-----/g, '-----BEGIN PRIVATE KEY-----')
-      parsed.private_key = parsed.private_key.replace(/-----END PRIVATE\s+KEY-----/g, '-----END PRIVATE KEY-----')
+      let pk = parsed.private_key
+
+      // 1. 이스케이프된 \\n (JSON에서 이중 이스케이프) -> \n
+      pk = pk.replace(/\\\\n/g, '\n')
+      // 2. 단일 \\n -> \n
+      pk = pk.replace(/\\n/g, '\n')
+      // 3. 리터럴 백슬래시+n 문자열
+      pk = pk.split('\\n').join('\n')
+
+      // PEM 헤더/푸터 정리 - 다양한 손상된 형식 처리
+      // "PRIVATEKEY" -> "PRIVATE KEY" (공백 없는 경우)
+      pk = pk.replace(/-----BEGIN\s*PRIVATE\s*KEY-----/gi, '-----BEGIN PRIVATE KEY-----')
+      pk = pk.replace(/-----END\s*PRIVATE\s*KEY-----/gi, '-----END PRIVATE KEY-----')
+
+      // 헤더/푸터 주변 공백 정리
+      pk = pk.replace(/-----BEGIN PRIVATE KEY-----\s*/g, '-----BEGIN PRIVATE KEY-----\n')
+      pk = pk.replace(/\s*-----END PRIVATE KEY-----/g, '\n-----END PRIVATE KEY-----')
+
+      parsed.private_key = pk
     }
 
     return parsed
