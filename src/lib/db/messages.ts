@@ -51,7 +51,7 @@ export async function findConversation(
   userId1: string,
   userId2: string
 ): Promise<Conversation | null> {
-  const [p1, p2] = userId1 < userId2 ? [userId1, userId2] : [userId2, userId1]
+  const [p1, p2] = userId1.localeCompare(userId2) < 0 ? [userId1, userId2] : [userId2, userId1]
 
   const result = await query<Conversation>(
     'SELECT * FROM conversations WHERE participant_1 = $1 AND participant_2 = $2',
@@ -67,7 +67,7 @@ export async function createConversation(
   userId1: string,
   userId2: string
 ): Promise<Conversation> {
-  const [p1, p2] = userId1 < userId2 ? [userId1, userId2] : [userId2, userId1]
+  const [p1, p2] = userId1.localeCompare(userId2) < 0 ? [userId1, userId2] : [userId2, userId1]
 
   const result = await query<Conversation>(
     `INSERT INTO conversations (participant_1, participant_2)

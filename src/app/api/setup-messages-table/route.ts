@@ -37,11 +37,14 @@ export async function POST(request: NextRequest) {
         last_message_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         last_message_preview TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        CONSTRAINT unique_conversation UNIQUE (participant_1, participant_2),
-        CONSTRAINT ordered_participants CHECK (participant_1 < participant_2)
+        CONSTRAINT unique_conversation UNIQUE (participant_1, participant_2)
       )
     `)
     console.log('✅ conversations 테이블 생성')
+
+    // CHECK 제약 조건 제거 (JS/PostgreSQL collation 차이 문제)
+    await query(`ALTER TABLE conversations DROP CONSTRAINT IF EXISTS ordered_participants`).catch(() => {})
+    console.log('✅ ordered_participants 제약 제거')
 
     // conversations 인덱스
     await query(`CREATE INDEX IF NOT EXISTS idx_conversations_p1 ON conversations(participant_1)`)
