@@ -3,7 +3,8 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Upload, X, FileText, AlertCircle } from 'lucide-react'
+import { Upload, X, FileText, AlertCircle, Loader2 } from 'lucide-react'
+import { getFirebaseAuth } from '@/lib/firebase/client'
 
 interface UploadFormProps {
   profile: any
@@ -16,6 +17,7 @@ export function UploadForm({ profile }: UploadFormProps) {
   const [file, setFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState('')
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -25,9 +27,9 @@ export function UploadForm({ profile }: UploadFormProps) {
 
   // 파일 선택
   const handleFileSelect = (selectedFile: File) => {
-    // 파일 크기 검증 (50MB)
-    if (selectedFile.size > 50 * 1024 * 1024) {
-      alert('파일 크기는 50MB를 초과할 수 없습니다')
+    // 파일 크기 검증 (200MB)
+    if (selectedFile.size > 200 * 1024 * 1024) {
+      alert('파일 크기는 200MB를 초과할 수 없습니다')
       return
     }
 
@@ -94,27 +96,64 @@ export function UploadForm({ profile }: UploadFormProps) {
     }
 
     setUploading(true)
+    setUploadProgress('업로드 준비 중...')
 
     try {
-      const uploadFormData = new FormData()
-      uploadFormData.append('file', file)
-      uploadFormData.append('title', formData.title)
-      uploadFormData.append('description', formData.description)
-      uploadFormData.append('target_category', formData.targetCategory)
-      uploadFormData.append('subject_category', formData.subjectCategory)
+      const auth = getFirebaseAuth()
+      const token = await auth.currentUser?.getIdToken()
+      if (!token) throw new Error('로그인이 필요합니다')
 
-      const response = await fetch('/api/materials/upload', {
-        method: 'POST',
-        body: uploadFormData,
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || '업로드 실패')
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       }
 
-      alert('✅ 파일이 성공적으로 업로드되었습니다!\n승인 후 공개됩니다.')
+      // 1단계: 서명된 업로드 URL 요청
+      setUploadProgress('업로드 URL 생성 중...')
+      const urlRes = await fetch('/api/materials/upload-url', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type || 'application/octet-stream',
+          fileSize: file.size,
+        }),
+      })
+
+      const urlData = await urlRes.json()
+      if (!urlRes.ok) throw new Error(urlData.error || 'URL 생성 실패')
+
+      // 2단계: GCS에 직접 업로드
+      setUploadProgress('파일 업로드 중...')
+      const uploadRes = await fetch(urlData.uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type || 'application/octet-stream' },
+        body: file,
+      })
+
+      if (!uploadRes.ok) throw new Error('파일 업로드에 실패했습니다')
+
+      // 3단계: 업로드 완료 알림 + DB 저장
+      setUploadProgress('저장 중...')
+      const confirmRes = await fetch('/api/materials/confirm-upload', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          gcsPath: urlData.gcsPath,
+          filename: file.name,
+          fileSize: file.size,
+          fileType: file.type || 'application/octet-stream',
+          title: formData.title,
+          description: formData.description,
+          targetCategory: formData.targetCategory,
+          subjectCategory: formData.subjectCategory,
+        }),
+      })
+
+      const confirmData = await confirmRes.json()
+      if (!confirmRes.ok) throw new Error(confirmData.error || '저장 실패')
+
+      alert('파일이 성공적으로 업로드되었습니다!\n승인 후 공개됩니다.')
       
       // 폼 초기화
       setFile(null)
@@ -136,6 +175,7 @@ export function UploadForm({ profile }: UploadFormProps) {
       alert('❌ 업로드 실패: ' + error.message)
     } finally {
       setUploading(false)
+      setUploadProgress('')
     }
   }
 
@@ -174,7 +214,7 @@ export function UploadForm({ profile }: UploadFormProps) {
                 파일을 드래그하거나 클릭하여 선택
               </p>
               <p className="text-sm text-gray-600 mb-4">
-                PDF, DOCX, PPTX, XLSX, HWP, ZIP, 이미지 (최대 50MB)
+                PDF, DOCX, PPTX, XLSX, HWP, ZIP, 이미지 (최대 200MB)
               </p>
               <button
                 type="button"
@@ -305,8 +345,8 @@ export function UploadForm({ profile }: UploadFormProps) {
             disabled={!file || uploading}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-cobalt-600 text-white font-medium rounded-lg hover:bg-cobalt-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
-            <Upload className="h-5 w-5" />
-            {uploading ? '업로드 중...' : '업로드'}
+            {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
+            {uploading ? uploadProgress || '업로드 중...' : '업로드'}
           </button>
         </div>
       </form>

@@ -20,7 +20,7 @@ const ALLOWED_MIME_TYPES = [
   'image/png',
 ]
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+const MAX_FILE_SIZE = 200 * 1024 * 1024 // 200MB
 
 export async function POST(request: NextRequest) {
   try {
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     if (file.size > MAX_FILE_SIZE) {
       console.error('❌ 파일 크기 초과:', file.size)
       return NextResponse.json(
-        { error: '파일 크기는 50MB를 초과할 수 없습니다' },
+        { error: '파일 크기는 200MB를 초과할 수 없습니다' },
         { status: 400 }
       )
     }
