@@ -86,6 +86,9 @@ export function ContentsTable({ materials }: ContentsTableProps) {
 
   // 🆕 파일 미리보기 핸들러 (GCS Signed URL 사용)
   const handlePreview = async (material: any) => {
+    // 팝업 차단 방지: 클릭 이벤트 컨텍스트에서 동기적으로 창 열기
+    const previewWindow = window.open('about:blank', '_blank')
+
     try {
       // Signed URL 발급 받기
       const res = await fetch(`/api/materials/${material.id}/preview`)
@@ -96,18 +99,19 @@ export function ContentsTable({ materials }: ContentsTableProps) {
 
       // Office 파일: Google Docs Viewer로 미리보기
       if (['docx', 'doc', 'pptx', 'ppt', 'xlsx', 'xls'].includes(ext)) {
-        window.open(
-          `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`,
-          '_blank',
-          'noopener,noreferrer'
-        )
+        if (previewWindow) {
+          previewWindow.location.href = `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`
+        }
         return
       }
 
       // PDF, 이미지, 기타: signed URL로 직접 열기
-      window.open(url, '_blank', 'noopener,noreferrer')
+      if (previewWindow) {
+        previewWindow.location.href = url
+      }
     } catch (error) {
       console.error('미리보기 실패:', error)
+      previewWindow?.close()
       alert('미리보기를 열 수 없습니다. 다운로드를 이용해주세요.')
     }
   }
