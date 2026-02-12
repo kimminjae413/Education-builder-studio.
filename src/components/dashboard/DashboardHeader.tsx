@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { UnreadBadge } from '@/components/messages/UnreadBadge'
-import { useUnreadCount } from '@/hooks/useUnreadCount'
+import { useNotificationCounts } from '@/hooks/useNotificationCounts'
 
 // 서버에서 전달받는 사용자 타입
 interface ServerUser {
@@ -38,7 +38,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const unreadCount = useUnreadCount()
+  const { messages: unreadCount } = useNotificationCounts()
 
   const handleLogout = async () => {
     await signOut()

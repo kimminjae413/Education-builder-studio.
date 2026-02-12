@@ -17,7 +17,7 @@ import {
   HelpCircle
 } from 'lucide-react'
 import { UnreadBadge } from '@/components/messages/UnreadBadge'
-import { useUnreadCount } from '@/hooks/useUnreadCount'
+import { useNotificationCounts } from '@/hooks/useNotificationCounts'
 
 interface BottomNavProps {
   profile: any
@@ -25,7 +25,7 @@ interface BottomNavProps {
 
 export function BottomNav({ profile }: BottomNavProps) {
   const pathname = usePathname()
-  const unreadCount = useUnreadCount()
+  const { messages, announcements, inquiries } = useNotificationCounts()
 
   const navItems = [
     {
@@ -52,16 +52,19 @@ export function BottomNav({ profile }: BottomNavProps) {
       href: '/announcements',
       label: '공지',
       icon: Bell,
+      badgeCount: announcements,
     },
     {
       href: '/messages',
       label: '메시지',
       icon: MessageSquare,
+      badgeCount: messages,
     },
     {
       href: '/inquiries',
       label: '문의',
       icon: HelpCircle,
+      badgeCount: inquiries,
     },
     {
       href: '/profile',
@@ -86,8 +89,8 @@ export function BottomNav({ profile }: BottomNavProps) {
           const Icon = item.icon
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
           const isAdminMenu = item.href === '/admin'
-          const isMessages = item.href === '/messages'
-          const hasUnread = isMessages && unreadCount > 0
+          const badgeCount = 'badgeCount' in item ? (item.badgeCount ?? 0) : 0
+          const hasUnread = badgeCount > 0
 
           return (
             <Link
@@ -109,7 +112,7 @@ export function BottomNav({ profile }: BottomNavProps) {
                   isActive && isAdminMenu && 'stroke-[2.5]',
                   hasUnread && !isActive && 'text-red-500 stroke-[2.5]'
                 )} />
-                {isMessages && <UnreadBadge count={unreadCount} />}
+                {hasUnread && <UnreadBadge count={badgeCount} />}
               </div>
               <span className={cn(
                 'text-[10px] font-medium',

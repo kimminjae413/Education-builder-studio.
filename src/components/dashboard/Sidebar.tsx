@@ -17,7 +17,7 @@ import {
   HelpCircle
 } from 'lucide-react'
 import { UnreadBadge } from '@/components/messages/UnreadBadge'
-import { useUnreadCount } from '@/hooks/useUnreadCount'
+import { useNotificationCounts } from '@/hooks/useNotificationCounts'
 
 interface SidebarProps {
   profile: any
@@ -25,7 +25,7 @@ interface SidebarProps {
 
 export function Sidebar({ profile }: SidebarProps) {
   const pathname = usePathname()
-  const unreadCount = useUnreadCount()
+  const { messages, announcements, inquiries } = useNotificationCounts()
 
   const navItems = [
     {
@@ -57,16 +57,19 @@ export function Sidebar({ profile }: SidebarProps) {
       href: '/announcements',
       label: '공지사항',
       icon: Bell,
+      badgeCount: announcements,
     },
     {
       href: '/messages',
       label: '메시지',
       icon: MessageSquare,
+      badgeCount: messages,
     },
     {
       href: '/inquiries',
       label: '1:1 문의',
       icon: HelpCircle,
+      badgeCount: inquiries,
     },
     {
       href: '/profile',
@@ -89,8 +92,8 @@ export function Sidebar({ profile }: SidebarProps) {
       {navItems.map((item) => {
         const Icon = item.icon
         const isActive = pathname === item.href
-        const isMessages = item.href === '/messages'
-        const hasUnread = isMessages && unreadCount > 0
+        const badgeCount = 'badgeCount' in item ? (item.badgeCount ?? 0) : 0
+        const hasUnread = badgeCount > 0
 
         return (
           <Link
@@ -107,7 +110,7 @@ export function Sidebar({ profile }: SidebarProps) {
           >
             <Icon className={cn('h-5 w-5', hasUnread && !isActive && 'text-red-500')} />
             <span>{item.label}</span>
-            {isMessages && <UnreadBadge count={unreadCount} />}
+            {hasUnread && <UnreadBadge count={badgeCount} />}
           </Link>
         )
       })}
