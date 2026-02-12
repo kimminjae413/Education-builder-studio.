@@ -84,32 +84,32 @@ export function ContentsTable({ materials }: ContentsTableProps) {
     }
   }
 
-  // 🆕 파일 미리보기 핸들러
-  const handlePreview = (material: any) => {
-    const ext = material.filename?.split('.').pop()?.toLowerCase() || ''
-    const fileUrl = material.file_url
+  // 🆕 파일 미리보기 핸들러 (GCS Signed URL 사용)
+  const handlePreview = async (material: any) => {
+    try {
+      // Signed URL 발급 받기
+      const res = await fetch(`/api/materials/${material.id}/preview`)
+      if (!res.ok) throw new Error('미리보기 URL 생성 실패')
+      const { url } = await res.json()
 
-    // PDF, 이미지: 브라우저에서 직접 열기
-    if (['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
-      window.open(fileUrl, '_blank', 'noopener,noreferrer')
-      return
+      const ext = material.filename?.split('.').pop()?.toLowerCase() || ''
+
+      // Office 파일: Google Docs Viewer로 미리보기
+      if (['docx', 'doc', 'pptx', 'ppt', 'xlsx', 'xls'].includes(ext)) {
+        window.open(
+          `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`,
+          '_blank',
+          'noopener,noreferrer'
+        )
+        return
+      }
+
+      // PDF, 이미지, 기타: signed URL로 직접 열기
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } catch (error) {
+      console.error('미리보기 실패:', error)
+      alert('미리보기를 열 수 없습니다. 다운로드를 이용해주세요.')
     }
-
-    // Office 파일: Google Docs Viewer로 미리보기
-    if (['docx', 'doc', 'pptx', 'ppt', 'xlsx', 'xls'].includes(ext)) {
-      const fullUrl = fileUrl.startsWith('http')
-        ? fileUrl
-        : `${window.location.origin}${fileUrl}`
-      window.open(
-        `https://docs.google.com/gview?url=${encodeURIComponent(fullUrl)}&embedded=true`,
-        '_blank',
-        'noopener,noreferrer'
-      )
-      return
-    }
-
-    // 나머지(HWP, ZIP 등): 다운로드
-    window.open(fileUrl, '_blank', 'noopener,noreferrer')
   }
 
   // 리뷰 모달 열기
