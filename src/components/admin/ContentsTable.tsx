@@ -79,17 +79,25 @@ export function ContentsTable({ materials }: ContentsTableProps) {
     }
   }
 
-  // 🆕 파일 미리보기 핸들러 (서버에서 Office→PDF 변환 후 브라우저로 표시)
+  // 🆕 파일 미리보기 핸들러
+  // PDF 변환 성공 → 브라우저에서 직접 표시
+  // 변환 실패 → MS Office Online Viewer로 표시
   const handlePreview = async (material: any) => {
     const previewWindow = window.open('about:blank', '_blank')
 
     try {
       const res = await fetch(`/api/materials/${material.id}/preview`)
       if (!res.ok) throw new Error('미리보기 URL 생성 실패')
-      const { url } = await res.json()
+      const { url, type } = await res.json()
 
       if (previewWindow) {
-        previewWindow.location.href = url
+        if (type === 'office') {
+          // PDF 변환 실패 시 MS Office Online Viewer 폴백
+          previewWindow.location.href = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`
+        } else {
+          // PDF, 이미지 등: 직접 열기
+          previewWindow.location.href = url
+        }
       }
     } catch (error) {
       console.error('미리보기 실패:', error)
