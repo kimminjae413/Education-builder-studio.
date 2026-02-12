@@ -23,22 +23,19 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  const profile = await getProfile(user.uid)
+  // 모든 DB 쿼리를 병렬 실행 (verifyIdToken, getProfile은 cache()로 레이아웃과 중복 제거됨)
+  const [profile, materialsData, pinnedAnnouncements] = await Promise.all([
+    getProfile(user.uid),
+    getMaterialsWithCount(user.uid),
+    getPinnedAnnouncements().catch(() => [] as any[]),
+  ])
+
   if (!profile) {
     redirect('/login?error=no-profile')
   }
 
-  const { materials, count: materialsCount } = await getMaterialsWithCount(user.uid)
-
+  const { materials, count: materialsCount } = materialsData
   const approvedCount = materials?.filter(m => m.status === 'approved').length || 0
-
-  // 고정 공지사항 가져오기
-  let pinnedAnnouncements: any[] = []
-  try {
-    pinnedAnnouncements = await getPinnedAnnouncements()
-  } catch {
-    // 테이블이 아직 없을 수 있음
-  }
 
   return (
     <div className="space-y-6">

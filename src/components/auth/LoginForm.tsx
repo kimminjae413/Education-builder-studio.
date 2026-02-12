@@ -41,17 +41,12 @@ export function LoginForm() {
       if (result.user) {
         console.log('✅ Login success:', result.user.email)
 
-        // ID 토큰을 쿠키에 저장 (서버 API를 통해)
         const token = await getIdToken()
         if (token) {
-          // 서버 API를 통해 쿠키 설정 (대시보드 접근에 필수)
-          await fetch('/api/auth/set-token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token }),
-          })
+          // 쿠키를 클라이언트에서 직접 설정 (API 콜드스타트 대기 제거)
+          document.cookie = `firebase-token=${token}; path=/; max-age=3600; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`
 
-          // 프로필 확인/생성은 백그라운드로 처리 (대시보드 이동을 막지 않음)
+          // 프로필 확인/생성은 백그라운드로 처리
           const userName = result.user.email?.split('@')[0] || ''
           fetch('/api/profile', {
             headers: { 'Authorization': `Bearer ${token}` },
@@ -69,7 +64,7 @@ export function LoginForm() {
           }).catch(() => {})
         }
 
-        // 쿠키 설정 후 즉시 대시보드로 이동
+        // 즉시 대시보드로 이동
         window.location.href = '/dashboard'
       }
     } catch (err: any) {

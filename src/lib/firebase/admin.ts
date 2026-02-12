@@ -3,6 +3,7 @@
 
 import { initializeApp, getApps, cert, App } from 'firebase-admin/app'
 import { getAuth, Auth } from 'firebase-admin/auth'
+import { cache } from 'react'
 
 let adminApp: App
 let adminAuth: Auth
@@ -94,8 +95,8 @@ export async function listUsers(maxResults: number = 100) {
   return auth.listUsers(maxResults)
 }
 
-// ID 토큰 검증
-export async function verifyIdToken(idToken: string) {
+// ID 토큰 검증 (React cache로 같은 요청 내 중복 호출 제거)
+export const verifyIdToken = cache(async (idToken: string) => {
   const auth = getAdminAuth()
   return auth.verifyIdToken(idToken)
-}
+})

@@ -2,6 +2,7 @@
 // Cloud SQL 쿼리 함수
 
 import { query, withTransaction } from './client'
+import { cache } from 'react'
 
 // ==========================================
 // Profiles (사용자 프로필)
@@ -22,7 +23,7 @@ export interface Profile {
   updated_at: Date
 }
 
-export async function getProfile(userId: string): Promise<Profile | null> {
+export const getProfile = cache(async (userId: string): Promise<Profile | null> => {
   const result = await query<Profile>(
     'SELECT * FROM profiles WHERE id = $1',
     [userId]
@@ -33,7 +34,7 @@ export async function getProfile(userId: string): Promise<Profile | null> {
     if (match) profile.profile_image_url = `/api/storage/${match[1]}`
   }
   return profile
-}
+})
 
 export async function createProfile(profile: Partial<Profile>): Promise<Profile> {
   const result = await query<Profile>(
