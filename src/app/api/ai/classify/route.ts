@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('❌ 자료 분류 오류:', error)
     return NextResponse.json({
-      error: error.message || 'Internal server error',
+      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : (error.message || 'Internal server error'),
     }, { status: 500 })
   }
 }

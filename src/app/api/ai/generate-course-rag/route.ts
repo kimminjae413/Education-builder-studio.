@@ -52,9 +52,6 @@ export async function POST(request: NextRequest) {
 
     console.log('📝 교육과정 생성 요청:', courseRequest)
 
-    // AI 사용량 증가
-    await incrementAIUsage(user.uid)
-
     let result
 
     if (useRAG) {
@@ -77,6 +74,9 @@ export async function POST(request: NextRequest) {
       sources: result.sources.length,
       timeMs: result.metadata.generationTimeMs,
     })
+
+    // AI 사용량 증가 (성공 후)
+    await incrementAIUsage(user.uid)
 
     // 과정 저장
     const course = await createCourse({
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('❌ 교육과정 생성 오류:', error)
     return NextResponse.json({
-      error: error.message || 'Internal server error',
+      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : (error.message || 'Internal server error'),
     }, { status: 500 })
   }
 }
@@ -132,6 +132,12 @@ export async function POST(request: NextRequest) {
 // GET: RAG 컨텍스트만 검색 (테스트용)
 export async function GET(request: NextRequest) {
   try {
+    // 인증 확인
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const searchParams = request.nextUrl.searchParams
     const query = searchParams.get('q')
 
@@ -158,6 +164,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('❌ RAG 검색 오류:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message }, { status: 500 })
   }
 }

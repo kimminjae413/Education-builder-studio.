@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('❌ 제약조건 추출 오류:', error)
     return NextResponse.json({
-      error: error.message || 'Internal server error',
+      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : (error.message || 'Internal server error'),
     }, { status: 500 })
   }
 }
@@ -78,6 +78,12 @@ export async function POST(request: NextRequest) {
 // GET: 샘플 추출 (테스트용)
 export async function GET(request: NextRequest) {
   try {
+    // 인증 확인
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const searchParams = request.nextUrl.searchParams
     const text = searchParams.get('text')
 
@@ -102,6 +108,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('❌ 테스트 추출 오류:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message }, { status: 500 })
   }
 }

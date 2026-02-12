@@ -3,6 +3,11 @@ import { NextResponse } from 'next/server'
 import { generateText, validateGeminiAPI } from '@/lib/ai/gemini'
 
 export async function GET() {
+  // Production guard - 프로덕션에서는 접근 차단
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not available in production' }, { status: 404 })
+  }
+
   try {
     // 1. API 키 유효성 확인
     const isValid = await validateGeminiAPI()
@@ -41,6 +46,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  // Production guard - 프로덕션에서는 접근 차단
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not available in production' }, { status: 404 })
+  }
+
   try {
     const { prompt } = await request.json()
 

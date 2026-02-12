@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('❌ 피드백 저장 오류:', error)
     return NextResponse.json({
-      error: error.message || 'Internal server error',
+      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : (error.message || 'Internal server error'),
     }, { status: 500 })
   }
 }
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('❌ 피드백 힌트 조회 오류:', error)
     return NextResponse.json({
-      error: error.message || 'Internal server error',
+      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : (error.message || 'Internal server error'),
     }, { status: 500 })
   }
 }

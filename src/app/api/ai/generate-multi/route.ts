@@ -52,13 +52,13 @@ export async function POST(request: NextRequest) {
 
     console.log('📝 복수 설계안 생성 요청:', courseRequest)
 
-    // AI 사용량 증가
-    await incrementAIUsage(user.uid)
-
     if (singleType && COURSE_TYPES[singleType as CourseType]) {
       // 단일 타입 생성
       console.log(`🎯 단일 타입(${singleType}) 생성 시작...`)
       const result = await generateSingleCourse(courseRequest, singleType as CourseType)
+
+      // AI 사용량 증가 (성공 후)
+      await incrementAIUsage(user.uid)
 
       return NextResponse.json({
         success: true,
@@ -70,6 +70,9 @@ export async function POST(request: NextRequest) {
     // 3가지 타입 동시 생성
     console.log('🚀 3가지 타입 동시 생성 시작...')
     const result = await generateMultipleCourses(courseRequest)
+
+    // AI 사용량 증가 (성공 후)
+    await incrementAIUsage(user.uid)
 
     console.log('✅ 생성 완료:', {
       types: result.courses.map(c => c.type),
@@ -87,7 +90,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('❌ 복수 설계안 생성 오류:', error)
     return NextResponse.json({
-      error: error.message || 'Internal server error',
+      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : (error.message || 'Internal server error'),
     }, { status: 500 })
   }
 }

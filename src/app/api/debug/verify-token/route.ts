@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyIdToken } from '@/lib/firebase/admin'
 
 export async function POST(request: NextRequest) {
+  // Production guard - 프로덕션에서는 접근 차단
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not available in production' }, { status: 404 })
+  }
+
   try {
     const { token } = await request.json()
 
@@ -38,6 +43,11 @@ export async function POST(request: NextRequest) {
 
 // GET for simple test and key format check
 export async function GET() {
+  // Production guard - 프로덕션에서는 접근 차단
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not available in production' }, { status: 404 })
+  }
+
   const key = process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_KEY
   let keyInfo: any = { hasKey: false }
 

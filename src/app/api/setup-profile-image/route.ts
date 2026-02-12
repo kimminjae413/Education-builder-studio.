@@ -5,6 +5,11 @@ import { NextResponse } from 'next/server'
 import { query } from '@/lib/db/client'
 
 export async function GET() {
+  // Production guard - 프로덕션에서는 접근 차단
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not available in production' }, { status: 404 })
+  }
+
   try {
     // profile_image_url 컬럼이 없으면 추가
     await query(`

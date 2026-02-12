@@ -45,7 +45,9 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
   try {
     const result = await pool.query<T>(text, params)
     const duration = Date.now() - start
-    console.log('Executed query', { text: text.substring(0, 50), duration, rows: result.rowCount })
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Executed query', { text: text.substring(0, 50), duration, rows: result.rowCount })
+    }
     return result
   } catch (error) {
     console.error('Query error', { text: text.substring(0, 50), error })

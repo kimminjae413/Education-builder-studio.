@@ -5,6 +5,11 @@ import { NextResponse } from 'next/server'
 import { query } from '@/lib/db/client'
 
 export async function POST() {
+  // Production guard - 프로덕션에서는 접근 차단
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not available in production' }, { status: 404 })
+  }
+
   try {
     // 1. teaching_materials에 사용률 컬럼 추가
     await query(`

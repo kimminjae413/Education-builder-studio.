@@ -40,7 +40,7 @@ export async function GET(
   } catch (error: any) {
     console.error('❌ 리스팅 조회 오류:', error)
     return NextResponse.json({
-      error: error.message || 'Internal server error',
+      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : (error.message || 'Internal server error'),
     }, { status: 500 })
   }
 }
@@ -84,7 +84,7 @@ export async function POST(
   } catch (error: any) {
     console.error('❌ 구매 오류:', error)
     return NextResponse.json({
-      error: error.message || 'Internal server error',
+      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : (error.message || 'Internal server error'),
     }, { status: 500 })
   }
 }
@@ -134,7 +134,7 @@ export async function PATCH(
   } catch (error: any) {
     console.error('❌ 리스팅 수정 오류:', error)
     return NextResponse.json({
-      error: error.message || 'Internal server error',
+      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : (error.message || 'Internal server error'),
     }, { status: 500 })
   }
 }

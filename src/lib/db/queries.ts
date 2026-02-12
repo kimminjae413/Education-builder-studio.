@@ -48,12 +48,19 @@ export async function createProfile(profile: Partial<Profile>): Promise<Profile>
   return result.rows[0]
 }
 
+// updateProfile 허용 컬럼 화이트리스트 (SQL injection 방어)
+const PROFILE_ALLOWED_COLUMNS = [
+  'name', 'phone', 'bio', 'profile_image_url', 'role', 'rank', 'points',
+  'ai_usage_count_this_month', 'manual_rank_override', 'manual_rank_reason', 'rank_updated_at',
+]
+
 export async function updateProfile(
   userId: string,
   updates: Partial<Profile>
 ): Promise<Profile | null> {
-  const fields = Object.keys(updates)
-  const values = Object.values(updates)
+  const fields = Object.keys(updates).filter(f => PROFILE_ALLOWED_COLUMNS.includes(f))
+  if (fields.length === 0) return null
+  const values = fields.map(f => (updates as Record<string, unknown>)[f])
   const setClause = fields.map((f, i) => `${f} = $${i + 2}`).join(', ')
 
   const result = await query<Profile>(
@@ -173,12 +180,26 @@ export async function createMaterial(
   return result.rows[0]
 }
 
+// updateMaterial 허용 컬럼 화이트리스트 (SQL injection 방어)
+const MATERIAL_ALLOWED_COLUMNS = [
+  'title', 'description', 'content_text', 'target_category', 'subject_category',
+  'tool_categories', 'method_categories', 'difficulty', 'learning_objectives',
+  'status', 'indexed', 'chunking_status', 'chunk_count', 'gcs_path',
+  'reference_count', 'citation_count', 'content_type', 'auto_category', 'auto_tags',
+  'review_note', 'reviewed_at', 'reviewed_by', 'seed_approved_at', 'seed_approved_by',
+  'is_seed_data', 'usage_count', 'download_count', 'bookmark_count', 'rating', 'rating_count',
+  'view_count', 'satisfaction_score', 'auto_main_category', 'auto_sub_category',
+  'auto_content_type', 'auto_target_grade', 'auto_difficulty', 'classification_confidence',
+  'file_url', 'filename', 'metadata',
+]
+
 export async function updateMaterial(
   id: string,
   updates: Partial<TeachingMaterial>
 ): Promise<TeachingMaterial | null> {
-  const fields = Object.keys(updates)
-  const values = Object.values(updates)
+  const fields = Object.keys(updates).filter(f => MATERIAL_ALLOWED_COLUMNS.includes(f))
+  if (fields.length === 0) return null
+  const values = fields.map(f => (updates as Record<string, unknown>)[f])
   const setClause = fields.map((f, i) => `${f} = $${i + 2}`).join(', ')
 
   const result = await query<TeachingMaterial>(

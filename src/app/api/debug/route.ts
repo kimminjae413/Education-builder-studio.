@@ -4,6 +4,11 @@ import { query } from '@/lib/db/client'
 import { getAuthenticatedUser } from '@/lib/firebase/server-auth'
 
 export async function GET(request: NextRequest) {
+  // Production guard - 프로덕션에서는 접근 차단
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not available in production' }, { status: 404 })
+  }
+
   const results: Record<string, unknown> = {}
 
   // Admin SDK 초기화 테스트

@@ -238,7 +238,7 @@ ${ragPromptSection}
         activities: courseData.sessions || [],
         materials_needed: courseData.overall_materials,
         ai_model_used: 'gemini-2.0-flash',
-        ai_prompt_used: prompt,
+        ai_prompt_used: process.env.NODE_ENV === 'production' ? undefined : prompt,
         generation_time_ms: generationTime,
         status: 'completed',
         recommended_materials: recommendedMaterials.map((m) => m.id),
@@ -294,7 +294,7 @@ ${ragPromptSection}
   } catch (error: unknown) {
     // 여기 도달 = AI 호출 자체 실패 등 → 카운팅 없음
     console.error('AI generation error:', error)
-    const message = error instanceof Error ? error.message : '과정 생성 실패'
+    const message = process.env.NODE_ENV === 'production' ? '과정 생성 실패' : (error instanceof Error ? error.message : '과정 생성 실패')
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

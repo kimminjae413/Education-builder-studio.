@@ -4,6 +4,11 @@
 import { NextResponse } from 'next/server'
 
 export async function GET() {
+  // Production guard - 프로덕션에서는 접근 차단
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not available in production' }, { status: 404 })
+  }
+
   try {
     const firebaseKey = process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_KEY
     const gcsKey = process.env.GCS_SERVICE_ACCOUNT_KEY

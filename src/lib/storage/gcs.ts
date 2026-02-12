@@ -200,7 +200,10 @@ export async function configureCors(): Promise<void> {
 
   await bucket.setCorsConfiguration([
     {
-      origin: ['*'], // 프로덕션에서는 도메인 지정
+      origin: [
+        'https://educationbuilderstudio.netlify.app',
+        process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+      ],
       method: ['GET', 'PUT', 'POST', 'DELETE'],
       maxAgeSeconds: 3600,
       responseHeader: ['Content-Type', 'Authorization'],

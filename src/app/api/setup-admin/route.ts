@@ -6,6 +6,11 @@ import { getAdminAuth } from '@/lib/firebase/admin'
 import { query } from '@/lib/db/client'
 
 export async function POST(request: NextRequest) {
+  // Production guard - 프로덕션에서는 접근 차단
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not available in production' }, { status: 404 })
+  }
+
   try {
     const body = await request.json()
     const { email, password, secretKey } = body

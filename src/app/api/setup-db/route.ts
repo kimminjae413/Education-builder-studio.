@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server'
 import { query } from '@/lib/db/client'
 
 export async function GET() {
+  // Production guard - 프로덕션에서는 접근 차단
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not available in production' }, { status: 404 })
+  }
+
   try {
     // profiles 테이블 생성
     await query(`

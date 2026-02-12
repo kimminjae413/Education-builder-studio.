@@ -10,12 +10,13 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({ success: true })
 
-    // 서버 사이드에서 쿠키 설정 (httpOnly 없이 설정하여 클라이언트에서도 접근 가능)
+    // 서버 사이드에서 쿠키 설정 (httpOnly로 XSS 공격 방어)
     response.cookies.set('firebase-token', token, {
       path: '/',
       maxAge: 60 * 60, // 1시간
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
     })
 
     return response
