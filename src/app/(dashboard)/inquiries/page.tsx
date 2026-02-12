@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { Plus, Clock, CheckCircle, AlertCircle, XCircle, MessageSquare, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { InquiryForm } from '@/components/inquiries/InquiryForm'
+import { getFirebaseAuth } from '@/lib/firebase/client'
+import { onAuthStateChanged } from 'firebase/auth'
 
 type InquiryStatus = 'pending' | 'in_progress' | 'resolved' | 'closed'
 
@@ -36,28 +38,26 @@ export default function InquiriesPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
 
-  async function fetchInquiries() {
-    try {
-      const { getAuth } = await import('firebase/auth')
-      const auth = getAuth()
-      const token = await auth.currentUser?.getIdToken()
-
-      const res = await fetch('/api/inquiries', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setInquiries(data.inquiries)
-      }
-    } catch (error) {
-      console.error('문의 목록 조회 오류:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
-    fetchInquiries()
+    const auth = getFirebaseAuth()
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const token = await user.getIdToken()
+          const res = await fetch('/api/inquiries', {
+            headers: { 'Authorization': `Bearer ${token}` },
+          })
+          if (res.ok) {
+            const data = await res.json()
+            setInquiries(data.inquiries)
+          }
+        } catch (error) {
+          console.error('문의 목록 조회 오류:', error)
+        }
+      }
+      setLoading(false)
+    })
+    return () => unsubscribe()
   }, [])
 
   function handleCreated(inquiry: Inquiry) {
