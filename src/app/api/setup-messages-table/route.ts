@@ -13,9 +13,20 @@ export async function POST(request: NextRequest) {
 
   try {
     // 0. profiles 테이블 컬럼 확인 (메시지 기능에 필요)
-    await query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS profile_image_url TEXT`).catch(() => {})
-    await query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS rank VARCHAR(50) DEFAULT 'newcomer'`).catch(() => {})
-    console.log('✅ profiles 컬럼 확인')
+    const migrations = []
+    try {
+      await query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS profile_image_url TEXT`)
+      migrations.push('profile_image_url added')
+    } catch (e: unknown) {
+      migrations.push(`profile_image_url: ${e instanceof Error ? e.message : 'failed'}`)
+    }
+    try {
+      await query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS rank VARCHAR(50) DEFAULT 'newcomer'`)
+      migrations.push('rank added')
+    } catch (e: unknown) {
+      migrations.push(`rank: ${e instanceof Error ? e.message : 'failed'}`)
+    }
+    console.log('✅ profiles 컬럼 확인:', migrations)
 
     // 1. conversations 테이블
     await query(`
@@ -68,6 +79,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Messages tables created successfully',
       tables: tables.rows.map((r: any) => r.table_name),
+      migrations,
     })
   } catch (error: unknown) {
     console.error('❌ 메시지 테이블 생성 오류:', error)
