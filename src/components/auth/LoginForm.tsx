@@ -44,53 +44,32 @@ export function LoginForm() {
         // ID 토큰을 쿠키에 저장 (서버 API를 통해)
         const token = await getIdToken()
         if (token) {
-          // 서버 API를 통해 쿠키 설정
-          const setCookieRes = await fetch('/api/auth/set-token', {
+          // 서버 API를 통해 쿠키 설정 (대시보드 접근에 필수)
+          await fetch('/api/auth/set-token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token }),
           })
-          console.log('Cookie set response:', setCookieRes.status)
 
-          // 프로필 확인 및 생성 (없으면 생성)
-          try {
-            console.log('Checking profile...')
-            const profileRes = await fetch('/api/profile', {
-              headers: { 'Authorization': `Bearer ${token}` },
-            })
-            console.log('Profile check response:', profileRes.status)
-
+          // 프로필 확인/생성은 백그라운드로 처리 (대시보드 이동을 막지 않음)
+          const userName = result.user.email?.split('@')[0] || ''
+          fetch('/api/profile', {
+            headers: { 'Authorization': `Bearer ${token}` },
+          }).then(async (profileRes) => {
             if (profileRes.status === 404) {
-              // 프로필이 없으면 생성
-              console.log('Profile not found, creating...')
-              const createRes = await fetch('/api/profile', {
+              await fetch('/api/profile', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
                   'Authorization': `Bearer ${token}`,
                 },
-                body: JSON.stringify({ name: result.user.email?.split('@')[0] }),
+                body: JSON.stringify({ name: userName }),
               })
-              console.log('Profile creation response:', createRes.status)
-
-              if (!createRes.ok) {
-                const errData = await createRes.json()
-                console.error('Profile creation failed:', errData)
-              } else {
-                const newProfile = await createRes.json()
-                console.log('Profile created:', newProfile)
-              }
-            } else if (!profileRes.ok) {
-              console.error('Profile check failed:', profileRes.status)
-            } else {
-              console.log('Profile exists')
             }
-          } catch (profileErr) {
-            console.error('Profile check/create error:', profileErr)
-          }
+          }).catch(() => {})
         }
 
-        // 쿠키 설정 후 대시보드로 이동
+        // 쿠키 설정 후 즉시 대시보드로 이동
         window.location.href = '/dashboard'
       }
     } catch (err: any) {

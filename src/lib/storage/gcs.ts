@@ -101,10 +101,7 @@ export async function uploadFile(
     metadata: metadata ? { metadata } : undefined,
   })
 
-  // 파일을 공개로 설정 (Public URL 접근 가능하도록)
-  await file.makePublic()
-
-  // Public URL 반환
+  // Public URL 반환 (버킷 IAM에서 allUsers:objectViewer 설정 필요)
   return getPublicUrl(destinationPath)
 }
 
