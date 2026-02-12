@@ -12,6 +12,11 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // 0. profiles 테이블 컬럼 확인 (메시지 기능에 필요)
+    await query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS profile_image_url TEXT`).catch(() => {})
+    await query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS rank VARCHAR(50) DEFAULT 'newcomer'`).catch(() => {})
+    console.log('✅ profiles 컬럼 확인')
+
     // 1. conversations 테이블
     await query(`
       CREATE TABLE IF NOT EXISTS conversations (
