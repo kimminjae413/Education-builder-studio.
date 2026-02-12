@@ -82,6 +82,38 @@ export async function getAnnouncementById(id: string): Promise<AnnouncementWithA
   return result.rows[0] || null
 }
 
+// ===== 읽음 처리 =====
+
+/**
+ * 공지사항 읽음 처리 (마지막 확인 시각 기록)
+ */
+export async function markAnnouncementsRead(userId: string): Promise<void> {
+  await query(
+    `INSERT INTO announcement_reads (user_id, last_read_at)
+     VALUES ($1, NOW())
+     ON CONFLICT (user_id)
+     DO UPDATE SET last_read_at = NOW()`,
+    [userId]
+  )
+}
+
+/**
+ * 안읽은 공지사항 수 조회
+ */
+export async function getUnreadAnnouncementCount(userId: string): Promise<number> {
+  const result = await query<{ count: number }>(
+    `SELECT COUNT(*)::int as count
+     FROM announcements
+     WHERE is_published = true
+     AND created_at > COALESCE(
+       (SELECT last_read_at FROM announcement_reads WHERE user_id = $1),
+       '1970-01-01'
+     )`,
+    [userId]
+  )
+  return result.rows[0]?.count || 0
+}
+
 // ===== 관리자 API =====
 
 /**

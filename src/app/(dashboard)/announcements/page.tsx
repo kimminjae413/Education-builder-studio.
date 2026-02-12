@@ -2,7 +2,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { verifyIdToken } from '@/lib/firebase/admin'
-import { getPublishedAnnouncements } from '@/lib/db/announcements'
+import { getPublishedAnnouncements, markAnnouncementsRead } from '@/lib/db/announcements'
 import Link from 'next/link'
 import { Pin, Eye, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
@@ -12,13 +12,18 @@ export default async function AnnouncementsPage() {
   const token = cookieStore.get('firebase-token')?.value
   if (!token) { redirect('/login') }
 
+  let uid: string
   try {
-    await verifyIdToken(token)
+    const decoded = await verifyIdToken(token)
+    uid = decoded.uid
   } catch {
     redirect('/login')
   }
 
   const { announcements, total } = await getPublishedAnnouncements(50, 0)
+
+  // 공지사항 페이지 방문 → 읽음 처리 (뱃지 제거)
+  markAnnouncementsRead(uid).catch(() => {})
 
   return (
     <div className="space-y-6">

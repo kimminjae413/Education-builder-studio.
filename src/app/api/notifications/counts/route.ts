@@ -24,12 +24,16 @@ export async function GET(request: NextRequest) {
          AND (c.participant_1 = $1 OR c.participant_2 = $1)`,
         [user.uid]
       ),
-      // 2) 최근 7일 내 새 공지사항 수
+      // 2) 유저가 아직 확인하지 않은 새 공지사항 수
       query<{ count: number }>(
         `SELECT COUNT(*)::int as count
          FROM announcements
          WHERE is_published = true
-         AND created_at > NOW() - INTERVAL '7 days'`
+         AND created_at > COALESCE(
+           (SELECT last_read_at FROM announcement_reads WHERE user_id = $1),
+           '1970-01-01'
+         )`,
+        [user.uid]
       ),
       // 3) 관리자 답변이 있는데 유저가 아직 확인 안 한 문의 수
       // (마지막 답글이 관리자 답변인 문의)

@@ -2,9 +2,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Clock, CheckCircle, AlertCircle, XCircle, Shield, User, Send } from 'lucide-react'
+import { Clock, CheckCircle, AlertCircle, XCircle, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
-import { getFirebaseAuth } from '@/lib/firebase/client'
 
 type InquiryStatus = 'pending' | 'in_progress' | 'resolved' | 'closed'
 
@@ -43,42 +42,10 @@ const STATUS_CONFIG: Record<InquiryStatus, {
 }
 
 export function InquiryThread({ inquiry, initialReplies }: Props) {
-  const [replies, setReplies] = useState(initialReplies)
-  const [replyContent, setReplyContent] = useState('')
-  const [sending, setSending] = useState(false)
+  const [replies] = useState(initialReplies)
 
   const config = STATUS_CONFIG[inquiry.status]
   const StatusIcon = config.icon
-  const canReply = inquiry.status !== 'closed'
-
-  async function handleReply(e: React.FormEvent) {
-    e.preventDefault()
-    if (!replyContent.trim() || !canReply) return
-
-    setSending(true)
-    try {
-      const auth = getFirebaseAuth()
-      const token = await auth.currentUser?.getIdToken()
-
-      const res = await fetch(`/api/inquiries/${inquiry.id}/reply`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ content: replyContent }),
-      })
-      if (res.ok) {
-        const { reply } = await res.json()
-        setReplies(prev => [...prev, { ...reply, author_name: '나' }])
-        setReplyContent('')
-      }
-    } catch (error) {
-      console.error('답글 오류:', error)
-    } finally {
-      setSending(false)
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -116,14 +83,8 @@ export function InquiryThread({ inquiry, initialReplies }: Props) {
             )}
           >
             <div className="flex items-center gap-2 mb-2 text-xs">
-              {reply.is_admin ? (
-                <Shield className="w-3.5 h-3.5 text-cobalt-600" />
-              ) : (
-                <User className="w-3.5 h-3.5 text-gray-500" />
-              )}
-              <span className={cn('font-medium', reply.is_admin ? 'text-cobalt-700' : 'text-gray-700')}>
-                {reply.is_admin ? '관리자' : reply.author_name}
-              </span>
+              <Shield className="w-3.5 h-3.5 text-cobalt-600" />
+              <span className="font-medium text-cobalt-700">관리자</span>
               <span className="text-gray-400">
                 {new Date(reply.created_at).toLocaleString('ko-KR')}
               </span>
@@ -139,30 +100,18 @@ export function InquiryThread({ inquiry, initialReplies }: Props) {
         )}
       </div>
 
-      {/* 답글 폼 */}
-      {canReply ? (
-        <form onSubmit={handleReply} className="bg-white border rounded-xl p-4">
-          <textarea
-            value={replyContent}
-            onChange={(e) => setReplyContent(e.target.value)}
-            rows={3}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-cobalt-500 focus:border-cobalt-500 outline-none resize-y text-sm"
-            placeholder="추가 내용을 입력해주세요..."
-          />
-          <div className="flex justify-end mt-3">
-            <button
-              type="submit"
-              disabled={sending || !replyContent.trim()}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-cobalt-500 text-white text-sm font-medium rounded-lg hover:bg-cobalt-600 transition-colors disabled:opacity-50"
-            >
-              <Send className="w-4 h-4" />
-              {sending ? '전송 중...' : '답글 보내기'}
-            </button>
-          </div>
-        </form>
-      ) : (
+      {/* 상태 안내 */}
+      {inquiry.status === 'closed' ? (
         <div className="text-center py-4 text-sm text-gray-500 bg-gray-50 rounded-xl">
           이 문의는 종료되었습니다
+        </div>
+      ) : inquiry.status === 'resolved' ? (
+        <div className="text-center py-4 text-sm text-green-600 bg-green-50 rounded-xl">
+          답변이 완료되었습니다
+        </div>
+      ) : (
+        <div className="text-center py-4 text-sm text-gray-500 bg-gray-50 rounded-xl">
+          관리자 답변을 기다리고 있습니다
         </div>
       )}
     </div>

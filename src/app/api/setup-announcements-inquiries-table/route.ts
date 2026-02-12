@@ -33,6 +33,15 @@ export async function POST(request: NextRequest) {
     await query(`CREATE INDEX IF NOT EXISTS idx_announcements_author ON announcements(author_id)`)
     console.log('announcements 인덱스 생성')
 
+    // 1-1. announcement_reads 테이블 (유저별 읽음 시각)
+    await query(`
+      CREATE TABLE IF NOT EXISTS announcement_reads (
+        user_id TEXT PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
+        last_read_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `)
+    console.log('announcement_reads 테이블 생성')
+
     // 2. inquiries 테이블
     await query(`
       CREATE TABLE IF NOT EXISTS inquiries (
@@ -73,7 +82,7 @@ export async function POST(request: NextRequest) {
     const tables = await query(`
       SELECT table_name FROM information_schema.tables
       WHERE table_schema = 'public'
-      AND table_name IN ('announcements', 'inquiries', 'inquiry_replies')
+      AND table_name IN ('announcements', 'announcement_reads', 'inquiries', 'inquiry_replies')
       ORDER BY table_name
     `)
 
