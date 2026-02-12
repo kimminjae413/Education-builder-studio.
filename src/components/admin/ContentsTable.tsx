@@ -86,8 +86,30 @@ export function ContentsTable({ materials }: ContentsTableProps) {
 
   // 🆕 파일 미리보기 핸들러
   const handlePreview = (material: any) => {
-    // 새 창에서 파일 열기
-    window.open(material.file_url, '_blank', 'noopener,noreferrer')
+    const ext = material.filename?.split('.').pop()?.toLowerCase() || ''
+    const fileUrl = material.file_url
+
+    // PDF, 이미지: 브라우저에서 직접 열기
+    if (['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+      window.open(fileUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
+
+    // Office 파일: Google Docs Viewer로 미리보기
+    if (['docx', 'doc', 'pptx', 'ppt', 'xlsx', 'xls'].includes(ext)) {
+      const fullUrl = fileUrl.startsWith('http')
+        ? fileUrl
+        : `${window.location.origin}${fileUrl}`
+      window.open(
+        `https://docs.google.com/gview?url=${encodeURIComponent(fullUrl)}&embedded=true`,
+        '_blank',
+        'noopener,noreferrer'
+      )
+      return
+    }
+
+    // 나머지(HWP, ZIP 등): 다운로드
+    window.open(fileUrl, '_blank', 'noopener,noreferrer')
   }
 
   // 리뷰 모달 열기

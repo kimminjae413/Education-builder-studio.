@@ -30,12 +30,25 @@ export async function GET(
       webp: 'image/webp',
       svg: 'image/svg+xml',
       pdf: 'application/pdf',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      doc: 'application/msword',
+      pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      ppt: 'application/vnd.ms-powerpoint',
+      xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      xls: 'application/vnd.ms-excel',
+      hwp: 'application/x-hwp',
+      zip: 'application/zip',
     }
     const contentType = contentTypeMap[ext || ''] || 'application/octet-stream'
+
+    // 브라우저에서 인라인 표시 가능한 타입
+    const inlineTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'application/pdf']
+    const disposition = inlineTypes.includes(contentType) ? 'inline' : `attachment; filename="${filePath.split('/').pop()}"`
 
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         'Content-Type': contentType,
+        'Content-Disposition': disposition,
         'Cache-Control': 'public, max-age=86400, s-maxage=86400',
       },
     })
