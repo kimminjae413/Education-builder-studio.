@@ -33,7 +33,7 @@ export async function GET(
     }
     const contentType = contentTypeMap[ext || ''] || 'application/octet-stream'
 
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       headers: {
         'Content-Type': contentType,
         'Cache-Control': 'public, max-age=86400, s-maxage=86400',
