@@ -80,25 +80,37 @@ export function ContentsTable({ materials }: ContentsTableProps) {
   }
 
   // 🆕 파일 미리보기 핸들러
-  // PDF 변환 성공 → 브라우저에서 직접 표시
-  // 변환 실패 → MS Office Online Viewer로 표시
+  // Office 파일 → 서버에서 PDF 변환 후 표시
+  // PDF/이미지 → 직접 표시
   const handlePreview = async (material: any) => {
     const previewWindow = window.open('about:blank', '_blank')
+    if (previewWindow) {
+      previewWindow.document.title = '미리보기 로딩 중...'
+      previewWindow.document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;color:#666"><p>PDF 변환 중... 잠시만 기다려주세요.</p></div>'
+    }
 
     try {
       const res = await fetch(`/api/materials/${material.id}/preview`)
       if (!res.ok) throw new Error('미리보기 URL 생성 실패')
       const { url, type } = await res.json()
 
-      if (previewWindow) {
-        if (type === 'office') {
-          // PDF 변환 실패 시 MS Office Online Viewer 폴백
-          previewWindow.location.href = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`
-        } else {
-          // PDF, 이미지 등: 직접 열기
-          previewWindow.location.href = url
+      if (type === 'office') {
+        // Office 파일: PDF 변환 API 호출
+        const convertRes = await fetch(`/api/materials/${material.id}/convert-pdf`)
+        if (convertRes.ok) {
+          const { url: pdfUrl } = await convertRes.json()
+          if (previewWindow) previewWindow.location.href = pdfUrl
+          return
         }
+        // 변환 실패: 원본 다운로드 제안
+        if (previewWindow) {
+          previewWindow.document.body.innerHTML = `<div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;gap:16px"><p style="color:#666">PDF 변환에 실패했습니다.</p><a href="${url}" style="padding:12px 24px;background:#3b82f6;color:white;border-radius:8px;text-decoration:none" download>원본 파일 다운로드</a></div>`
+        }
+        return
       }
+
+      // PDF, 이미지 등: 직접 열기
+      if (previewWindow) previewWindow.location.href = url
     } catch (error) {
       console.error('미리보기 실패:', error)
       previewWindow?.close()
