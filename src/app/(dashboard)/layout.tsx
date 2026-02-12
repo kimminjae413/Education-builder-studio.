@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { verifyIdToken } from '@/lib/firebase/admin'
 import { getProfile } from '@/lib/db/queries'
-import { toProxyUrl } from '@/lib/storage/gcs'
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { Sidebar } from '@/components/dashboard/Sidebar'
 import { BottomNav } from '@/components/dashboard/BottomNav'
@@ -29,12 +28,8 @@ export default async function DashboardLayout({
     redirect('/login?error=token-verify-failed')
   }
 
-  // 프로필 정보 가져오기 (GCS URL → 프록시 URL 변환)
-  const rawProfile = await getProfile(user.uid)
-  const profile = rawProfile ? {
-    ...rawProfile,
-    profile_image_url: toProxyUrl(rawProfile.profile_image_url),
-  } : rawProfile
+  // 프로필 정보 가져오기
+  const profile = await getProfile(user.uid)
 
   return (
     <div className="min-h-screen bg-gray-50">

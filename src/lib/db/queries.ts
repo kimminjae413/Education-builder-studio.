@@ -27,7 +27,12 @@ export async function getProfile(userId: string): Promise<Profile | null> {
     'SELECT * FROM profiles WHERE id = $1',
     [userId]
   )
-  return result.rows[0] || null
+  const profile = result.rows[0] || null
+  if (profile?.profile_image_url?.includes('storage.googleapis.com')) {
+    const match = profile.profile_image_url.match(/storage\.googleapis\.com\/[^/]+\/(.+)/)
+    if (match) profile.profile_image_url = `/api/storage/${match[1]}`
+  }
+  return profile
 }
 
 export async function createProfile(profile: Partial<Profile>): Promise<Profile> {
