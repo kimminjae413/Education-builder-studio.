@@ -101,6 +101,9 @@ export async function uploadFile(
     metadata: metadata ? { metadata } : undefined,
   })
 
+  // 파일을 공개로 설정 (Public URL 접근 가능하도록)
+  await file.makePublic()
+
   // Public URL 반환
   return getPublicUrl(destinationPath)
 }
