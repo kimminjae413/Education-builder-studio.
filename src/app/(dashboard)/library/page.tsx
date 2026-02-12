@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { getFirebaseAuth } from '@/lib/firebase/client'
 import { onAuthStateChanged, User } from 'firebase/auth'
+import { SendMessageModal } from '@/components/messages/SendMessageModal'
 
 interface Material {
   id: string
@@ -13,6 +14,7 @@ interface Material {
   subject_category: string
   download_count: number
   rating: number
+  user_id: string
   user_name: string
   created_at: string
 }
@@ -33,11 +35,17 @@ export default function LibraryPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [sortBy, setSortBy] = useState('newest')
+  const [messageTarget, setMessageTarget] = useState<{ id: string; name: string } | null>(null)
+  const [token, setToken] = useState('')
 
   useEffect(() => {
     const auth = getFirebaseAuth()
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user)
+      if (user) {
+        const t = await user.getIdToken()
+        setToken(t)
+      }
     })
     return () => unsubscribe()
   }, [])
@@ -207,9 +215,19 @@ export default function LibraryPage() {
                     <h3 className="font-semibold text-gray-900 truncate">
                       {material.title}
                     </h3>
-                    <p className="text-sm text-gray-500 truncate">
-                      {material.user_name || '익명'}
-                    </p>
+                    {material.user_id && material.user_id !== user?.uid ? (
+                      <button
+                        onClick={() => setMessageTarget({ id: material.user_id, name: material.user_name || '익명' })}
+                        className="text-sm text-cobalt-600 hover:underline truncate block"
+                        title="메시지 보내기"
+                      >
+                        {material.user_name || '익명'}
+                      </button>
+                    ) : (
+                      <p className="text-sm text-gray-500 truncate">
+                        {material.user_name || '익명'}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -263,6 +281,15 @@ export default function LibraryPage() {
             </a>
           </div>
         </div>
+      )}
+      {/* 메시지 전송 모달 */}
+      {messageTarget && token && (
+        <SendMessageModal
+          recipientId={messageTarget.id}
+          recipientName={messageTarget.name}
+          token={token}
+          onClose={() => setMessageTarget(null)}
+        />
       )}
     </div>
   )

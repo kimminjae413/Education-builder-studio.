@@ -4,15 +4,17 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils/cn'
-import { 
-  Home, 
-  Wand2, 
-  Library, 
-  Upload, 
+import {
+  Home,
+  Wand2,
+  Library,
+  Upload,
   Trophy,
   Shield,
-  User
+  User,
+  MessageSquare
 } from 'lucide-react'
+import { UnreadBadge } from '@/components/messages/UnreadBadge'
 
 interface BottomNavProps {
   profile: any
@@ -41,6 +43,11 @@ export function BottomNav({ profile }: BottomNavProps) {
       href: '/contribute',
       label: '기여',
       icon: Upload,
+    },
+    {
+      href: '/messages',
+      label: '메시지',
+      icon: MessageSquare,
     },
     {
       href: '/profile',
@@ -73,18 +80,21 @@ export function BottomNav({ profile }: BottomNavProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 flex-1 py-2 px-1 rounded-lg transition-colors',
+                'flex flex-col items-center justify-center gap-1 flex-1 py-2 px-1 rounded-lg transition-colors relative',
                 isActive && !isAdminMenu && 'text-cobalt-600',
                 isActive && isAdminMenu && 'text-red-600',
                 !isActive && !isAdminMenu && 'text-gray-600 hover:text-cobalt-600',
                 !isActive && isAdminMenu && 'text-gray-600 hover:text-red-600'
               )}
             >
-              <Icon className={cn(
-                'h-5 w-5',
-                isActive && !isAdminMenu && 'stroke-[2.5]',
-                isActive && isAdminMenu && 'stroke-[2.5]'
-              )} />
+              <div className="relative">
+                <Icon className={cn(
+                  'h-5 w-5',
+                  isActive && !isAdminMenu && 'stroke-[2.5]',
+                  isActive && isAdminMenu && 'stroke-[2.5]'
+                )} />
+                {item.href === '/messages' && <UnreadBadge />}
+              </div>
               <span className={cn(
                 'text-[10px] font-medium',
                 isActive && 'font-semibold'

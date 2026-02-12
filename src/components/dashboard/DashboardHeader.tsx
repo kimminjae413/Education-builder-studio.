@@ -16,9 +16,11 @@ import {
   Library,
   Upload,
   Trophy,
-  Shield
+  Shield,
+  MessageSquare
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
+import { UnreadBadge } from '@/components/messages/UnreadBadge'
 
 // 서버에서 전달받는 사용자 타입
 interface ServerUser {
@@ -67,6 +69,11 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
       href: '/rewards',
       label: '리워드',
       icon: Trophy,
+    },
+    {
+      href: '/messages',
+      label: '메시지',
+      icon: MessageSquare,
     },
   ]
 
@@ -141,6 +148,17 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
               </div>
               
               <div className="flex items-center gap-1">
+                {/* 메시지 버튼 */}
+                <button
+                  onClick={() => router.push('/messages')}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
+                  title="메시지"
+                  aria-label="메시지"
+                >
+                  <MessageSquare className="w-5 h-5 text-gray-600" />
+                  <UnreadBadge />
+                </button>
+
                 {/* 프로필 버튼 */}
                 <button
                   onClick={() => router.push('/profile')}

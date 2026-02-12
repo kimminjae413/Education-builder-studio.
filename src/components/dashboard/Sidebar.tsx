@@ -4,15 +4,17 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils/cn'
-import { 
-  LayoutDashboard, 
-  Wand2, 
-  Library, 
-  Upload, 
-  Trophy, 
+import {
+  LayoutDashboard,
+  Wand2,
+  Library,
+  Upload,
+  Trophy,
   User,
-  Shield
+  Shield,
+  MessageSquare
 } from 'lucide-react'
+import { UnreadBadge } from '@/components/messages/UnreadBadge'
 
 interface SidebarProps {
   profile: any
@@ -48,6 +50,11 @@ export function Sidebar({ profile }: SidebarProps) {
       icon: Trophy,
     },
     {
+      href: '/messages',
+      label: '메시지',
+      icon: MessageSquare,
+    },
+    {
       href: '/profile',
       label: '프로필',
       icon: User,
@@ -74,7 +81,7 @@ export function Sidebar({ profile }: SidebarProps) {
             key={item.href}
             href={item.href}
             className={cn(
-              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative',
               isActive
                 ? 'bg-cobalt-500 text-white'
                 : 'text-gray-700 hover:bg-gray-100'
@@ -82,6 +89,7 @@ export function Sidebar({ profile }: SidebarProps) {
           >
             <Icon className="h-5 w-5" />
             <span>{item.label}</span>
+            {item.href === '/messages' && <UnreadBadge />}
           </Link>
         )
       })}
