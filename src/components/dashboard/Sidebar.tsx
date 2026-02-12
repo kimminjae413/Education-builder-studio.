@@ -12,7 +12,9 @@ import {
   Trophy,
   User,
   Shield,
-  MessageSquare
+  MessageSquare,
+  Bell,
+  HelpCircle
 } from 'lucide-react'
 import { UnreadBadge } from '@/components/messages/UnreadBadge'
 import { useUnreadCount } from '@/hooks/useUnreadCount'
@@ -52,9 +54,19 @@ export function Sidebar({ profile }: SidebarProps) {
       icon: Trophy,
     },
     {
+      href: '/announcements',
+      label: '공지사항',
+      icon: Bell,
+    },
+    {
       href: '/messages',
       label: '메시지',
       icon: MessageSquare,
+    },
+    {
+      href: '/inquiries',
+      label: '1:1 문의',
+      icon: HelpCircle,
     },
     {
       href: '/profile',

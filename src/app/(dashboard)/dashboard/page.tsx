@@ -1,10 +1,12 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { verifyIdToken } from '@/lib/firebase/admin'
 import { getProfile, getMaterialsWithCount } from '@/lib/db/queries'
 import { RankBadge } from '@/components/rank/RankBadge'
 import { RankProgress } from '@/components/rank/RankProgress'
 import { InstructorRank } from '@/lib/rank/types'
+import { getPinnedAnnouncements } from '@/lib/db/announcements'
 
 export default async function DashboardPage() {
   const cookieStore = await cookies()
@@ -30,8 +32,44 @@ export default async function DashboardPage() {
 
   const approvedCount = materials?.filter(m => m.status === 'approved').length || 0
 
+  // 고정 공지사항 가져오기
+  let pinnedAnnouncements: any[] = []
+  try {
+    pinnedAnnouncements = await getPinnedAnnouncements()
+  } catch {
+    // 테이블이 아직 없을 수 있음
+  }
+
   return (
     <div className="space-y-6">
+      {/* 고정 공지사항 */}
+      {pinnedAnnouncements.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-amber-900 flex items-center gap-1.5">
+              <span>📢</span> 공지사항
+            </h2>
+            <Link href="/announcements" className="text-xs text-amber-700 hover:underline">
+              전체보기
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {pinnedAnnouncements.map((a) => (
+              <Link
+                key={a.id}
+                href={`/announcements/${a.id}`}
+                className="block text-sm text-amber-800 hover:text-amber-900 hover:underline truncate"
+              >
+                {a.title}
+                <span className="text-xs text-amber-600 ml-2">
+                  {new Date(a.created_at).toLocaleDateString('ko-KR')}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 환영 메시지 */}
       <div className="bg-white rounded-2xl p-6 border border-gray-200">
         <h1 className="text-2xl font-bold text-gray-900">

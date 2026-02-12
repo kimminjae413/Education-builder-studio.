@@ -4,13 +4,15 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { 
-  LayoutDashboard, 
-  Users, 
-  FileCheck, 
+import {
+  LayoutDashboard,
+  Users,
+  FileCheck,
   Upload,
   DollarSign,
   Settings,
+  Megaphone,
+  HelpCircle,
   X
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
@@ -39,6 +41,16 @@ export function AdminSidebar({ isMobileOpen, onClose }: AdminSidebarProps) {
       href: '/admin/users',
       label: '사용자 관리',
       icon: Users,
+    },
+    {
+      href: '/admin/announcements',
+      label: '공지사항',
+      icon: Megaphone,
+    },
+    {
+      href: '/admin/inquiries',
+      label: '1:1 문의',
+      icon: HelpCircle,
     },
     {
       href: '/admin/contents',
