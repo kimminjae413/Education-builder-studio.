@@ -79,28 +79,15 @@ export function ContentsTable({ materials }: ContentsTableProps) {
     }
   }
 
-  // 🆕 파일 미리보기 핸들러 (GCS Signed URL 사용)
+  // 🆕 파일 미리보기 핸들러 (서버에서 Office→PDF 변환 후 브라우저로 표시)
   const handlePreview = async (material: any) => {
-    // 팝업 차단 방지: 클릭 이벤트 컨텍스트에서 동기적으로 창 열기
     const previewWindow = window.open('about:blank', '_blank')
 
     try {
-      // Signed URL 발급 받기
       const res = await fetch(`/api/materials/${material.id}/preview`)
       if (!res.ok) throw new Error('미리보기 URL 생성 실패')
       const { url } = await res.json()
 
-      const ext = material.filename?.split('.').pop()?.toLowerCase() || ''
-
-      // Office 파일: Microsoft Office Online Viewer로 미리보기 (대용량 파일 지원)
-      if (['docx', 'doc', 'pptx', 'ppt', 'xlsx', 'xls'].includes(ext)) {
-        if (previewWindow) {
-          previewWindow.location.href = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`
-        }
-        return
-      }
-
-      // PDF, 이미지, 기타: signed URL로 직접 열기
       if (previewWindow) {
         previewWindow.location.href = url
       }
