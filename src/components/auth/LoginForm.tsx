@@ -64,15 +64,17 @@ export function LoginForm() {
           }).catch(() => {})
         }
 
-        // 즉시 대시보드로 이동
-        window.location.href = '/dashboard'
+        // router.push로 이동 (로딩 상태를 유지하며 대시보드 로딩)
+        // window.location.href 대신 사용하면 "로그인 중..." 상태가 유지됨
+        router.push('/dashboard')
+        // 로딩 상태 유지 (setLoading(false) 하지 않음)
+        return
       }
     } catch (err: any) {
       console.error('🔴 Unexpected error:', err)
       setError(`로그인 중 오류: ${err.message || '알 수 없는 오류'}`)
-    } finally {
-      setLoading(false)
     }
+    setLoading(false)
   }
 
   return (

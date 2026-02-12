@@ -41,9 +41,9 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
   const { messages: unreadCount } = useNotificationCounts()
 
   const handleLogout = async () => {
+    document.cookie = 'firebase-token=; path=/; max-age=0'
     await signOut()
-    router.push('/login')
-    router.refresh()
+    window.location.href = '/login'
   }
 
   const navItems = [
