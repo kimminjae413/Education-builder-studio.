@@ -226,3 +226,17 @@ export async function configureCors(): Promise<void> {
 
   console.log('GCS CORS configured')
 }
+
+// 버킷 공개 읽기 설정 (uniform bucket-level access용, 한 번만 실행)
+export async function makeBucketPublic(): Promise<void> {
+  const bucket = getBucket()
+  await bucket.iam.setPolicy({
+    bindings: [
+      {
+        role: 'roles/storage.objectViewer',
+        members: ['allUsers'],
+      },
+    ],
+  })
+  console.log('GCS bucket set to public read')
+}
