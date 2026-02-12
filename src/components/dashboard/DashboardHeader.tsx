@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { UnreadBadge } from '@/components/messages/UnreadBadge'
+import { useUnreadCount } from '@/hooks/useUnreadCount'
 
 // 서버에서 전달받는 사용자 타입
 interface ServerUser {
@@ -37,6 +38,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const unreadCount = useUnreadCount()
 
   const handleLogout = async () => {
     await signOut()
@@ -151,12 +153,20 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
                 {/* 메시지 버튼 */}
                 <button
                   onClick={() => router.push('/messages')}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
+                  className={cn(
+                    'p-2 rounded-lg transition-colors relative',
+                    unreadCount > 0
+                      ? 'bg-red-50 hover:bg-red-100'
+                      : 'hover:bg-gray-100'
+                  )}
                   title="메시지"
                   aria-label="메시지"
                 >
-                  <MessageSquare className="w-5 h-5 text-gray-600" />
-                  <UnreadBadge />
+                  <MessageSquare className={cn(
+                    'w-5 h-5',
+                    unreadCount > 0 ? 'text-red-500' : 'text-gray-600'
+                  )} />
+                  <UnreadBadge count={unreadCount} />
                 </button>
 
                 {/* 프로필 버튼 */}

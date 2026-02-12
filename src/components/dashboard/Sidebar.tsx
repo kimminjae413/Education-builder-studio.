@@ -15,6 +15,7 @@ import {
   MessageSquare
 } from 'lucide-react'
 import { UnreadBadge } from '@/components/messages/UnreadBadge'
+import { useUnreadCount } from '@/hooks/useUnreadCount'
 
 interface SidebarProps {
   profile: any
@@ -22,6 +23,7 @@ interface SidebarProps {
 
 export function Sidebar({ profile }: SidebarProps) {
   const pathname = usePathname()
+  const unreadCount = useUnreadCount()
 
   const navItems = [
     {
@@ -75,6 +77,8 @@ export function Sidebar({ profile }: SidebarProps) {
       {navItems.map((item) => {
         const Icon = item.icon
         const isActive = pathname === item.href
+        const isMessages = item.href === '/messages'
+        const hasUnread = isMessages && unreadCount > 0
 
         return (
           <Link
@@ -84,12 +88,14 @@ export function Sidebar({ profile }: SidebarProps) {
               'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative',
               isActive
                 ? 'bg-cobalt-500 text-white'
-                : 'text-gray-700 hover:bg-gray-100'
+                : hasUnread
+                  ? 'bg-red-50 text-red-600 hover:bg-red-100 ring-1 ring-red-200'
+                  : 'text-gray-700 hover:bg-gray-100'
             )}
           >
-            <Icon className="h-5 w-5" />
+            <Icon className={cn('h-5 w-5', hasUnread && !isActive && 'text-red-500')} />
             <span>{item.label}</span>
-            {item.href === '/messages' && <UnreadBadge />}
+            {isMessages && <UnreadBadge count={unreadCount} />}
           </Link>
         )
       })}

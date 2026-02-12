@@ -15,6 +15,7 @@ import {
   MessageSquare
 } from 'lucide-react'
 import { UnreadBadge } from '@/components/messages/UnreadBadge'
+import { useUnreadCount } from '@/hooks/useUnreadCount'
 
 interface BottomNavProps {
   profile: any
@@ -22,6 +23,7 @@ interface BottomNavProps {
 
 export function BottomNav({ profile }: BottomNavProps) {
   const pathname = usePathname()
+  const unreadCount = useUnreadCount()
 
   const navItems = [
     {
@@ -56,7 +58,7 @@ export function BottomNav({ profile }: BottomNavProps) {
     },
   ]
 
-  // ⭐ 관리자인 경우 관리자 메뉴 추가
+  // 관리자인 경우 관리자 메뉴 추가
   if (profile?.role === 'admin') {
     navItems.push({
       href: '/admin',
@@ -71,9 +73,9 @@ export function BottomNav({ profile }: BottomNavProps) {
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-          
-          // ⭐ 관리자 메뉴는 빨간색으로 강조
           const isAdminMenu = item.href === '/admin'
+          const isMessages = item.href === '/messages'
+          const hasUnread = isMessages && unreadCount > 0
 
           return (
             <Link
@@ -83,7 +85,8 @@ export function BottomNav({ profile }: BottomNavProps) {
                 'flex flex-col items-center justify-center gap-1 flex-1 py-2 px-1 rounded-lg transition-colors relative',
                 isActive && !isAdminMenu && 'text-cobalt-600',
                 isActive && isAdminMenu && 'text-red-600',
-                !isActive && !isAdminMenu && 'text-gray-600 hover:text-cobalt-600',
+                !isActive && hasUnread && 'text-red-500',
+                !isActive && !isAdminMenu && !hasUnread && 'text-gray-600 hover:text-cobalt-600',
                 !isActive && isAdminMenu && 'text-gray-600 hover:text-red-600'
               )}
             >
@@ -91,13 +94,15 @@ export function BottomNav({ profile }: BottomNavProps) {
                 <Icon className={cn(
                   'h-5 w-5',
                   isActive && !isAdminMenu && 'stroke-[2.5]',
-                  isActive && isAdminMenu && 'stroke-[2.5]'
+                  isActive && isAdminMenu && 'stroke-[2.5]',
+                  hasUnread && !isActive && 'text-red-500 stroke-[2.5]'
                 )} />
-                {item.href === '/messages' && <UnreadBadge />}
+                {isMessages && <UnreadBadge count={unreadCount} />}
               </div>
               <span className={cn(
                 'text-[10px] font-medium',
-                isActive && 'font-semibold'
+                isActive && 'font-semibold',
+                hasUnread && !isActive && 'text-red-500 font-semibold'
               )}>
                 {item.label}
               </span>
