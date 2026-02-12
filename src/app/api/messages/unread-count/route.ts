@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     console.error('안읽은 메시지 수 조회 오류:', error)
     return NextResponse.json(
-      { error: process.env.NODE_ENV === 'production' ? 'Internal server error' : (error instanceof Error ? error.message : 'Internal server error') },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }

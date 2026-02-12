@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     console.error('유저 검색 오류:', error)
     return NextResponse.json(
-      { error: process.env.NODE_ENV === 'production' ? 'Internal server error' : (error instanceof Error ? error.message : 'Internal server error') },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }
