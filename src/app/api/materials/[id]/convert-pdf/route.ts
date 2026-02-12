@@ -2,6 +2,8 @@
 // Office 파일 → PDF 변환 (Google Drive API + Firebase Admin credential)
 // 변환된 PDF는 GCS에 캐시하여 재사용
 
+export const maxDuration = 60 // Netlify Pro: 최대 60초, Free: 26초
+
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/firebase/server-auth'
 import { query } from '@/lib/db/client'

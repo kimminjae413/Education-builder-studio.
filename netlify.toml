@@ -5,5 +5,9 @@
 [build.environment]
   NODE_VERSION = "20"
 
+[functions]
+  external_node_modules = ["@google-cloud/storage"]
+  node_bundler = "esbuild"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
