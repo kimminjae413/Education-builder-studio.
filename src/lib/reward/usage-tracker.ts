@@ -194,19 +194,19 @@ export async function getContributorStats(userId: string): Promise<ContributorSt
   const row = result.rows[0]
   const contributionScore = calculateContributionScore(row)
 
-  // 랭크 계산
+  // 랭크 계산 (자료등록 +5점 포함)
   const rankResult = await query(
     `SELECT COUNT(*) + 1 as rank
      FROM (
        SELECT user_id,
          SUM(COALESCE(citation_count, 0) * 10 +
              COALESCE(reference_count, 0) * 5 +
-             COALESCE(download_count, 0) * 3) as score
+             COALESCE(download_count, 0) * 3) + COUNT(*) * 5 as score
        FROM teaching_materials
        GROUP BY user_id
        HAVING SUM(COALESCE(citation_count, 0) * 10 +
                   COALESCE(reference_count, 0) * 5 +
-                  COALESCE(download_count, 0) * 3) > $1
+                  COALESCE(download_count, 0) * 3) + COUNT(*) * 5 > $1
      ) ranked`,
     [contributionScore]
   )
@@ -253,7 +253,7 @@ export async function getTopContributors(limit: number = 10): Promise<Contributo
        SUM(COALESCE(m.citation_count, 0) * 10 +
            COALESCE(m.reference_count, 0) * 5 +
            COALESCE(m.download_count, 0) * 3 +
-           COALESCE(m.satisfaction_score, 0) * 20) as contribution_score
+           COALESCE(m.satisfaction_score, 0) * 20) + COUNT(m.id) * 5 as contribution_score
      FROM profiles p
      LEFT JOIN teaching_materials m ON p.id = m.user_id
      GROUP BY p.id, p.name

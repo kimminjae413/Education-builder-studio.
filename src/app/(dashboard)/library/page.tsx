@@ -9,21 +9,20 @@ interface Material {
   id: string
   title: string
   description: string
-  file_type: string
-  target_category: string
-  subject_category: string
-  download_count: number
-  rating: number
+  filename: string
+  subject: string
+  target_audience: string
   user_id: string
   user_name: string
+  download_count: number
+  view_count: number
+  rating: number
   created_at: string
 }
 
 interface Category {
   id: string
   name: string
-  description: string
-  icon: string
   count: number
 }
 
@@ -57,20 +56,17 @@ export default function LibraryPage() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      // 카테고리 및 자료 동시 로드
-      const [catRes, matRes] = await Promise.all([
-        fetch('/api/marketplace?action=categories'),
-        fetch(`/api/marketplace?action=search&category=${selectedCategory}&sort=${sortBy}&limit=20`)
-      ])
+      const params = new URLSearchParams({
+        sort: sortBy,
+        limit: '20',
+      })
+      if (selectedCategory) params.set('category', selectedCategory)
 
-      if (catRes.ok) {
-        const catData = await catRes.json()
-        setCategories(catData.categories || [])
-      }
-
-      if (matRes.ok) {
-        const matData = await matRes.json()
-        setMaterials(matData.listings || [])
+      const res = await fetch(`/api/library?${params}`)
+      if (res.ok) {
+        const data = await res.json()
+        setMaterials(data.materials || [])
+        setCategories(data.categories || [])
       }
     } catch (error) {
       console.error('데이터 로드 오류:', error)
@@ -87,10 +83,14 @@ export default function LibraryPage() {
 
     setLoading(true)
     try {
-      const res = await fetch(`/api/marketplace?action=search&q=${encodeURIComponent(searchQuery)}&sort=${sortBy}`)
+      const params = new URLSearchParams({
+        q: searchQuery,
+        sort: sortBy,
+      })
+      const res = await fetch(`/api/library?${params}`)
       if (res.ok) {
         const data = await res.json()
-        setMaterials(data.listings || [])
+        setMaterials(data.materials || [])
       }
     } catch (error) {
       console.error('검색 오류:', error)
@@ -99,8 +99,9 @@ export default function LibraryPage() {
     }
   }
 
-  const getFileIcon = (fileType: string) => {
-    switch (fileType?.toLowerCase()) {
+  const getFileIcon = (filename: string) => {
+    const ext = filename?.split('.').pop()?.toLowerCase()
+    switch (ext) {
       case 'pdf': return '📄'
       case 'docx': case 'doc': return '📝'
       case 'pptx': case 'ppt': return '📊'
@@ -147,7 +148,7 @@ export default function LibraryPage() {
             <option value="">모든 카테고리</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
-                {cat.icon} {cat.name} ({cat.count})
+                {cat.name} ({cat.count})
               </option>
             ))}
           </select>
@@ -166,23 +167,24 @@ export default function LibraryPage() {
       </div>
 
       {/* 카테고리 카드 */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setSelectedCategory(cat.id === selectedCategory ? '' : cat.id)}
-            className={`p-4 rounded-xl border text-center transition-all ${
-              selectedCategory === cat.id
-                ? 'bg-blue-50 border-blue-300'
-                : 'bg-white border-gray-200 hover:border-blue-200'
-            }`}
-          >
-            <div className="text-2xl mb-1">{cat.icon}</div>
-            <div className="text-sm font-medium text-gray-900">{cat.name}</div>
-            <div className="text-xs text-gray-500">{cat.count}개</div>
-          </button>
-        ))}
-      </div>
+      {categories.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id === selectedCategory ? '' : cat.id)}
+              className={`p-4 rounded-xl border text-center transition-all ${
+                selectedCategory === cat.id
+                  ? 'bg-blue-50 border-blue-300'
+                  : 'bg-white border-gray-200 hover:border-blue-200'
+              }`}
+            >
+              <div className="text-sm font-medium text-gray-900">{cat.name}</div>
+              <div className="text-xs text-gray-500">{cat.count}개</div>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* 자료 목록 */}
       {loading ? (
@@ -197,7 +199,7 @@ export default function LibraryPage() {
             등록된 자료가 없습니다
           </h2>
           <p className="text-gray-600 max-w-md mx-auto">
-            아직 마켓플레이스에 등록된 교육 자료가 없습니다.<br />
+            아직 승인된 교육 자료가 없습니다.<br />
             자료를 업로드하고 공유해보세요!
           </p>
         </div>
@@ -210,10 +212,10 @@ export default function LibraryPage() {
             >
               <div className="p-5">
                 <div className="flex items-start gap-3">
-                  <div className="text-3xl">{getFileIcon(material.file_type)}</div>
+                  <div className="text-3xl">{getFileIcon(material.filename)}</div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-gray-900 truncate">
-                      {material.title}
+                      {material.title || '제목 없음'}
                     </h3>
                     {material.user_id && material.user_id !== user?.uid ? (
                       <button
@@ -236,14 +238,14 @@ export default function LibraryPage() {
                 </p>
 
                 <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
-                  {material.target_category && (
+                  {material.target_audience && (
                     <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs">
-                      {material.target_category}
+                      {material.target_audience}
                     </span>
                   )}
-                  {material.subject_category && (
+                  {material.subject && (
                     <span className="px-2 py-1 bg-green-50 text-green-700 rounded-full text-xs">
-                      {material.subject_category}
+                      {material.subject}
                     </span>
                   )}
                 </div>
@@ -251,11 +253,11 @@ export default function LibraryPage() {
                 <div className="mt-4 flex items-center justify-between text-sm">
                   <div className="flex items-center gap-3 text-gray-500">
                     <span>⬇️ {material.download_count || 0}</span>
-                    <span>⭐ {material.rating?.toFixed(1) || '0.0'}</span>
+                    <span>👁️ {material.view_count || 0}</span>
                   </div>
-                  <button className="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
-                    상세보기
-                  </button>
+                  <span className="text-xs text-gray-400">
+                    {new Date(material.created_at).toLocaleDateString('ko-KR')}
+                  </span>
                 </div>
               </div>
             </div>
@@ -274,7 +276,7 @@ export default function LibraryPage() {
               </p>
             </div>
             <a
-              href="/upload"
+              href="/contribute"
               className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
             >
               자료 업로드
