@@ -80,8 +80,8 @@ export function ContentsTable({ materials }: ContentsTableProps) {
   }
 
   // 🆕 파일 미리보기 핸들러
-  // Office 파일 → Microsoft Office Online Viewer로 표시
-  // PDF/이미지 → 직접 표시
+  // Office 파일 → 프록시 URL + MS Office Online Viewer
+  // PDF → Signed URL 직접 표시
   const handlePreview = async (material: any) => {
     const previewWindow = window.open('about:blank', '_blank')
     if (previewWindow) {
@@ -95,8 +95,9 @@ export function ContentsTable({ materials }: ContentsTableProps) {
       const { url, type } = await res.json()
 
       if (type === 'office') {
-        // Office 파일: Microsoft Office Online Viewer 사용
-        const viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`
+        // Office 파일: 프록시 URL을 MS Office Online Viewer에 전달
+        const proxyUrl = `${window.location.origin}/api/materials/${material.id}/file`
+        const viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(proxyUrl)}`
         if (previewWindow) previewWindow.location.href = viewerUrl
         return
       }
